@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog Donghua</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; margin: 0; padding: 15px; }
+    .container { max-width: 1000px; margin: 0 auto; text-align: center; }
+    h1 { color: #38bdf8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 20px; }
+    .card { background: #1e293b; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+    .card:hover { transform: scale(1.03); }
+    .card img { width: 100%; height: 180px; object-fit: cover; background: #334155; }
+    .card-title { padding: 8px; font-size: 12px; font-weight: bold; height: 45px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    #statusMsg { margin-top: 20px; font-size: 14px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Katalog Donghua Anichin</h1>
+    <div id="statusMsg">Memuat data dari Vercel API...</div>
+    <div class="grid" id="donghuaGrid"></div>
+  </div>
+
+  <script>
+    // Panggil Endpoint API internal Vercel
+    const API_URL = '/api/donghua';
+
+    window.onload = loadData;
+
+    async function loadData() {
+      const status = document.getElementById('statusMsg');
+      const grid = document.getElementById('donghuaGrid');
+
+      try {
+        const response = await fetch(API_URL);
+        const result = await response.json();
+
+        if (result.success && result.data.length > 0) {
+          status.style.display = 'none';
+          grid.innerHTML = '';
+          result.data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => window.open(item.href, '_blank');
+            card.innerHTML = `
+              <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+              <div class="card-title">${item.title}</div>
+            `;
+            grid.appendChild(card);
+          });
+        } else {
+          status.innerText = 'Gagal memuat data atau data kosong.';
+        }
+      } catch (err) {
+        status.innerText = 'Terjadi kesalahan server Vercel.';
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
