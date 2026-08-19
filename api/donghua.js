@@ -7,7 +7,6 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    // Ambil nomor halaman dari query parameter (default = 1)
     const pageNum = req.query.page || 1;
     const targetUrl = `https://anichin.moe/anime/?page=${pageNum}&status=&type=&order=update`;
 
@@ -27,16 +26,20 @@ module.exports = async (req, res) => {
       const titleEl = card.find('div.tt, h2, h3, .title, .entry-title').first();
       const linkEl = card.find('a').first();
       const imgEl = card.find('img').first();
+      // Ambil teks episode langsung dari HTML Anichin (biasanya di kelas .epx / .bt .epx)
+      const epEl = card.find('.epx, .bt .epx, .episode, .ep').first();
 
       const title = titleEl.text().trim();
       const href = linkEl.attr('href');
       const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
+      const episode = epEl.text().trim() || 'NEW';
 
       if (title && href) {
         donghuaList.push({
           title: title.replace(/\s+/g, ' '),
           href: href,
-          poster: poster || 'https://via.placeholder.com/150'
+          poster: poster || 'https://via.placeholder.com/150',
+          episode: episode
         });
       }
     });
@@ -53,7 +56,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: 'Gagal mengambil data halaman: ' + error.message
+      error: 'Gagal mengambil data: ' + error.message
     });
   }
 };
