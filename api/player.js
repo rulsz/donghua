@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
     const url = req.query.url;
     if (!url) return res.status(400).send('URL dibutuhkan');
 
-    // Mengambil player dari server asal dengan memalsukan Referer Anichin
+    // Mengambil HTML player dari Anichin/server asal dengan memalsukan Referer
     const html = await cloudscraper.get({
       uri: url,
       headers: {
@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Menghapus skrip pemutus iframe (framekiller)
+    // Menghapus skrip pemutus iframe (framekiller) jika ada
     const cleanHtml = html
       .replace(/top\.location\s*=\s*/gi, '//')
       .replace(/parent\.location\s*=\s*/gi, '//');
