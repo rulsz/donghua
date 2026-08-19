@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Katalog Donghua Anichin</title>
+  <title>Katalog Donghua</title>
   <style>
     * { box-sizing: border-box; }
     body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; margin: 0; padding: 15px; }
@@ -20,13 +20,13 @@
 <body>
   <div class="container">
     <h1>Katalog Donghua Anichin</h1>
-    <div id="statusMsg">Memuat data langsung dari Anichin...</div>
+    <div id="statusMsg">Memuat data dari Vercel API...</div>
     <div class="grid" id="donghuaGrid"></div>
   </div>
 
   <script>
-    // Memakai Proxy AllOrigins untuk mem-bypass CORS
-    const TARGET_URL = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://anichin.moe');
+    // Panggil Endpoint API internal Vercel
+    const API_URL = '/api/donghua';
 
     window.onload = loadData;
 
@@ -35,46 +35,13 @@
       const grid = document.getElementById('donghuaGrid');
 
       try {
-        const response = await fetch(TARGET_URL);
+        const response = await fetch(API_URL);
         const result = await response.json();
-        
-        if (!result.contents) throw new Error('Data tidak terambil dari proxy');
 
-        // Parse string HTML menjadi elemen DOM Virtual
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(result.contents, 'text/html');
-        
-        const cards = doc.querySelectorAll('article, div.bs, div.bsx, div.post-show');
-        const donghuaList = [];
-
-        cards.forEach(card => {
-          const titleEl = card.querySelector('div.tt, h2, h3, .title');
-          const linkEl = card.querySelector('a');
-          const imgEl = card.querySelector('img');
-
-          if (titleEl && linkEl) {
-            // PERBAIKAN: Menggunakan textContent, bukan innerText
-            const title = titleEl.textContent ? titleEl.textContent.trim() : '';
-            const href = linkEl.getAttribute('href');
-            let poster = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazy-src')) : '';
-
-            if (href && title) {
-              donghuaList.push({
-                title: title.replace(/\s+/g, ' '),
-                href: href,
-                poster: poster || 'https://via.placeholder.com/150'
-              });
-            }
-          }
-        });
-
-        // Hapus duplikat berdasarkan URL
-        const uniqueList = donghuaList.filter((v, i, a) => a.findIndex(t => t.href === v.href) === i);
-
-        if (uniqueList.length > 0) {
+        if (result.success && result.data.length > 0) {
           status.style.display = 'none';
           grid.innerHTML = '';
-          uniqueList.forEach(item => {
+          result.data.forEach(item => {
             const card = document.createElement('div');
             card.className = 'card';
             card.onclick = () => window.open(item.href, '_blank');
@@ -85,11 +52,10 @@
             grid.appendChild(card);
           });
         } else {
-          status.innerText = 'Struktur halaman Anichin tidak sesuai atau terblokir.';
+          status.innerText = 'Gagal memuat data atau data kosong.';
         }
-
       } catch (err) {
-        status.innerText = 'Gagal memuat data dari Proxy: ' + err.message;
+        status.innerText = 'Terjadi kesalahan server Vercel.';
         console.error(err);
       }
     }
