@@ -39,7 +39,6 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Fungsi pembersih URL Server (mengabaikan Dailymotion beriklan yang merusak UI)
     function extractServers($doc) {
       const serverList = [];
       $doc('.mirror option, select.mirror option, .select-mirror option').each((_, el) => {
@@ -47,8 +46,7 @@ module.exports = async (req, res) => {
         const name = option.text().trim();
         let value = option.attr('value') || '';
 
-        // Abaikan opsi beriklan yang memuat web Anichin penuh
-        if (value && name && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion')) {
+        if (value && name && !name.toLowerCase().includes('pilih')) {
           let streamUrl = value;
           if (value.includes('iframe') || value.startsWith('aHR0c')) {
             try {
@@ -57,20 +55,20 @@ module.exports = async (req, res) => {
               if (iframeMatch) streamUrl = iframeMatch[1];
             } catch (e) {}
           }
-          serverList.push({ name: name, url: streamUrl });
+          
+          // Filter hanya mengambil URL murni, bukan yang meredirect balik ke anichin
+          if (streamUrl && !streamUrl.includes('anichin.moe')) {
+            serverList.push({ name: name, url: streamUrl });
+          }
         }
       });
 
-      let fallbackUrl = $doc('iframe').first().attr('src') || '';
-      if (serverList.length === 0 && fallbackUrl && !fallbackUrl.includes('dailymotion')) {
-        serverList.push({ name: 'Default Server', url: fallbackUrl });
-      }
       return serverList;
     }
 
     let servers = extractServers($);
 
-    // Ambil video episode terbaru jika berada di halaman anime utama
+    // Ambil dari episode 1 / episode terbaru jika halaman utama dibuka
     if (servers.length === 0 && episodes.length > 0) {
       try {
         const latestEpSlug = episodes[0].slug;
