@@ -28,22 +28,29 @@ module.exports = async (req, res) => {
 
     let $ = cheerio.load(html);
 
-    const title = $('.entry-title, .titl').first().text().trim();
+    // Ambil judul utama H1 agar tidak terambil artikel/tutorial shortlink
+    let title = $('h1.entry-title, .infox h1, .entry-title').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
-    const synopsis = $('.entry-content p, .synopsis p').text().trim() || 'Tidak ada sinopsis.';
+    
+    // Ambil sinopsis murni
+    let synopsis = $('.entry-content p, .synopsis p, .desc p').first().text().trim();
+    if (!synopsis || synopsis.toLowerCase().includes('shortlink')) {
+      synopsis = 'Tidak ada sinopsis.';
+    }
 
+    // Ambil episode list murni
     const episodes = [];
     $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
       const link = $(el).find('a').attr('href');
       const epTitle = $(el).find('.epl-num, .epl-title').text().trim() || $(el).find('a').text().trim();
-      if (link) {
+      if (link && !link.includes('tutorial') && !link.includes('shortlink')) {
         episodes.push({ title: epTitle, slug: link.replace('https://anichin.moe/', '').replace(/\/$/, '') });
       }
     });
 
-    // EKSTRAKSI DENGAN FALLBACK AMAN
+    // EKSTRAKSI SERVER & SENSOR LINK SAMPAH / SHORTLINK
     async function extractDirectStream(iframeUrl) {
-      if (!iframeUrl) return null;
+      if (!iframeUrl || iframeUrl.includes('dailymotion') || iframeUrl.includes('shortlink')) return null;
       try {
         const frameHtml = await cloudscraper.get({
           uri: iframeUrl,
@@ -84,20 +91,24 @@ module.exports = async (req, res) => {
     $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
       let val = $(el).attr('value') || '';
-      if (val && !name.toLowerCase().includes('pilih')) {
+      
+      // ABAIKAN TOTAL DAILYMOTION & ADS SHORTLINK
+      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
         if (val.startsWith('aHR0c')) {
           try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
         }
         const match = val.match(/src=["']([^"']+)["']/);
         const embedUrl = match ? match[1] : val;
-        rawServers.push({ name, embedUrl });
+        if (!embedUrl.includes('dailymotion')) {
+          rawServers.push({ name, embedUrl });
+        }
       }
     });
 
-    // Ambil iframe default jika selector option kosong
     let defaultIframe = $('iframe').first().attr('src') || '';
+    if (defaultIframe.includes('dailymotion')) defaultIframe = '';
 
-    // Jika di halaman anime utama, ambil server episode pertama
+    // BILA DI HALAMAN ANIME UTAMA: Ambil dari episode 1 / episode terbaru
     if (rawServers.length === 0 && !defaultIframe && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
@@ -108,16 +119,20 @@ module.exports = async (req, res) => {
         $ep('.mirror option, select.mirror option').each((_, el) => {
           const name = $ep(el).text().trim();
           let val = $ep(el).attr('value') || '';
-          if (val && !name.toLowerCase().includes('pilih')) {
+          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
             if (val.startsWith('aHR0c')) {
               try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
             }
             const match = val.match(/src=["']([^"']+)["']/);
-            rawServers.push({ name, embedUrl: match ? match[1] : val });
+            const embedUrl = match ? match[1] : val;
+            if (!embedUrl.includes('dailymotion')) {
+              rawServers.push({ name, embedUrl });
+            }
           }
         });
         if (rawServers.length === 0) {
-          defaultIframe = $ep('iframe').first().attr('src') || '';
+          const epIframe = $ep('iframe').first().attr('src') || '';
+          if (!epIframe.includes('dailymotion')) defaultIframe = epIframe;
         }
       } catch (e) {}
     }
@@ -134,7 +149,7 @@ module.exports = async (req, res) => {
     if (processedServers.length === 0 && defaultIframe) {
       const directUrl = await extractDirectStream(defaultIframe);
       processedServers.push({
-        name: 'Default Server',
+        name: 'Server Utam',
         url: directUrl || defaultIframe
       });
     }
