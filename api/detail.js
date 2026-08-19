@@ -23,12 +23,10 @@ module.exports = async (req, res) => {
 
     let $ = cheerio.load(html);
 
-    // 1. Ambil Data Detail Utama
     const title = $('.entry-title, .titl').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
     const synopsis = $('.entry-content p, .synopsis p, .desc p').text().trim() || 'Tidak ada sinopsis.';
 
-    // 2. Ambil Daftar Episode
     const episodes = [];
     $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
       const item = $(el);
@@ -37,14 +35,11 @@ module.exports = async (req, res) => {
 
       if (link) {
         const epSlug = link.replace('https://anichin.moe/', '').replace(/\/$/, '');
-        episodes.push({
-          title: epTitle,
-          slug: epSlug
-        });
+        episodes.push({ title: epTitle, slug: epSlug });
       }
     });
 
-    // 3. Fungsi Pengambil Server Video dari HTML
+    // Fungsi pembersih URL Server (mengabaikan Dailymotion beriklan yang merusak UI)
     function extractServers($doc) {
       const serverList = [];
       $doc('.mirror option, select.mirror option, .select-mirror option').each((_, el) => {
@@ -52,7 +47,8 @@ module.exports = async (req, res) => {
         const name = option.text().trim();
         let value = option.attr('value') || '';
 
-        if (value && name && !name.toLowerCase().includes('pilih')) {
+        // Abaikan opsi beriklan yang memuat web Anichin penuh
+        if (value && name && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion')) {
           let streamUrl = value;
           if (value.includes('iframe') || value.startsWith('aHR0c')) {
             try {
@@ -66,7 +62,7 @@ module.exports = async (req, res) => {
       });
 
       let fallbackUrl = $doc('iframe').first().attr('src') || '';
-      if (serverList.length === 0 && fallbackUrl) {
+      if (serverList.length === 0 && fallbackUrl && !fallbackUrl.includes('dailymotion')) {
         serverList.push({ name: 'Default Server', url: fallbackUrl });
       }
       return serverList;
@@ -74,7 +70,7 @@ module.exports = async (req, res) => {
 
     let servers = extractServers($);
 
-    // BILA HALAMAN UTAMA TIDAK PUNYA VIDEO: Ambil otomatis dari Episode Terbaru (Episode Pertama di List)
+    // Ambil video episode terbaru jika berada di halaman anime utama
     if (servers.length === 0 && episodes.length > 0) {
       try {
         const latestEpSlug = episodes[0].slug;
