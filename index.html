@@ -61,7 +61,6 @@
 
     .detail-body { padding: 0 0 16px 0; }
 
-    /* EPISODE LIST SECTION (DENGAN GARIS PEMISAH / LINE) */
     .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .ep-header-title { font-size: 16px; font-weight: 700; color: #fff; }
     .ep-total-text { font-size: 12px; color: #64748b; }
@@ -71,18 +70,15 @@
     .ep-box { flex: 0 0 54px; height: 54px; background: #161f32; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #f8fafc; cursor: pointer; transition: all 0.2s; }
     .ep-box.active { background: #581c87; border-color: #a855f7; color: #ffffff; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
 
-    /* ACTION BAR KUSTOM */
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; }
     .action-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; font-size: 11px; font-weight: 500; cursor: pointer; position: relative; }
     .action-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-    /* MENU SERVER (TANPA SVG ICON, NAMA SERVER BERUKURAN SEPERTI ICON TOMBOL LAINNYA) */
     .server-custom-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: #38bdf8; position: relative; }
     .server-name-text { font-size: 18px; font-weight: 800; color: #38bdf8; max-width: 75px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; height: 22px; display: flex; align-items: center; }
     .server-label-text { font-size: 11px; font-weight: 500; color: #94a3b8; }
     .server-select-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-    /* DETAIL MEDIA INFO */
     .media-title { font-size: 20px; font-weight: 800; color: #ffffff; margin-bottom: 10px; }
     .badge-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
     .tag-badge { background: #1e293b; color: #94a3b8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
@@ -144,21 +140,17 @@
     </div>
 
     <div id="detailView">
-      <!-- VIDEO PLAYER -->
       <div class="player-wrapper" id="playerWrapper" style="display: none;">
         <div class="detail-player-box" id="playerMediaContainer"></div>
       </div>
 
       <div class="detail-body">
-        
-        <!-- 1. EPISODE LIST (DI BAWAH PLAYER WITH LINE) -->
         <div class="ep-header-row">
           <span class="ep-header-title">Episode List</span>
           <span class="ep-total-text" id="epTotalInfo">0 Episode</span>
         </div>
         <div class="ep-scroll-grid" id="epGrid">Memuat episode...</div>
 
-        <!-- 2. ACTION BAR (TOMBOL SERVER TANPA ICON SVG) -->
         <div class="action-bar">
           <div class="server-custom-btn">
             <span class="server-name-text" id="serverDisplayTitle">OK.ru</span>
@@ -183,7 +175,6 @@
           </div>
         </div>
 
-        <!-- 3. JUDUL & INFORMASI DETAIL -->
         <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
 
         <div class="badge-row">
@@ -206,6 +197,7 @@
   <script>
     let currentPage = 1;
     let rawDonghuaData = [];
+    let currentActiveMainSlug = '';
 
     function toggleSearch() {
       document.getElementById('searchWrapper').classList.toggle('active');
@@ -305,10 +297,8 @@
       });
     }
 
-    async function loadDetail(slug) {
+    async function loadDetail(requestedSlug) {
       const playerWrapper = document.getElementById('playerWrapper');
-      const serverSelect = document.getElementById('serverSelect');
-      const serverDisplayTitle = document.getElementById('serverDisplayTitle');
       const mediaBox = document.getElementById('playerMediaContainer');
       
       mediaBox.innerHTML = '';
@@ -318,7 +308,7 @@
       document.getElementById('epGrid').innerHTML = 'Memuat list episode...';
 
       try {
-        const res = await fetch(`/api/detail?slug=${slug}`);
+        const res = await fetch(`/api/detail?slug=${requestedSlug}`);
         const result = await res.json();
 
         if (result.success) {
@@ -328,25 +318,6 @@
           document.getElementById('topHeaderTitle').innerText = data.title;
           document.getElementById('dSynopsis').innerText = data.synopsis;
 
-          // SETUP SERVER DROPDOWN & NAMA SERVER
-          serverSelect.innerHTML = '';
-          if (data.servers && data.servers.length > 0) {
-            data.servers.forEach((srv) => {
-              const opt = document.createElement('option');
-              opt.value = srv.url;
-              opt.innerText = srv.name;
-              serverSelect.appendChild(opt);
-            });
-
-            serverDisplayTitle.innerText = data.servers[0].name;
-            playerWrapper.style.display = 'block';
-            renderPlayerMedia(data.servers[0].url);
-          } else if (data.streamUrl) {
-            playerWrapper.style.display = 'block';
-            renderPlayerMedia(data.streamUrl);
-          }
-
-          // RENDER EPISODE LIST
           const epGrid = document.getElementById('epGrid');
           epGrid.innerHTML = '';
 
@@ -354,15 +325,24 @@
             document.getElementById('dTotalEp').innerText = `Total ${data.episodes.length} Episode`;
             document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode`;
 
-            // Buka Riwayat Terakhir / Default Episode Pertama
-            const savedHistory = getSavedEpisode(slug);
-            let targetEpSlug = savedHistory ? savedHistory.epSlug : null;
+            // Tentukan episode yang harus diputar
+            let targetEpSlug = requestedSlug;
+            const isEpisodePage = data.episodes.some(e => e.slug === requestedSlug);
 
-            if (!targetEpSlug) {
-              const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
-              targetEpSlug = epOne ? epOne.slug : data.episodes[0].slug;
+            if (!isEpisodePage) {
+              currentActiveMainSlug = requestedSlug;
+              const savedHistory = getSavedEpisode(requestedSlug);
+              if (savedHistory && savedHistory.epSlug) {
+                targetEpSlug = savedHistory.epSlug;
+              } else {
+                const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
+                targetEpSlug = epOne ? epOne.slug : data.episodes[0].slug;
+              }
+            } else {
+              currentActiveMainSlug = data.episodes[data.episodes.length - 1]?.slug || requestedSlug;
             }
 
+            // Render tombol episode
             data.episodes.forEach((ep, index) => {
               const box = document.createElement('div');
               box.className = 'ep-box';
@@ -371,26 +351,22 @@
               box.innerText = epNumber;
 
               box.onclick = () => {
-                selectEpisode(slug, ep.slug, data.title, data.poster, `Ep ${epNumber}`);
+                selectEpisode(currentActiveMainSlug, ep.slug, data.title, data.poster, `Ep ${epNumber}`);
               };
               epGrid.appendChild(box);
             });
 
-            // Highlight Active Box
-            const activeBox = document.getElementById(`ep-box-${slug}`) || document.getElementById(`ep-box-${targetEpSlug}`);
-            if (activeBox) {
-              activeBox.classList.add('active');
-            } else if (data.episodes.length > 0) {
-              document.getElementById(`ep-box-${data.episodes[0].slug}`)?.classList.add('active');
-            }
+            // Tandai tombol aktif
+            document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
+            const activeBox = document.getElementById(`ep-box-${targetEpSlug}`);
+            if (activeBox) activeBox.classList.add('active');
 
-            // Simpan Riwayat Penonton
-            const activeEpObj = data.episodes.find(e => e.slug === slug || e.slug === targetEpSlug) || data.episodes[0];
-            const epNum = activeEpObj.title.match(/\d+/) ? activeEpObj.title.match(/\d+/)[0] : '1';
-            saveHistory(slug, activeEpObj.slug, data.title, data.poster, `Ep ${epNum}`);
+            // Ambil server stream episode yang aktif
+            loadEpisodeStream(targetEpSlug, currentActiveMainSlug, data.title, data.poster);
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
+            setupServers(data.servers, data.streamUrl);
           }
         } else {
           document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
@@ -400,42 +376,50 @@
       }
     }
 
-    // FUNGSI MEMILIH EPISODE & SECARA LANGSUNG MEMUAT PERUBAHAN VIDEO
-    async function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
-      document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
-      const targetBox = document.getElementById(`ep-box-${epSlug}`);
-      if (targetBox) targetBox.classList.add('active');
-
-      saveHistory(mainSlug, epSlug, title, poster, episodeName);
-
-      // Ambil server stream khusus episode yang dipilih
+    async function loadEpisodeStream(epSlug, mainSlug, title, poster) {
       try {
         const res = await fetch(`/api/detail?slug=${epSlug}`);
         const result = await res.json();
 
         if (result.success && result.data) {
-          const data = result.data;
-          const serverSelect = document.getElementById('serverSelect');
-          const serverDisplayTitle = document.getElementById('serverDisplayTitle');
+          setupServers(result.data.servers, result.data.streamUrl);
 
-          serverSelect.innerHTML = '';
-          if (data.servers && data.servers.length > 0) {
-            data.servers.forEach((srv) => {
-              const opt = document.createElement('option');
-              opt.value = srv.url;
-              opt.innerText = srv.name;
-              serverSelect.appendChild(opt);
-            });
-
-            serverDisplayTitle.innerText = data.servers[0].name;
-            renderPlayerMedia(data.servers[0].url);
-          } else if (data.streamUrl) {
-            renderPlayerMedia(data.streamUrl);
-          }
+          const epNum = epSlug.match(/\d+/) ? epSlug.match(/\d+/)[0] : '1';
+          saveHistory(mainSlug, epSlug, title, poster, `Ep ${epNum}`);
         }
-      } catch (err) {}
+      } catch (e) {}
+    }
 
-      window.history.pushState({}, '', '/' + epSlug);
+    function setupServers(servers, fallbackUrl) {
+      const playerWrapper = document.getElementById('playerWrapper');
+      const serverSelect = document.getElementById('serverSelect');
+      const serverDisplayTitle = document.getElementById('serverDisplayTitle');
+
+      serverSelect.innerHTML = '';
+      if (servers && servers.length > 0) {
+        servers.forEach((srv) => {
+          const opt = document.createElement('option');
+          opt.value = srv.url;
+          opt.innerText = srv.name;
+          serverSelect.appendChild(opt);
+        });
+
+        serverDisplayTitle.innerText = servers[0].name;
+        playerWrapper.style.display = 'block';
+        renderPlayerMedia(servers[0].url);
+      } else if (fallbackUrl) {
+        playerWrapper.style.display = 'block';
+        renderPlayerMedia(fallbackUrl);
+      }
+    }
+
+    function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
+      document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
+      const targetBox = document.getElementById(`ep-box-${epSlug}`);
+      if (targetBox) targetBox.classList.add('active');
+
+      saveHistory(mainSlug, epSlug, title, poster, episodeName);
+      openPage('/' + epSlug);
     }
 
     function renderPlayerMedia(url) {
@@ -483,14 +467,14 @@
 
     function saveHistory(mainSlug, epSlug, title, poster, episode) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history = history.filter(item => item.mainSlug !== mainSlug && item.slug !== mainSlug && item.mainSlug !== epSlug);
+      history = history.filter(item => item.mainSlug !== mainSlug && item.epSlug !== epSlug && item.slug !== mainSlug && item.slug !== epSlug);
       history.unshift({ mainSlug, epSlug, slug: epSlug, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 20)));
     }
 
     function getSavedEpisode(mainSlug) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      return history.find(item => item.mainSlug === mainSlug || item.slug === mainSlug);
+      return history.find(item => item.mainSlug === mainSlug || item.epSlug === mainSlug || item.slug === mainSlug);
     }
 
     function renderContinueWatching() {
@@ -505,7 +489,8 @@
       history.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => openPage('/' + (item.epSlug || item.slug));
+        const targetPath = item.epSlug || item.slug;
+        card.onclick = () => openPage('/' + targetPath);
 
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
