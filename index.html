@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RZ Donghua</title>
   
-  <!-- Library HLS.js untuk memutar file streaming .m3u8 -->
+  <!-- Library HLS.js untuk memutar streaming .m3u8 -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <!-- Video.js Minimal Web Component -->
@@ -65,8 +65,8 @@
     .server-dropdown { width: 100%; background: #0f172a; color: #fff; border: 1px solid #334155; padding: 6px 12px; border-radius: 8px; font-size: 12px; outline: none; font-weight: 600; cursor: pointer; }
 
     .detail-player-box { width: 100%; aspect-ratio: 16/9; background: #000; position: relative; overflow: hidden; }
+    .player-iframe { width: 100%; height: 100%; border: none; }
     
-    /* Responsive Styling Video Minimal Player */
     video-player { width: 100%; height: 100%; display: block; }
     video-minimal-skin { width: 100%; height: 100%; display: block; }
     video { width: 100%; height: 100%; object-fit: contain; }
@@ -383,26 +383,34 @@
       }
     }
 
-    // MEMUTAR VIDEO DENGAN KODE MOUNTING SAMA PERSIS SEPERTI PERMINTAAN
+    // SYSTEM HYBRID: OTOMATIS MEMILIH VIDEO-PLAYER ATAU IFRAME PEMUTAR RESMI
     function renderPlayerMedia(url) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = '';
 
       if (!url) return;
 
-      mediaBox.innerHTML = `
-        <video-player>
-          <video-minimal-skin>
-            <video id="myVideo" src="${url}" playsinline controls autoplay></video>
-          </video-minimal-skin>
-        </video-player>
-      `;
+      // Cek apakah URL merupakan file video murni
+      const isDirectVideo = (url.includes('.m3u8') || url.includes('.mp4')) && !url.includes('ok.ru') && !url.includes('vk.com');
 
-      const video = document.getElementById('myVideo');
-      if (url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
+      if (isDirectVideo) {
+        mediaBox.innerHTML = `
+          <video-player>
+            <video-minimal-skin>
+              <video id="myVideo" src="${url}" playsinline controls autoplay></video>
+            </video-minimal-skin>
+          </video-player>
+        `;
+
+        const video = document.getElementById('myVideo');
+        if (url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(url);
+          hls.attachMedia(video);
+        }
+      } else {
+        // Jika berupa link server embed (OK.ru / Odnoklassniki / Vidhide dll), gunakan iframe agar tidak memicu error CORS
+        mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen></iframe>`;
       }
     }
 
