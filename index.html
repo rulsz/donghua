@@ -14,12 +14,19 @@
     .badge { background: #0284c7; color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
     
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
-    .card { background: #1e293b; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
+    .card { background: #1e293b; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
     .card:hover { transform: translateY(-4px); }
     .card img { width: 100%; height: 185px; object-fit: cover; background: #334155; }
     .card-title { padding: 8px; font-size: 12px; font-weight: bold; height: 45px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
     
     #statusMsg { text-align: center; margin-top: 40px; font-size: 14px; color: #94a3b8; }
+
+    /* Navigasi Pagination */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; padding: 10px 0; }
+    .btn { background-color: #0284c7; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; }
+    .btn:hover { background-color: #0369a1; }
+    .btn:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.6; }
+    .page-info { font-size: 14px; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -30,26 +37,51 @@
 
     <div id="statusMsg">Memuat rilisan terbaru...</div>
     <div class="grid" id="donghuaGrid"></div>
+
+    <!-- Tombol Pagination -->
+    <div class="pagination" id="paginationNav" style="display: none;">
+      <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
+      <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
+      <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
+    </div>
   </div>
 
   <script>
-    const API_URL = '/api/donghua';
+    let currentPage = 1;
 
-    window.onload = loadData;
+    window.onload = () => loadData(currentPage);
 
-    async function loadData() {
+    async function loadData(page) {
       const status = document.getElementById('statusMsg');
       const grid = document.getElementById('donghuaGrid');
       const totalCount = document.getElementById('totalCount');
+      const paginationNav = document.getElementById('paginationNav');
+      const prevBtn = document.getElementById('prevBtn');
+      const pageDisplay = document.getElementById('pageDisplay');
+
+      // Scroll ke atas halaman setiap kali pindah halaman
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      status.style.display = 'block';
+      status.innerText = `Memuat data halaman ${page}...`;
+      grid.innerHTML = '';
+      paginationNav.style.display = 'none';
 
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`/api/donghua?page=${page}`);
         const result = await response.json();
 
         if (result.success && result.data.length > 0) {
           status.style.display = 'none';
           totalCount.innerText = result.total;
-          grid.innerHTML = '';
+          pageDisplay.innerText = page;
+
+          // Sembunyikan tombol "Sebelumnya" jika sedang di Halaman 1
+          if (page <= 1) {
+            prevBtn.style.display = 'none';
+          } else {
+            prevBtn.style.display = 'inline-block';
+          }
 
           result.data.forEach(item => {
             const card = document.createElement('div');
@@ -61,13 +93,21 @@
             `;
             grid.appendChild(card);
           });
+
+          paginationNav.style.display = 'flex';
         } else {
-          status.innerText = 'Gagal memuat rilisan terbaru atau data kosong.';
+          status.innerText = 'Data tidak ditemukan di halaman ini.';
         }
       } catch (err) {
-        status.innerText = 'Terjadi kesalahan saat memanggil API Vercel.';
+        status.innerText = 'Terjadi kesalahan saat memuat halaman.';
         console.error(err);
       }
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      if (currentPage < 1) currentPage = 1;
+      loadData(currentPage);
     }
   </script>
 </body>
