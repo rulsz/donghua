@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // Ambil daftar episode
+    // Ambil list episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -40,65 +40,82 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Helper Dekode URL Embed dari Anichin
-    function parseEmbedUrl(val) {
-      if (!val) return '';
-      let decoded = val;
+    // Helper Pembersih URL Embed
+    function cleanEmbedUrl(url) {
+      if (!url) return '';
+      let result = url;
 
-      // Dekode Base64 jika string di-encode
-      if (val.startsWith('aHR0c') || val.length > 30 && !val.includes('http')) {
-        try { 
-          decoded = Buffer.from(val, 'base64').toString('utf-8'); 
-        } catch(e){}
+      if (url.startsWith('aHR0c') || (url.length > 30 && !url.includes('http'))) {
+        try { result = Buffer.from(url, 'base64').toString('utf-8'); } catch(e){}
       }
 
-      // Ambil atribut src jika val berupa tag iframe HTML
-      const match = decoded.match(/src=["']([^"']+)["']/i);
-      let finalUrl = match ? match[1] : decoded;
+      const match = result.match(/src=["']([^"']+)["']/i);
+      if (match) result = match[1];
 
-      if (finalUrl.startsWith('//')) finalUrl = 'https:' + finalUrl;
+      if (result.startsWith('//')) result = 'https:' + result;
 
-      // BIFURKASI: Jika URL masih mengarah ke anichin/shortlink/dailymotion, BUANG!
-      if (finalUrl.includes('anichin.moe') || finalUrl.includes('dailymotion') || finalUrl.includes('shortlink')) {
+      // Hapus jika tautan masih mengarah ke anichin / dailymotion / shortlink
+      if (result.includes('anichin.moe') || result.includes('dailymotion') || result.includes('shortlink')) {
         return '';
       }
 
-      return finalUrl;
+      return result;
     }
 
-    // Ambil server dari halaman saat ini
-    let rawServers = [];
-    $('.mirror option, select.mirror option').each((_, el) => {
-      const name = $(el).text().trim();
-      const val = $(el).attr('value') || '';
+    // Fungsi Ekstraksi Server dari HTML Episode
+    async function extractServersFromHtml($doc) {
+      const servers = [];
 
-      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
-        const cleanUrl = parseEmbedUrl(val);
-        if (cleanUrl) {
-          rawServers.push({ name, url: cleanUrl });
+      // 1. Cek Tag Option
+      $doc('.mirror option, select.mirror option').each((_, el) => {
+        const name = $doc(el).text().trim();
+        const val = $doc(el).attr('value') || '';
+
+        if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
+          const validUrl = cleanEmbedUrl(val);
+          if (validUrl) {
+            servers.push({ name, url: validUrl });
+          }
+        }
+      });
+
+      // 2. Cek Iframe Default jika option tidak memberikan hasil
+      if (servers.length === 0) {
+        $doc('iframe').each((_, el) => {
+          const src = $doc(el).attr('src') || '';
+          const validUrl = cleanEmbedUrl(src);
+          if (validUrl) {
+            servers.push({ name: 'Server Utama', url: validUrl });
+          }
+        });
+      }
+
+      // 3. Cek Atribut Data (data-em, data-post, data-type) jika Anichin menggunakan AJAX
+      if (servers.length === 0) {
+        const dataEm = $doc('.mirror option[data-em]').first().attr('data-em') || '';
+        if (dataEm) {
+          const validUrl = cleanEmbedUrl(dataEm);
+          if (validUrl) {
+            servers.push({ name: 'Server Utama', url: validUrl });
+          }
         }
       }
-    });
 
-    // Jika halaman utama anime, ambil dari episode terbaru
+      return servers;
+    }
+
+    // Ambil Server dari halaman yang sedang dibuka
+    let rawServers = await extractServersFromHtml($);
+
+    // JIKA DI HALAMAN UTAMA ANIME: Scraping otomatis dilakukan ke episode pertama
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
           uri: `https://anichin.moe/${episodes[0].slug}/`,
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
         });
         const $ep = cheerio.load(epHtml);
-        $ep('.mirror option, select.mirror option').each((_, el) => {
-          const name = $ep(el).text().trim();
-          const val = $ep(el).attr('value') || '';
-
-          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
-            const cleanUrl = parseEmbedUrl(val);
-            if (cleanUrl) {
-              rawServers.push({ name, url: cleanUrl });
-            }
-          }
-        });
+        rawServers = await extractServersFromHtml($ep);
       } catch (e) {}
     }
 
