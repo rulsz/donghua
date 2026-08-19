@@ -25,7 +25,6 @@
     .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; padding: 10px 0; }
     .btn { background-color: #0284c7; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; }
     .btn:hover { background-color: #0369a1; }
-    .btn:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.6; }
     .page-info { font-size: 14px; color: #94a3b8; }
   </style>
 </head>
@@ -49,7 +48,29 @@
   <script>
     let currentPage = 1;
 
-    window.onload = () => loadData(currentPage);
+    // Ambil nomor halaman dari URL saat pertama kali dibuka (contoh: ?page=2)
+    function getPageFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const page = parseInt(urlParams.get('page'));
+      return page && page > 0 ? page : 1;
+    }
+
+    // Perbarui URL browser tanpa reload halaman
+    function updateURL(page) {
+      const newUrl = page > 1 ? `?page=${page}` : window.location.pathname;
+      window.history.pushState({ page: page }, '', newUrl);
+    }
+
+    window.onload = () => {
+      currentPage = getPageFromURL();
+      loadData(currentPage);
+    };
+
+    // Mendukung tombol Back/Forward browser
+    window.onpopstate = (event) => {
+      currentPage = getPageFromURL();
+      loadData(currentPage);
+    };
 
     async function loadData(page) {
       const status = document.getElementById('statusMsg');
@@ -59,7 +80,6 @@
       const prevBtn = document.getElementById('prevBtn');
       const pageDisplay = document.getElementById('pageDisplay');
 
-      // Scroll ke atas halaman setiap kali pindah halaman
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       status.style.display = 'block';
@@ -76,7 +96,7 @@
           totalCount.innerText = result.total;
           pageDisplay.innerText = page;
 
-          // Sembunyikan tombol "Sebelumnya" jika sedang di Halaman 1
+          // Sembunyikan tombol "Sebelumnya" jika di Halaman 1
           if (page <= 1) {
             prevBtn.style.display = 'none';
           } else {
@@ -107,6 +127,7 @@
     function changePage(direction) {
       currentPage += direction;
       if (currentPage < 1) currentPage = 1;
+      updateURL(currentPage);
       loadData(currentPage);
     }
   </script>
