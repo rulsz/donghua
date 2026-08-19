@@ -1,16 +1,6 @@
 const cloudscraper = require('cloudscraper');
 const cheerio = require('cheerio');
 
-function unpackJS(code) {
-  try {
-    const match = code.match(/eval\(function\(p,a,c,k,e,d\).*\)/);
-    if (!match) return code;
-    return code; 
-  } catch (e) {
-    return code;
-  }
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
@@ -28,17 +18,10 @@ module.exports = async (req, res) => {
 
     let $ = cheerio.load(html);
 
-    // Ambil judul utama H1 agar tidak terambil artikel/tutorial shortlink
-    let title = $('h1.entry-title, .infox h1, .entry-title').first().text().trim();
+    const title = $('h1.entry-title, .infox h1, .entry-title').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
-    
-    // Ambil sinopsis murni
-    let synopsis = $('.entry-content p, .synopsis p, .desc p').first().text().trim();
-    if (!synopsis || synopsis.toLowerCase().includes('shortlink')) {
-      synopsis = 'Tidak ada sinopsis.';
-    }
+    let synopsis = $('.entry-content p, .synopsis p, .desc p').first().text().trim() || 'Tidak ada sinopsis.';
 
-    // Ambil episode list murni
     const episodes = [];
     $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
       const link = $(el).find('a').attr('href');
@@ -48,41 +31,30 @@ module.exports = async (req, res) => {
       }
     });
 
-    // EKSTRAKSI SERVER & SENSOR LINK SAMPAH / SHORTLINK
-    async function extractDirectStream(iframeUrl) {
-      if (!iframeUrl || iframeUrl.includes('dailymotion') || iframeUrl.includes('shortlink')) return null;
+    // FUNGSI EKSTRAKSI LINK VIDEO MURNI OK.RU
+    async function extractOkRuStream(okUrl) {
       try {
-        const frameHtml = await cloudscraper.get({
-          uri: iframeUrl,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Referer': 'https://anichin.moe/'
-          }
+        const videoIdMatch = okUrl.match(/(?:video\/|embed\/)(\d+)/);
+        if (!videoIdMatch) return null;
+        
+        const videoId = videoIdMatch[1];
+        const pageHtml = await cloudscraper.get({
+          uri: `https://ok.ru/videoembed/${videoId}`,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
         });
 
-        const directMatch = frameHtml.match(/(https?:\/\/[^\s"'<>]+\.(?:m3u8|mp4)[^\s"'<>]*)/i);
-        if (directMatch) return directMatch[1];
-
-        if (iframeUrl.includes('ok.ru')) {
-          const okMatch = frameHtml.match(/data-options="([^"]+)"/);
-          if (okMatch) {
-            const cleanJson = okMatch[1].replace(/&quot;/g, '"');
-            const data = JSON.parse(cleanJson);
-            if (data.flashvars && data.flashvars.metadata) {
-              const meta = JSON.parse(data.flashvars.metadata);
-              if (meta.videos && meta.videos.length > 0) {
-                return meta.videos[meta.videos.length - 1].url;
-              }
+        const match = pageHtml.match(/data-options="([^"]+)"/);
+        if (match) {
+          const cleanJson = match[1].replace(/&quot;/g, '"');
+          const data = JSON.parse(cleanJson);
+          if (data.flashvars && data.flashvars.metadata) {
+            const meta = JSON.parse(data.flashvars.metadata);
+            if (meta.videos && meta.videos.length > 0) {
+              // Ambil kualitas video tertinggi
+              return meta.videos[meta.videos.length - 1].url;
             }
           }
         }
-
-        if (iframeUrl.includes('vidhide') || iframeUrl.includes('streamwish')) {
-          const unpacked = unpackJS(frameHtml);
-          const m3u8Match = unpacked.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/i);
-          if (m3u8Match) return m3u8Match[1];
-        }
-
       } catch (err) {}
       return null;
     }
@@ -91,25 +63,19 @@ module.exports = async (req, res) => {
     $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
       let val = $(el).attr('value') || '';
-      
-      // ABAIKAN TOTAL DAILYMOTION & ADS SHORTLINK
-      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
+
+      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion')) {
         if (val.startsWith('aHR0c')) {
           try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
         }
         const match = val.match(/src=["']([^"']+)["']/);
         const embedUrl = match ? match[1] : val;
-        if (!embedUrl.includes('dailymotion')) {
-          rawServers.push({ name, embedUrl });
-        }
+        rawServers.push({ name, embedUrl });
       }
     });
 
-    let defaultIframe = $('iframe').first().attr('src') || '';
-    if (defaultIframe.includes('dailymotion')) defaultIframe = '';
-
-    // BILA DI HALAMAN ANIME UTAMA: Ambil dari episode 1 / episode terbaru
-    if (rawServers.length === 0 && !defaultIframe && episodes.length > 0) {
+    // Jika di halaman anime utama, ambil dari episode 1 / terbaru
+    if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
           uri: `https://anichin.moe/${episodes[0].slug}/`,
@@ -119,39 +85,29 @@ module.exports = async (req, res) => {
         $ep('.mirror option, select.mirror option').each((_, el) => {
           const name = $ep(el).text().trim();
           let val = $ep(el).attr('value') || '';
-          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
+          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion')) {
             if (val.startsWith('aHR0c')) {
               try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
             }
             const match = val.match(/src=["']([^"']+)["']/);
-            const embedUrl = match ? match[1] : val;
-            if (!embedUrl.includes('dailymotion')) {
-              rawServers.push({ name, embedUrl });
-            }
+            rawServers.push({ name, embedUrl: match ? match[1] : val });
           }
         });
-        if (rawServers.length === 0) {
-          const epIframe = $ep('iframe').first().attr('src') || '';
-          if (!epIframe.includes('dailymotion')) defaultIframe = epIframe;
-        }
       } catch (e) {}
     }
 
     const processedServers = [];
     for (let srv of rawServers) {
-      const directUrl = await extractDirectStream(srv.embedUrl);
-      processedServers.push({
-        name: srv.name,
-        url: directUrl || srv.embedUrl
-      });
-    }
-
-    if (processedServers.length === 0 && defaultIframe) {
-      const directUrl = await extractDirectStream(defaultIframe);
-      processedServers.push({
-        name: 'Server Utam',
-        url: directUrl || defaultIframe
-      });
+      if (srv.embedUrl.includes('ok.ru')) {
+        const directMp4 = await extractOkRuStream(srv.embedUrl);
+        if (directMp4) {
+          processedServers.push({ name: srv.name + ' (Direct MP4)', url: directMp4, isDirect: true });
+        } else {
+          processedServers.push({ name: srv.name, url: srv.embedUrl, isDirect: false });
+        }
+      } else {
+        processedServers.push({ name: srv.name, url: srv.embedUrl, isDirect: false });
+      }
     }
 
     return res.status(200).json({
