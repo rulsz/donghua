@@ -11,10 +11,16 @@ module.exports = async (req, res) => {
     if (!slug) return res.status(400).json({ success: false, error: 'Slug dibutuhkan' });
 
     let targetUrl = `https://anichin.moe/${slug}/`;
-    let html = await cloudscraper.get({
-      uri: targetUrl,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
-    });
+    let html;
+    
+    try {
+      html = await cloudscraper.get({
+        uri: targetUrl,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
+      });
+    } catch(err) {
+      return res.status(404).json({ success: false, error: 'Halaman tidak ditemukan' });
+    }
 
     let $ = cheerio.load(html);
 
@@ -63,12 +69,23 @@ module.exports = async (req, res) => {
           }
         }
       });
+
+      // Backup jika option kosong, cari iframe langsung
+      if (servers.length === 0) {
+        $doc('iframe').each((_, el) => {
+          let src = $doc(el).attr('src') || $doc(el).attr('data-src') || '';
+          if (src && !src.includes('facebook') && !src.includes('ads')) {
+            if (src.startsWith('//')) src = 'https:' + src;
+            servers.push({ name: 'Default Server', url: src });
+          }
+        });
+      }
       return servers;
     }
 
     let rawServers = parseServers($);
 
-    // Jika halaman anime utama tidak punya player langsung, ambil dari episode pertama
+    // Ambil server dari episode pertama jika halaman anime utama tidak menyertakan player
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
