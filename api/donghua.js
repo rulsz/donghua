@@ -24,35 +24,35 @@ module.exports = async (req, res) => {
     $('article, div.bs, div.bsx, div.post-show, .listupd .animposx').each((_, element) => {
       const card = $(element);
       
-      let titleEl = card.find('h2, h3, .entry-title').first();
-      if (!titleEl.length) titleEl = card.find('.tt').first();
-
+      // Ambil elemen judul
+      const titleEl = card.find('.tt, .entry-title, h2, h3').first();
       const linkEl = card.find('a').first();
       const imgEl = card.find('img').first();
       const epEl = card.find('.epx, .bt .epx, .episode, .ep, .typez').first();
 
-      let title = titleEl.text().trim().replace(/\s+/g, ' ');
-
-      // Pembersih judul ganda
-      const halfLength = Math.floor(title.length / 2);
-      const firstHalf = title.slice(0, halfLength).trim();
-      const secondHalf = title.slice(halfLength).trim();
-      if (firstHalf === secondHalf && firstHalf.length > 0) {
-        title = firstHalf;
+      // CARA AMPUH MENCEGAH JUDUL GANDA:
+      // Ambil teks dari tag 'a' atau 'h2/h3' paling spesifik
+      let rawTitle = titleEl.find('h2, h3').text().trim() || titleEl.text().trim();
+      
+      // Jika teks terduplikasi (misal: "TitleTitle"), potong jadi satu
+      let cleanTitle = rawTitle.replace(/\s+/g, ' ');
+      const middle = Math.floor(cleanTitle.length / 2);
+      if (cleanTitle.length > 0 && cleanTitle.slice(0, middle) === cleanTitle.slice(middle)) {
+        cleanTitle = cleanTitle.slice(0, middle);
       }
 
-      const href = linkEl.attr('href') || '';
-      // Ekstrak Slug Unik (misal: "the-eternal-supreme-li-yunxiao")
-      const slug = href.replace('https://anichin.moe/', '').replace(/\/$/, '');
+      const rawHref = linkEl.attr('href') || '';
+      
+      // EXTRACT SLUG UNIK MURNI (mencabut domain https://anichin.moe/ dan slash)
+      let slug = rawHref.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/|\/$/g, '');
 
       const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
       const episode = epEl.text().trim() || 'Ongoing';
 
-      if (title && slug) {
+      if (cleanTitle && slug) {
         donghuaList.push({
-          title: title,
+          title: cleanTitle,
           slug: slug,
-          href: href,
           poster: poster || 'https://via.placeholder.com/150',
           episode: episode
         });
