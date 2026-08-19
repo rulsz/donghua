@@ -23,20 +23,21 @@ module.exports = async (req, res) => {
 
     $('article, div.bs, div.bsx, div.post-show, .listupd .animposx').each((_, element) => {
       const card = $(element);
-      const titleEl = card.find('div.tt, h2, h3, .title, .entry-title').first();
+      
+      // Ambil satu elemen judul utama saja agar tidak terduplikat
+      const titleEl = card.find('.tt, .entry-title, h2, h3').first();
       const linkEl = card.find('a').first();
       const imgEl = card.find('img').first();
-      // Ambil teks episode langsung dari HTML Anichin (biasanya di kelas .epx / .bt .epx)
       const epEl = card.find('.epx, .bt .epx, .episode, .ep').first();
 
-      const title = titleEl.text().trim();
+      let title = titleEl.text().trim().replace(/\s+/g, ' ');
       const href = linkEl.attr('href');
       const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
       const episode = epEl.text().trim() || 'NEW';
 
       if (title && href) {
         donghuaList.push({
-          title: title.replace(/\s+/g, ' '),
+          title: title,
           href: href,
           poster: poster || 'https://via.placeholder.com/150',
           episode: episode
