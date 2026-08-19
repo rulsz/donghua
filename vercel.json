@@ -1,7 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/donghua", "destination": "/api/donghua.js" },
-    { "source": "/api/detail", "destination": "/api/detail.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
