@@ -52,7 +52,7 @@
     #detailView { display: none; padding-top: 0; }
     
     .player-wrapper { margin-left: -16px; margin-right: -16px; width: calc(100% + 32px); background: #000; margin-bottom: 16px; }
-    .detail-player-box { width: 100%; aspect-ratio: 16/9; background: #000; position: relative; overflow: hidden; }
+    .detail-player-box { width: 100%; aspect-ratio: 16/9; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
     .player-iframe { width: 100%; height: 100%; border: none; }
     
     video-player { width: 100%; height: 100%; display: block; }
@@ -140,8 +140,8 @@
     </div>
 
     <div id="detailView">
-      <div class="player-wrapper" id="playerWrapper" style="display: none;">
-        <div class="detail-player-box" id="playerMediaContainer"></div>
+      <div class="player-wrapper" id="playerWrapper" style="display: block;">
+        <div class="detail-player-box" id="playerMediaContainer">Memuat pemutar video...</div>
       </div>
 
       <div class="detail-body">
@@ -153,7 +153,7 @@
 
         <div class="action-bar">
           <div class="server-custom-btn">
-            <span class="server-name-text" id="serverDisplayTitle">OK.ru</span>
+            <span class="server-name-text" id="serverDisplayTitle">Server</span>
             <span class="server-label-text">Server</span>
             <select class="server-select-hidden" id="serverSelect" onchange="switchServer(this.value, this.options[this.selectedIndex].text)"></select>
           </div>
@@ -197,7 +197,7 @@
   <script>
     let currentPage = 1;
     let rawDonghuaData = [];
-    let currentActiveMainSlug = '';
+    let currentMainSlug = '';
 
     function toggleSearch() {
       document.getElementById('searchWrapper').classList.toggle('active');
@@ -210,6 +210,7 @@
       renderList(filtered);
     }
 
+    // MEMASIKAN NAVIGASI SINGLE-PAGE TERPANGGIL DENGAN LENGKAP
     function openPage(path) {
       window.history.pushState({}, '', path);
       router();
@@ -297,21 +298,18 @@
       });
     }
 
-    async function loadDetail(requestedSlug) {
-      const playerWrapper = document.getElementById('playerWrapper');
+    async function loadDetail(slug) {
       const mediaBox = document.getElementById('playerMediaContainer');
-      
-      mediaBox.innerHTML = '';
-      playerWrapper.style.display = 'none';
+      mediaBox.innerHTML = 'Memuat video...';
       document.getElementById('dTitle').innerText = 'Memuat Judul...';
       document.getElementById('dSynopsis').innerText = 'Sedang mengambil deskripsi...';
       document.getElementById('epGrid').innerHTML = 'Memuat list episode...';
 
       try {
-        const res = await fetch(`/api/detail?slug=${requestedSlug}`);
+        const res = await fetch(`/api/detail?slug=${slug}`);
         const result = await res.json();
 
-        if (result.success) {
+        if (result.success && result.data) {
           const data = result.data;
 
           document.getElementById('dTitle').innerText = data.title;
@@ -325,24 +323,23 @@
             document.getElementById('dTotalEp').innerText = `Total ${data.episodes.length} Episode`;
             document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode`;
 
-            // Tentukan episode yang harus diputar
-            let targetEpSlug = requestedSlug;
-            const isEpisodePage = data.episodes.some(e => e.slug === requestedSlug);
+            // Mencari induk slug anime
+            currentMainSlug = slug;
+            const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
+            const isEpisodeDirect = data.episodes.some(e => e.slug === slug);
 
-            if (!isEpisodePage) {
-              currentActiveMainSlug = requestedSlug;
-              const savedHistory = getSavedEpisode(requestedSlug);
+            let targetEpSlug = slug;
+
+            if (!isEpisodeDirect) {
+              const savedHistory = getSavedEpisode(slug);
               if (savedHistory && savedHistory.epSlug) {
                 targetEpSlug = savedHistory.epSlug;
               } else {
-                const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
                 targetEpSlug = epOne ? epOne.slug : data.episodes[0].slug;
               }
-            } else {
-              currentActiveMainSlug = data.episodes[data.episodes.length - 1]?.slug || requestedSlug;
             }
 
-            // Render tombol episode
+            // Render list episode
             data.episodes.forEach((ep, index) => {
               const box = document.createElement('div');
               box.className = 'ep-box';
@@ -351,18 +348,18 @@
               box.innerText = epNumber;
 
               box.onclick = () => {
-                selectEpisode(currentActiveMainSlug, ep.slug, data.title, data.poster, `Ep ${epNumber}`);
+                selectEpisode(currentMainSlug, ep.slug, data.title, data.poster, `Ep ${epNumber}`);
               };
               epGrid.appendChild(box);
             });
 
-            // Tandai tombol aktif
+            // Highlight tombol aktif
             document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
             const activeBox = document.getElementById(`ep-box-${targetEpSlug}`);
             if (activeBox) activeBox.classList.add('active');
 
-            // Ambil server stream episode yang aktif
-            loadEpisodeStream(targetEpSlug, currentActiveMainSlug, data.title, data.poster);
+            // Mengambil streaming video khusus episode target
+            fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
@@ -376,14 +373,13 @@
       }
     }
 
-    async function loadEpisodeStream(epSlug, mainSlug, title, poster) {
+    async function fetchAndPlayStream(epSlug, mainSlug, title, poster) {
       try {
         const res = await fetch(`/api/detail?slug=${epSlug}`);
         const result = await res.json();
 
         if (result.success && result.data) {
           setupServers(result.data.servers, result.data.streamUrl);
-
           const epNum = epSlug.match(/\d+/) ? epSlug.match(/\d+/)[0] : '1';
           saveHistory(mainSlug, epSlug, title, poster, `Ep ${epNum}`);
         }
@@ -391,7 +387,6 @@
     }
 
     function setupServers(servers, fallbackUrl) {
-      const playerWrapper = document.getElementById('playerWrapper');
       const serverSelect = document.getElementById('serverSelect');
       const serverDisplayTitle = document.getElementById('serverDisplayTitle');
 
@@ -405,11 +400,11 @@
         });
 
         serverDisplayTitle.innerText = servers[0].name;
-        playerWrapper.style.display = 'block';
         renderPlayerMedia(servers[0].url);
       } else if (fallbackUrl) {
-        playerWrapper.style.display = 'block';
         renderPlayerMedia(fallbackUrl);
+      } else {
+        document.getElementById('playerMediaContainer').innerText = 'Server video tidak tersedia.';
       }
     }
 
@@ -490,7 +485,10 @@
         const card = document.createElement('div');
         card.className = 'card-continue';
         const targetPath = item.epSlug || item.slug;
-        card.onclick = () => openPage('/' + targetPath);
+
+        card.onclick = function() {
+          openPage('/' + targetPath);
+        };
 
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
