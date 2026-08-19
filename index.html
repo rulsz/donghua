@@ -375,7 +375,7 @@
       }
     }
 
-    // FUNGSI RENDER PLAYER MENGGUNAKAN PROXY /api/player DENGAN REFERRER PALSU
+    // MEMASANG VIDEO KE PLAYER KUSTOM / PROXY IFRAME KETIKA SERVER MERUPAKAN EMBED
     function renderPlayerMedia(url) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = '';
@@ -385,6 +385,7 @@
       const isDirectMedia = url.includes('.mp4') || url.includes('.m3u8');
 
       if (isDirectMedia) {
+        // Tampilkan Custom Player Video.js buatanmu
         mediaBox.innerHTML = `
           <video-player>
             <video-minimal-skin>
@@ -400,7 +401,7 @@
           hls.attachMedia(video);
         }
       } else {
-        // Menggunakan Endpoint Reverse Proxy /api/player
+        // Menggunakan Endpoint Reverse Proxy /api/player agar lolos dari blokir 403
         const proxyUrl = `/api/player?url=${encodeURIComponent(url)}`;
 
         mediaBox.innerHTML = `
