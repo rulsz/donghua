@@ -21,8 +21,8 @@ module.exports = async (req, res) => {
 
     let $ = cheerio.load(html);
 
-    // 1. Ambil Judul Utama
-    const title = $('h1.entry-title, .infox h1').first().text().trim() || $('.entry-title').first().text().trim();
+    // 1. Ambil Judul Utama (Saring dari elemen blog/tutorial)
+    let title = $('.infox h1, h1.entry-title').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
     
     // 2. Ambil Sinopsis
@@ -31,23 +31,27 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // 3. Ambil List Episode (Saring link tutorial/shortlink)
+    // 3. Ambil List Episode Murni (Hanya dari area eplister, abaikan blog/tutorial)
     const episodes = [];
-    $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
-      const link = $(el).find('a').attr('href');
-      const epTitle = $(el).find('.epl-num, .epl-title').text().trim() || $(el).find('a').text().trim();
-      if (link && !link.includes('tutorial') && !link.includes('shortlink')) {
-        episodes.push({ title: epTitle, slug: link.replace('https://anichin.moe/', '').replace(/\/$/, '') });
+    $('.eplister ul li a, .eplister li a').each((_, el) => {
+      const link = $(el).attr('href');
+      const epTitle = $(el).find('.epl-num, .epl-title').text().trim() || $(el).text().trim();
+      
+      if (link) {
+        const cleanSlug = link.replace('https://anichin.moe/', '').replace(/\/$/, '');
+        // STRICT FILTER: Buang link yang mengandung blog, tutorial, atau shortlink
+        if (!cleanSlug.includes('blog') && !cleanSlug.includes('tutorial') && !cleanSlug.includes('shortlink')) {
+          episodes.push({ title: epTitle, slug: cleanSlug });
+        }
       }
     });
 
-    // 4. Extrak Opsi Server Streaming
+    // 4. Extrak Opsi Server Streaming Dari Halaman Ini
     let rawServers = [];
     $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
       let val = $(el).attr('value') || '';
 
-      // Saring Dailymotion / ADS yang merusak UI
       if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
         if (val.startsWith('aHR0c')) {
           try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
@@ -57,17 +61,18 @@ module.exports = async (req, res) => {
         
         if (embedUrl.startsWith('//')) embedUrl = 'https:' + embedUrl;
         
-        if (!embedUrl.includes('dailymotion')) {
+        if (!embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
           rawServers.push({ name, url: embedUrl });
         }
       }
     });
 
-    // 5. JIKA DI HALAMAN ANIME UTAMA: Ambil otomatis server dari Episode 1 / Episode Terbaru
+    // 5. BILA HALAMAN DONGHUA UTAMA: Ambil otomatis server dari episode pertama di list
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
+        const latestEpSlug = episodes[0].slug;
         const epHtml = await cloudscraper.get({
-          uri: `https://anichin.moe/${episodes[0].slug}/`,
+          uri: `https://anichin.moe/${latestEpSlug}/`,
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
         });
         const $ep = cheerio.load(epHtml);
@@ -81,7 +86,7 @@ module.exports = async (req, res) => {
             const match = val.match(/src=["']([^"']+)["']/);
             let embedUrl = match ? match[1] : val;
             if (embedUrl.startsWith('//')) embedUrl = 'https:' + embedUrl;
-            if (!embedUrl.includes('dailymotion')) {
+            if (!embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
               rawServers.push({ name, url: embedUrl });
             }
           }
