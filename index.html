@@ -9,7 +9,7 @@
     body { background-color: #0b1120; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 70px; padding-bottom: 50px; }
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Floating Header */
+    /* Header Melayang Blur */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
@@ -31,7 +31,7 @@
     .section-title { font-size: 19px; font-weight: 700; color: #ffffff; margin-bottom: 16px; }
     .section-subtitle { font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 18px; }
 
-    /* Lanjutkan Menonton */
+    /* Lanjutkan Menonton (3 Item Horizontal) */
     .scroll-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; scroll-snap-type: x mandatory; }
     .scroll-row::-webkit-scrollbar { display: none; }
     .card-continue { flex: 0 0 calc((100% - 28px) / 3); min-width: calc((100% - 28px) / 3); scroll-snap-align: start; cursor: pointer; }
@@ -41,7 +41,7 @@
     .close-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .close-btn svg { width: 12px; height: 12px; stroke: #ffffff; stroke-width: 2.5; }
 
-    /* Grid Layout (3 Kolom) */
+    /* Grid Layout 3 Kolom (Rilisan Terbaru) */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .card-grid { cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .card-grid-img-wrapper { position: relative; width: 100%; height: 165px; border-radius: 12px; overflow: hidden; background: #1e293b; pointer-events: none; }
@@ -49,7 +49,7 @@
     .badge-bottom { position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; }
     .card-title { margin-top: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; pointer-events: none; }
 
-    /* Detail Donghua & Player UI */
+    /* Halaman Detail Donghua UI */
     #detailView { display: none; }
     .detail-header { display: flex; gap: 16px; margin-bottom: 20px; }
     .detail-poster { width: 110px; height: 160px; border-radius: 12px; object-fit: cover; background: #1e293b; flex-shrink: 0; }
@@ -57,21 +57,25 @@
     .detail-title { font-size: 18px; font-weight: 800; color: #38bdf8; margin-bottom: 8px; }
     .detail-synopsis { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; background: #1e293b; padding: 12px; border-radius: 10px; }
     
+    /* List Episode UI */
     .ep-list-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
     .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
-    .ep-item { background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .ep-item { background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .ep-item:hover { background: #0284c7; border-color: #38bdf8; }
 
-    .player-container { display: none; margin-bottom: 20px; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+    /* Video Player Frame Container */
+    .player-container { display: none; margin-bottom: 24px; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
     .player-iframe { width: 100%; height: 100%; border: none; }
 
     #statusMsg { text-align: center; margin: 40px 0; font-size: 13px; color: #64748b; }
     .pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 35px; }
     .btn { background-color: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 12px; }
+    .page-info { font-size: 13px; color: #64748b; }
   </style>
 </head>
 <body>
 
+  <!-- Header Melayang -->
   <header>
     <div class="header-content">
       <div class="header-left" onclick="openPage('/')">
@@ -91,7 +95,7 @@
 
   <div class="container">
 
-    <!-- BERANDA -->
+    <!-- VIEW BERANDA -->
     <div id="homeView">
       <section class="section-block" id="continueSection" style="display: none;">
         <h2 class="section-title">Lanjutkan Menonton</h2>
@@ -113,7 +117,7 @@
       </section>
     </div>
 
-    <!-- DETAIL & PLAYER -->
+    <!-- VIEW DETAIL & PLAYER -->
     <div id="detailView">
       <div class="player-container" id="playerContainer">
         <iframe class="player-iframe" id="videoFrame" src="" allowfullscreen></iframe>
@@ -208,8 +212,6 @@
       list.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card-grid';
-        
-        // Panggilan Navigasi Langsung
         card.onclick = function() {
           openPage('/' + item.slug);
         };
@@ -242,9 +244,9 @@
           document.getElementById('dPoster').src = data.poster;
           document.getElementById('dSynopsis').innerText = data.synopsis;
 
+          // Jika halaman ini mengandung URL pemutar video
           if (data.streamUrl) {
-            document.getElementById('playerContainer').style.display = 'block';
-            document.getElementById('videoFrame').src = data.streamUrl;
+            playVideo(data.streamUrl);
           }
 
           const epGrid = document.getElementById('epGrid');
@@ -254,13 +256,23 @@
             data.episodes.forEach(ep => {
               const btn = document.createElement('div');
               btn.className = 'ep-item';
+              btn.id = `ep-btn-${ep.slug}`;
               btn.innerText = ep.title;
+              
               btn.onclick = () => {
                 saveHistory(slug, data.title, data.poster, ep.title);
                 openPage('/' + ep.slug);
               };
               epGrid.appendChild(btn);
             });
+
+            // Beri warna latar biru pada episode yang sedang aktif
+            const activeBtn = document.getElementById(`ep-btn-${slug}`);
+            if (activeBtn) {
+              activeBtn.style.backgroundColor = '#0284c7';
+              activeBtn.style.borderColor = '#38bdf8';
+            }
+
           } else {
             epGrid.innerText = 'Tidak ada episode terdeteksi.';
           }
@@ -268,6 +280,17 @@
       } catch (err) {
         document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
       }
+    }
+
+    function playVideo(url) {
+      const container = document.getElementById('playerContainer');
+      const frame = document.getElementById('videoFrame');
+      
+      container.style.display = 'block';
+      frame.src = url;
+
+      // Otomatis scroll halus ke bagian pemutar video
+      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function saveHistory(slug, title, poster, episode) {
