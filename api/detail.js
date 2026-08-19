@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // 1. Ekstraksi Episode
+    // Ekstraksi Episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Dekode Base64 Cepat
+    // Dekode Base64 Fast
     function decodeVal(val) {
       if (!val) return '';
       let result = val;
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
       return result;
     }
 
-    // 2. Ekstraksi Server Langsung tanpa Request Berantai (Instan)
+    // Ekstraksi Server Streaming
     function parseServers($doc) {
       const servers = [];
       $doc('.mirror option, select.mirror option').each((_, el) => {
@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
 
     let rawServers = parseServers($);
 
-    // Jika di halaman utama anime, ambil dari halaman episode pertama
+    // Jika membuka halaman utama anime, ambil otomatis episode pertama
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
