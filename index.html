@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <!-- Kunci viewport agar HP tidak bisa di-zoom -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RZ Donghua</title>
   <style>
@@ -10,143 +9,133 @@
     body { background-color: #0b1120; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 70px; padding-bottom: 50px; }
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Floating Header Blur */
+    /* Header Melayang Blur */
     header { 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      right: 0; 
-      z-index: 100; 
-      background: rgba(11, 17, 32, 0.85); 
-      backdrop-filter: blur(12px); 
-      -webkit-backdrop-filter: blur(12px); 
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
-      padding: 12px 16px; 
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
+      background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 16px; 
     }
     .header-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-left { display: flex; align-items: center; gap: 14px; cursor: pointer; }
     .brand-title { font-size: 19px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; }
-    .header-right { display: flex; align-items: center; gap: 12px; }
     
-    .icon-btn { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; }
+    .icon-btn { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
     .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-    /* Input Search Modal (Font 16px Mencegah Auto-Zoom iOS/Android) */
     .search-box-wrapper { display: none; margin-top: 10px; width: 100%; }
     .search-box-wrapper.active { display: block; }
     .search-input { width: 100%; background: #1e293b; border: 1px solid #334155; padding: 10px 14px; border-radius: 10px; color: #fff; font-size: 16px !important; outline: none; }
 
-    /* Section Styling & Spacing */
+    /* Layout Sections */
     .section-block { margin-top: 28px; }
     .section-title { font-size: 19px; font-weight: 700; color: #ffffff; margin-bottom: 16px; }
     .section-subtitle { font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 18px; }
 
-    /* Lanjutkan Menonton (Horizontal Scroll 3 Item) */
-    .scroll-row { 
-      display: flex; 
-      gap: 14px; 
-      overflow-x: auto; 
-      padding-bottom: 12px; 
-      scrollbar-width: none; 
-      scroll-snap-type: x mandatory; 
-    }
+    /* Horizontal List 3 Item (Lanjutkan Menonton) */
+    .scroll-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; scroll-snap-type: x mandatory; }
     .scroll-row::-webkit-scrollbar { display: none; }
-    
-    .card-continue { 
-      flex: 0 0 calc((100% - 28px) / 3); 
-      min-width: calc((100% - 28px) / 3); 
-      scroll-snap-align: start; 
-      cursor: pointer; 
-    }
+    .card-continue { flex: 0 0 calc((100% - 28px) / 3); min-width: calc((100% - 28px) / 3); scroll-snap-align: start; cursor: pointer; }
     .card-continue-img-wrapper { position: relative; width: 100%; height: 165px; border-radius: 12px; overflow: hidden; background: #1e293b; }
     .card-continue img { width: 100%; height: 100%; object-fit: cover; }
-    
     .badge-ep { position: absolute; top: 8px; left: 8px; background: rgba(56, 189, 248, 0.95); color: #0f172a; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
-    .close-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .close-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .close-btn svg { width: 12px; height: 12px; stroke: #ffffff; stroke-width: 2.5; }
 
-    /* Rilisan Terbaru (3 Kolom Grid) */
+    /* Grid Layout 3 Kolom (Rilisan Terbaru) */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .card-grid { cursor: pointer; }
     .card-grid-img-wrapper { position: relative; width: 100%; height: 165px; border-radius: 12px; overflow: hidden; background: #1e293b; }
     .card-grid img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-bottom { position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; backdrop-filter: blur(4px); }
-
+    .badge-bottom { position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; }
     .card-title { margin-top: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 
-    /* Modal Player Internal (Buka di Dalam Web Sendiri) */
-    .player-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 17, 32, 0.98); z-index: 1000; flex-direction: column; }
-    .player-modal.active { display: flex; }
-    .player-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #0f172a; border-bottom: 1px solid #1e293b; }
-    .player-title { font-size: 14px; font-weight: 700; color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
-    .player-close { background: #1e293b; border: 1px solid #334155; color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .player-iframe { width: 100%; height: 100%; border: none; background: #000; }
+    /* Halaman Detail Donghua UI */
+    #detailView { display: none; }
+    .detail-header { display: flex; gap: 16px; margin-bottom: 20px; }
+    .detail-poster { width: 120px; height: 175px; border-radius: 12px; object-fit: cover; background: #1e293b; flex-shrink: 0; }
+    .detail-info { display: flex; flex-direction: column; justify-content: center; }
+    .detail-title { font-size: 18px; font-weight: 800; color: #38bdf8; margin-bottom: 8px; }
+    .detail-synopsis { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; background: #1e293b; padding: 12px; border-radius: 10px; }
+    
+    /* List Episode UI */
+    .ep-list-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+    .ep-item { background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .ep-item:hover { background: #0284c7; border-color: #38bdf8; }
 
-    /* Pagination */
+    /* Video Player Modal Container */
+    .player-container { display: none; margin-bottom: 20px; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+    .player-iframe { width: 100%; height: 100%; border: none; }
+
     #statusMsg { text-align: center; margin: 40px 0; font-size: 13px; color: #64748b; }
     .pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 35px; }
     .btn { background-color: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 12px; }
-    .page-info { font-size: 13px; color: #64748b; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- Floating Header -->
   <header>
     <div class="header-content">
-      <div class="header-left">
-        <button class="icon-btn" aria-label="Menu">
-          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
+      <div class="header-left" onclick="goHome()">
+        <button class="icon-btn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
         <span class="brand-title">RZ Donghua</span>
       </div>
       <div class="header-right">
-        <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        </button>
+        <button class="icon-btn" onclick="toggleSearch()" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
       </div>
     </div>
-    
     <div class="container">
       <div class="search-box-wrapper" id="searchWrapper">
-        <input type="text" class="search-input" id="searchInput" placeholder="Cari judul donghua..." onkeyup="handleSearch(event)">
+        <input type="text" class="search-input" id="searchInput" placeholder="Cari judul..." onkeyup="handleSearch(event)">
       </div>
     </div>
   </header>
 
   <div class="container">
-    
-    <!-- Lanjutkan Menonton -->
-    <section class="section-block" id="continueSection" style="display: none;">
-      <h2 class="section-title">Lanjutkan Menonton</h2>
-      <div class="scroll-row" id="continueRow"></div>
-    </section>
 
-    <!-- Rilisan Terbaru -->
-    <section class="section-block">
-      <h2 class="section-title" id="sectionTitle">Rilisan Terbaru</h2>
-      <p class="section-subtitle" id="sectionSub">Update Donghua Terbaru</p>
-      
-      <div id="statusMsg">Memuat data...</div>
-      <div class="grid-3" id="donghuaGrid"></div>
+    <!-- VIEW 1: BERANDA -->
+    <div id="homeView">
+      <section class="section-block" id="continueSection" style="display: none;">
+        <h2 class="section-title">Lanjutkan Menonton</h2>
+        <div class="scroll-row" id="continueRow"></div>
+      </section>
 
-      <!-- Pagination -->
-      <div class="pagination" id="paginationNav" style="display: none;">
-        <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
-        <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
-        <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
-      </div>
-    </section>
+      <section class="section-block">
+        <h2 class="section-title" id="sectionTitle">Rilisan Terbaru</h2>
+        <p class="section-subtitle">Update Donghua Terbaru</p>
 
-  </div>
+        <div id="statusMsg">Memuat data...</div>
+        <div class="grid-3" id="donghuaGrid"></div>
 
-  <!-- Modal Player Frame -->
-  <div class="player-modal" id="playerModal">
-    <div class="player-header">
-      <div class="player-title" id="playerModalTitle">Memuat Donghua...</div>
-      <button class="player-close" onclick="closePlayer()">✕ Tutup</button>
+        <div class="pagination" id="paginationNav" style="display: none;">
+          <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
+          <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
+          <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
+        </div>
+      </section>
     </div>
-    <iframe class="player-iframe" id="playerFrame" src="" allowfullscreen></iframe>
+
+    <!-- VIEW 2: HALAMAN DETAIL & PLAYER -->
+    <div id="detailView">
+      <!-- Player Video (Muncul Saat Episode Diklik) -->
+      <div class="player-container" id="playerContainer">
+        <iframe class="player-iframe" id="videoFrame" src="" allowfullscreen></iframe>
+      </div>
+
+      <div class="detail-header">
+        <img src="" id="dPoster" class="detail-poster" alt="Poster">
+        <div class="detail-info">
+          <h1 id="dTitle" class="detail-title">Loading...</h1>
+        </div>
+      </div>
+
+      <p class="detail-synopsis" id="dSynopsis">Memuat sinopsis...</p>
+
+      <h3 class="ep-list-title">Daftar Episode</h3>
+      <div class="ep-grid" id="epGrid">Memuat episode...</div>
+    </div>
+
   </div>
 
   <script>
@@ -156,173 +145,83 @@
     function toggleSearch() {
       const wrapper = document.getElementById('searchWrapper');
       wrapper.classList.toggle('active');
-      if (wrapper.classList.contains('active')) {
-        document.getElementById('searchInput').focus();
-      }
     }
 
     function handleSearch(event) {
       const query = event.target.value.toLowerCase().trim();
-      const sectionTitle = document.getElementById('sectionTitle');
-
-      if (query === '') {
-        sectionTitle.innerText = "Rilisan Terbaru";
-        renderList(rawDonghuaData);
-        return;
-      }
-
-      sectionTitle.innerText = `Hasil Pencarian: "${query}"`;
+      if (query === '') { renderList(rawDonghuaData); return; }
       const filtered = rawDonghuaData.filter(item => item.title.toLowerCase().includes(query));
       renderList(filtered);
     }
 
-    function getPageFromURL() {
+    function goHome() {
+      window.history.pushState({}, '', '/');
+      router();
+    }
+
+    // SPA Router menangani perpindahan URL halaman
+    window.onload = router;
+    window.onpopstate = router;
+
+    function router() {
+      const path = window.location.pathname.replace(/^\//, '');
       const urlParams = new URLSearchParams(window.location.search);
-      const page = parseInt(urlParams.get('page'));
-      return page && page > 0 ? page : 1;
-    }
+      const page = parseInt(urlParams.get('page')) || 1;
 
-    function updateURL(page) {
-      const newUrl = page > 1 ? `?page=${page}` : window.location.pathname;
-      window.history.pushState({ page: page }, '', newUrl);
-    }
-
-    window.onload = () => {
-      renderContinueWatching();
-      currentPage = getPageFromURL();
-      loadData(currentPage);
-    };
-
-    window.onpopstate = () => {
-      currentPage = getPageFromURL();
-      loadData(currentPage);
-    };
-
-    function renderContinueWatching() {
-      const history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      const container = document.getElementById('continueSection');
-      const row = document.getElementById('continueRow');
-
-      if (history.length === 0) {
-        container.style.display = 'none';
-        return;
+      if (path === '' || window.location.search.includes('page')) {
+        // Tampilkan Beranda
+        document.getElementById('homeView').style.display = 'block';
+        document.getElementById('detailView').style.display = 'none';
+        renderContinueWatching();
+        loadData(page);
+      } else {
+        // Tampilkan Halaman Detail berdasarkan Slug URL (Contoh: /the-eternal-supreme)
+        document.getElementById('homeView').style.display = 'none';
+        document.getElementById('detailView').style.display = 'block';
+        loadDetail(path);
       }
-
-      container.style.display = 'block';
-      row.innerHTML = '';
-
-      history.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'card-continue';
-        
-        const wrapper = document.createElement('div');
-        wrapper.className = 'card-continue-img-wrapper';
-        wrapper.onclick = () => openDonghua(item.href, item.title, item.poster, item.episode);
-        wrapper.innerHTML = `
-          <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-          <span class="badge-ep">${item.episode || 'Nonton'}</span>
-          <button class="close-btn" aria-label="Hapus">
-            <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        `;
-
-        wrapper.querySelector('.close-btn').onclick = (e) => {
-          e.stopPropagation();
-          removeHistory(index);
-        };
-
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'card-title';
-        titleDiv.innerText = item.title;
-
-        card.appendChild(wrapper);
-        card.appendChild(titleDiv);
-        row.appendChild(card);
-      });
     }
 
-    function removeHistory(index) {
-      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history.splice(index, 1);
-      localStorage.setItem('rz_continue_history', JSON.stringify(history));
-      renderContinueWatching();
-    }
-
-    function openDonghua(href, title, poster, episode) {
-      if (!href) return;
-
-      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history = history.filter(item => item.href !== href);
-      history.unshift({ href, title, poster, episode });
-      localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 15)));
-
-      let targetUrl = href;
-      if (!targetUrl.startsWith('http')) {
-        targetUrl = 'https://anichin.moe' + (targetUrl.startsWith('/') ? '' : '/') + targetUrl;
-      }
-
-      // Membuka player di dalam modal web RZ Donghua
-      document.getElementById('playerModalTitle').innerText = title;
-      document.getElementById('playerFrame').src = targetUrl;
-      document.getElementById('playerModal').classList.add('active');
-
-      renderContinueWatching();
-    }
-
-    function closePlayer() {
-      document.getElementById('playerModal').classList.remove('active');
-      document.getElementById('playerFrame').src = '';
-    }
-
+    // 1. Load Data Beranda
     async function loadData(page) {
       const status = document.getElementById('statusMsg');
       const grid = document.getElementById('donghuaGrid');
       const paginationNav = document.getElementById('paginationNav');
-      const prevBtn = document.getElementById('prevBtn');
-      const pageDisplay = document.getElementById('pageDisplay');
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
+      
       status.style.display = 'block';
-      status.innerText = `Memuat halaman ${page}...`;
       grid.innerHTML = '';
       paginationNav.style.display = 'none';
 
       try {
-        const response = await fetch(`/api/donghua?page=${page}`);
-        const result = await response.json();
+        const res = await fetch(`/api/donghua?page=${page}`);
+        const result = await res.json();
 
-        if (result.success && result.data.length > 0) {
+        if (result.success) {
           status.style.display = 'none';
-          pageDisplay.innerText = page;
-          prevBtn.style.display = page <= 1 ? 'none' : 'inline-block';
+          document.getElementById('pageDisplay').innerText = page;
+          document.getElementById('prevBtn').style.display = page <= 1 ? 'none' : 'inline-block';
 
           rawDonghuaData = result.data;
           renderList(rawDonghuaData);
-
           paginationNav.style.display = 'flex';
-        } else {
-          status.innerText = 'Data tidak ditemukan.';
         }
       } catch (err) {
-        status.innerText = 'Gagal terhubung ke API Server.';
-        console.error(err);
+        status.innerText = 'Gagal memuat data.';
       }
     }
 
     function renderList(list) {
       const grid = document.getElementById('donghuaGrid');
       grid.innerHTML = '';
-
-      if (list.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b;">Donghua tidak ditemukan.</div>';
-        return;
-      }
-
       list.forEach(item => {
+        // Ekstrak slug unik dari URL
+        const slug = item.href.replace('https://anichin.moe/', '').replace(/\/$/, '');
         const card = document.createElement('div');
         card.className = 'card-grid';
-        card.onclick = () => openDonghua(item.href, item.title, item.poster, item.episode);
+        card.onclick = () => {
+          window.history.pushState({}, '', `/${slug}`);
+          router();
+        };
         card.innerHTML = `
           <div class="card-grid-img-wrapper">
             <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -334,11 +233,104 @@
       });
     }
 
+    // 2. Load Data Detail & Sinopsis
+    async function loadDetail(slug) {
+      document.getElementById('playerContainer').style.display = 'none';
+      document.getElementById('videoFrame').src = '';
+      document.getElementById('dTitle').innerText = 'Memuat Detail...';
+      document.getElementById('dSynopsis').innerText = 'Sedang mengambil sinopsis...';
+      document.getElementById('epGrid').innerHTML = 'Memuat list episode...';
+
+      try {
+        const res = await fetch(`/api/detail?slug=${slug}`);
+        const result = await res.json();
+
+        if (result.success) {
+          const data = result.data;
+          document.getElementById('dTitle').innerText = data.title;
+          document.getElementById('dPoster').src = data.poster;
+          document.getElementById('dSynopsis').innerText = data.synopsis;
+
+          // Jika URL slug langsung menuju video episode
+          if (data.streamUrl) {
+            document.getElementById('playerContainer').style.display = 'block';
+            document.getElementById('videoFrame').src = data.streamUrl;
+          }
+
+          // Render List Episode
+          const epGrid = document.getElementById('epGrid');
+          epGrid.innerHTML = '';
+
+          if (data.episodes.length > 0) {
+            data.episodes.forEach(ep => {
+              const btn = document.createElement('div');
+              btn.className = 'ep-item';
+              btn.innerText = ep.title;
+              btn.onclick = () => {
+                // Pindah URL ke episode dan buka video
+                saveHistory(slug, data.title, data.poster, ep.title);
+                window.history.pushState({}, '', `/${ep.slug}`);
+                router();
+              };
+              epGrid.appendChild(btn);
+            });
+          } else {
+            epGrid.innerText = 'Tidak ada episode terdeteksi.';
+          }
+        }
+      } catch (err) {
+        document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
+      }
+    }
+
+    // 3. Lanjutkan Menonton LocalStorage Handler
+    function saveHistory(slug, title, poster, episode) {
+      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      history = history.filter(item => item.slug !== slug);
+      history.unshift({ slug, title, poster, episode });
+      localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 15)));
+    }
+
+    function renderContinueWatching() {
+      const history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      const container = document.getElementById('continueSection');
+      const row = document.getElementById('continueRow');
+
+      if (history.length === 0) { container.style.display = 'none'; return; }
+      container.style.display = 'block';
+      row.innerHTML = '';
+
+      history.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card-continue';
+        card.onclick = () => {
+          window.history.pushState({}, '', `/${item.slug}`);
+          router();
+        };
+        card.innerHTML = `
+          <div class="card-continue-img-wrapper">
+            <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+            <span class="badge-ep">${item.episode || 'Lanjut'}</span>
+            <button class="close-btn" onclick="event.stopPropagation(); removeHistory(${index})"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="card-title">${item.title}</div>
+        `;
+        row.appendChild(card);
+      });
+    }
+
+    function removeHistory(index) {
+      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      history.splice(index, 1);
+      localStorage.setItem('rz_continue_history', JSON.stringify(history));
+      renderContinueWatching();
+    }
+
     function changePage(direction) {
       currentPage += direction;
       if (currentPage < 1) currentPage = 1;
-      updateURL(currentPage);
-      loadData(currentPage);
+      window.history.pushState({}, '', `/?page=${currentPage}`);
+      router();
     }
   </script>
 </body>
