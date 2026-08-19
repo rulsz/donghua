@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RZ Donghua</title>
   
+  <!-- HLS.js & VideoJS Minimal Component -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
 
@@ -375,19 +376,21 @@
       }
     }
 
+    // MEMASANG VIDEO KE PLAYER KUSTOM / IFRAME DENGAN AMAN
     function renderPlayerMedia(url) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = '';
 
       if (!url) return;
 
-      const isDirectMp4 = url.includes('.mp4') || url.includes('.m3u8');
+      const isDirectMedia = url.includes('.mp4') || url.includes('.m3u8');
 
-      if (isDirectMp4) {
+      if (isDirectMedia) {
+        // Pemutar kustom Video.js kamu
         mediaBox.innerHTML = `
           <video-player>
             <video-minimal-skin>
-              <video id="myVideo" src="${url}" playsinline controls autoplay></video>
+              <video id="myVideo" src="${url}" playsinline controls autoplay crossorigin="anonymous"></video>
             </video-minimal-skin>
           </video-player>
         `;
@@ -399,12 +402,13 @@
           hls.attachMedia(video);
         }
       } else {
+        // Embed Player cadangan jika server berupa iframe eksternal (OK.ru, Vidhide)
         mediaBox.innerHTML = `
           <iframe 
             class="player-iframe" 
             src="${url}" 
             referrerpolicy="no-referrer" 
-            sandbox="allow-scripts allow-forms" 
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" 
             allowfullscreen>
           </iframe>
         `;
