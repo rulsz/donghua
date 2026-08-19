@@ -326,12 +326,6 @@
         if (result.success) {
           const data = result.data;
 
-          // JIKA HALAMAN ANIME UTAMA DIBUKA, OTOMATIS PINDAH KE EPISODE TERBARU
-          if (data.isMainPage && data.latestEpSlug) {
-            openPage('/' + data.latestEpSlug);
-            return;
-          }
-
           document.getElementById('dTitle').innerText = data.title;
           document.getElementById('topHeaderTitle').innerText = data.title;
           document.getElementById('dSynopsis').innerText = data.synopsis;
@@ -384,13 +378,14 @@
           } else {
             epGrid.innerText = 'Tidak ada episode.';
           }
+        } else {
+          document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
         }
       } catch (err) {
         document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
       }
     }
 
-    // PEMUTAR VIDEO DENGAN PENJAGAAN SANDBOX DAN COMPONENT MP4/M3U8
     function renderPlayerMedia(url) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = '';
@@ -415,7 +410,6 @@
           hls.attachMedia(video);
         }
       } else {
-        // ATRIBUT SANDBOX UNTUK MEMBLOKIR BREAKOUT SCRIPT DARI SERVER LUAR
         mediaBox.innerHTML = `
           <iframe 
             class="player-iframe" 
