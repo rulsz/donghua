@@ -23,15 +23,43 @@ module.exports = async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    // Ambil Data Detail Bersih
+    // 1. Data Detail Utama
     const title = $('.entry-title, .titl').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
     const synopsis = $('.entry-content p, .synopsis p, .desc p').text().trim() || 'Tidak ada sinopsis.';
-    
-    // Ambil Iframe Stream Video Khusus
-    const streamUrl = $('iframe').first().attr('src') || '';
 
-    // Ambil Daftar Episode
+    // 2. Extrak Daftar Server Video
+    const servers = [];
+    $('.mirror option, select.mirror option, .select-mirror option').each((_, el) => {
+      const option = $(el);
+      const name = option.text().trim();
+      let value = option.attr('value') || '';
+
+      if (value && name && !name.toLowerCase().includes('pilih')) {
+        // Decode base64 jika nilai server di-encode oleh Anichin
+        let streamUrl = value;
+        if (value.includes('iframe') || value.startsWith('aHR0c')) {
+          try {
+            const decoded = Buffer.from(value, 'base64').toString('utf-8');
+            const iframeMatch = decoded.match(/src=["']([^"']+)["']/);
+            if (iframeMatch) streamUrl = iframeMatch[1];
+          } catch (e) {}
+        }
+
+        servers.push({
+          name: name,
+          url: streamUrl
+        });
+      }
+    });
+
+    // Fallback Iframe Default jika server option tidak ada
+    let defaultStreamUrl = $('iframe').first().attr('src') || '';
+    if (servers.length === 0 && defaultStreamUrl) {
+      servers.push({ name: 'Default Server', url: defaultStreamUrl });
+    }
+
+    // 3. Extrak Daftar Episode
     const episodes = [];
     $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
       const item = $(el);
@@ -49,7 +77,14 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: { title, poster, synopsis, streamUrl, episodes }
+      data: {
+        title,
+        poster,
+        synopsis,
+        servers,
+        streamUrl: servers.length > 0 ? servers[0].url : defaultStreamUrl,
+        episodes
+      }
     });
 
   } catch (error) {
