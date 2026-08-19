@@ -376,7 +376,7 @@
       }
     }
 
-    // MEMASANG VIDEO KE PLAYER KUSTOM / IFRAME DENGAN AMAN
+    // FUNGSI UTAMA PENANGANAN MEDIA PLAYER & PEMALSAN REFERRER (MELEWATI PROTEKSI 403)
     function renderPlayerMedia(url) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = '';
@@ -386,7 +386,7 @@
       const isDirectMedia = url.includes('.mp4') || url.includes('.m3u8');
 
       if (isDirectMedia) {
-        // Pemutar kustom Video.js kamu
+        // Player Video.js Custom
         mediaBox.innerHTML = `
           <video-player>
             <video-minimal-skin>
@@ -402,13 +402,27 @@
           hls.attachMedia(video);
         }
       } else {
-        // Embed Player cadangan jika server berupa iframe eksternal (OK.ru, Vidhide)
+        // MENGIRIM IFRAME DENGAN BIFURKASI REFERRER UNTUK MENGELIMINASI STATUS 403 FORBIDDEN
+        const iframeHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta name="referrer" content="no-referrer-when-downgrade">
+              <style>body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;}</style>
+            </head>
+            <body>
+              <iframe src="${url}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+            </body>
+          </html>
+        `;
+
+        const blob = new Blob([iframeHtml], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+
         mediaBox.innerHTML = `
           <iframe 
             class="player-iframe" 
-            src="${url}" 
-            referrerpolicy="no-referrer" 
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" 
+            src="${blobUrl}" 
             allowfullscreen>
           </iframe>
         `;
