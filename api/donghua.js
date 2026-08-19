@@ -24,7 +24,6 @@ module.exports = async (req, res) => {
     $('article, div.bs, div.bsx, div.post-show, .listupd .animposx').each((_, element) => {
       const card = $(element);
       
-      // Ambil elemen H2 atau H3 secara spesifik (BUKAN seluruh wadah .tt)
       let titleEl = card.find('h2, h3, .entry-title').first();
       if (!titleEl.length) titleEl = card.find('.tt').first();
 
@@ -34,7 +33,7 @@ module.exports = async (req, res) => {
 
       let title = titleEl.text().trim().replace(/\s+/g, ' ');
 
-      // LOGIKA PEMBERSIH JUDUL GANDA (Misal: "Lingwu ContinentLingwu Continent")
+      // Pembersih judul ganda
       const halfLength = Math.floor(title.length / 2);
       const firstHalf = title.slice(0, halfLength).trim();
       const secondHalf = title.slice(halfLength).trim();
@@ -43,12 +42,16 @@ module.exports = async (req, res) => {
       }
 
       const href = linkEl.attr('href') || '';
+      // Ekstrak Slug Unik (misal: "the-eternal-supreme-li-yunxiao")
+      const slug = href.replace('https://anichin.moe/', '').replace(/\/$/, '');
+
       const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
       const episode = epEl.text().trim() || 'Ongoing';
 
-      if (title && href) {
+      if (title && slug) {
         donghuaList.push({
           title: title,
+          slug: slug,
           href: href,
           poster: poster || 'https://via.placeholder.com/150',
           episode: episode
@@ -56,7 +59,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    const uniqueList = donghuaList.filter((v, i, a) => a.findIndex(t => t.href === v.href) === i);
+    const uniqueList = donghuaList.filter((v, i, a) => a.findIndex(t => t.slug === v.slug) === i);
 
     return res.status(200).json({
       success: true,
