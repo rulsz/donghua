@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // Ambil list episode
+    // Ambil daftar episode murni
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -34,19 +34,21 @@ module.exports = async (req, res) => {
       
       if (link) {
         const cleanSlug = link.replace('https://anichin.moe/', '').replace(/\/$/, '');
+        // Mengizinkan slug episode yang valid (seperti -subtitle-indonesia)
         if (!cleanSlug.includes('blog') && !cleanSlug.includes('tutorial') && !cleanSlug.includes('shortlink')) {
           episodes.push({ title: epTitle, slug: cleanSlug });
         }
       }
     });
 
-    // Helper Pembersih URL Embed
-    function cleanEmbedUrl(url) {
-      if (!url) return '';
-      let result = url;
+    // Helper Dekode & Pembersih URL Player Video
+    function cleanEmbedUrl(val) {
+      if (!val) return '';
+      let result = val;
 
-      if (url.startsWith('aHR0c') || (url.length > 30 && !url.includes('http'))) {
-        try { result = Buffer.from(url, 'base64').toString('utf-8'); } catch(e){}
+      // Dekode Base64 jika nilai berupa string terenkripsi
+      if (val.startsWith('aHR0c') || (val.length > 30 && !val.includes('http'))) {
+        try { result = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
       }
 
       const match = result.match(/src=["']([^"']+)["']/i);
@@ -54,22 +56,30 @@ module.exports = async (req, res) => {
 
       if (result.startsWith('//')) result = 'https:' + result;
 
-      // Hapus jika tautan masih mengarah ke anichin / dailymotion / shortlink
-      if (result.includes('anichin.moe') || result.includes('dailymotion') || result.includes('shortlink')) {
+      // Buang jika link mengarah ke artikel/shortlink/dailymotion
+      if (result.includes('dailymotion') || result.includes('shortlink') || result.includes('tutorial')) {
         return '';
       }
 
-      return result;
+      // Mengizinkan iframe player internal (/player/ atau /action/) atau provider eksternal (OK.ru, Vidhide, dll)
+      const isAnichinPlayer = result.includes('anichin.moe/player') || result.includes('anichin.moe/action') || result.includes('action=get_player');
+      const isExternalEmbed = !result.includes('anichin.moe');
+
+      if (isExternalEmbed || isAnichinPlayer) {
+        return result;
+      }
+
+      return '';
     }
 
-    // Fungsi Ekstraksi Server dari HTML Episode
+    // Fungsi ekstraksi server dari HTML
     async function extractServersFromHtml($doc) {
       const servers = [];
 
-      // 1. Cek Tag Option
+      // 1. Ambil dari tag option / data-em
       $doc('.mirror option, select.mirror option').each((_, el) => {
         const name = $doc(el).text().trim();
-        const val = $doc(el).attr('value') || '';
+        const val = $doc(el).attr('value') || $doc(el).attr('data-em') || '';
 
         if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
           const validUrl = cleanEmbedUrl(val);
@@ -79,7 +89,7 @@ module.exports = async (req, res) => {
         }
       });
 
-      // 2. Cek Iframe Default jika option tidak memberikan hasil
+      // 2. Ambil dari iframe bawaan jika option kosong
       if (servers.length === 0) {
         $doc('iframe').each((_, el) => {
           const src = $doc(el).attr('src') || '';
@@ -90,24 +100,12 @@ module.exports = async (req, res) => {
         });
       }
 
-      // 3. Cek Atribut Data (data-em, data-post, data-type) jika Anichin menggunakan AJAX
-      if (servers.length === 0) {
-        const dataEm = $doc('.mirror option[data-em]').first().attr('data-em') || '';
-        if (dataEm) {
-          const validUrl = cleanEmbedUrl(dataEm);
-          if (validUrl) {
-            servers.push({ name: 'Server Utama', url: validUrl });
-          }
-        }
-      }
-
       return servers;
     }
 
-    // Ambil Server dari halaman yang sedang dibuka
     let rawServers = await extractServersFromHtml($);
 
-    // JIKA DI HALAMAN UTAMA ANIME: Scraping otomatis dilakukan ke episode pertama
+    // BILA DI HALAMAN DONGHUA UTAMA: Scraping dilakukan otomatis ke episode pertama (misal: /slug-episode-154-subtitle-indonesia/)
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
