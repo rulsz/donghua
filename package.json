@@ -1,9 +1,8 @@
 {
-  "name": "web-donghua-api",
+  "name": "donghua",
   "version": "1.0.0",
-  "main": "api/donghua.js",
   "dependencies": {
-    "@sparticuz/chromium": "^122.0.0",
-    "puppeteer-core": "^22.0.0"
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12"
   }
 }
