@@ -3,79 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anichin - Rilisan Terbaru</title>
+  <title>Katalog Donghua</title>
   <style>
-    * { box-sizing: border-box; }
-    body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; margin: 0; padding: 15px; }
-    .container { max-width: 1100px; margin: 0 auto; }
-    
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; }
-    h1 { color: #38bdf8; font-size: 20px; margin: 0; display: flex; align-items: center; gap: 8px; }
-    .badge { background: #0284c7; color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
-    
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
-    .card { background: #1e293b; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
-    .card:hover { transform: translateY(-4px); }
-    .card img { width: 100%; height: 185px; object-fit: cover; background: #334155; }
-    .card-title { padding: 8px; font-size: 12px; font-weight: bold; height: 45px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
-    
-    #statusMsg { text-align: center; margin-top: 40px; font-size: 14px; color: #94a3b8; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #0b1120; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding-bottom: 40px; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 15px; }
 
-    /* Navigasi Pagination */
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; padding: 10px 0; }
-    .btn { background-color: #0284c7; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; }
-    .btn:hover { background-color: #0369a1; }
-    .page-info { font-size: 14px; color: #94a3b8; }
+    /* Top Navigation Header */
+    header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; margin-bottom: 10px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .profile-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #1e293b; }
+    .header-right { display: flex; align-items: center; gap: 15px; }
+    .icon-btn { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; }
+
+    /* Section Styling */
+    .section-title { font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+    .section-subtitle { font-size: 13px; color: #64748b; margin-bottom: 15px; }
+    .section-block { margin-top: 25px; }
+
+    /* Horizontal Scroll Layout (Lanjutkan Menonton) */
+    .scroll-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+    .scroll-row::-webkit-scrollbar { display: none; }
+    
+    .card-continue { min-width: 130px; max-width: 130px; flex-shrink: 0; cursor: pointer; position: relative; }
+    .card-continue-img-wrapper { position: relative; width: 100%; height: 180px; border-radius: 16px; overflow: hidden; background: #1e293b; }
+    .card-continue img { width: 100%; height: 100%; object-fit: cover; }
+    .badge-ep { position: absolute; top: 10px; left: 10px; background: #38bdf8; color: #0f172a; font-size: 10px; font-weight: 800; padding: 3px 6px; border-radius: 6px; }
+    .close-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+
+    /* Grid Layout (Rilisan Terbaru) */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 14px; }
+    .card-grid { cursor: pointer; }
+    .card-grid-img-wrapper { position: relative; width: 100%; height: 170px; border-radius: 16px; overflow: hidden; background: #1e293b; }
+    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
+    .badge-bottom { position: absolute; bottom: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); color: #0f172a; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+
+    /* Title Styling */
+    .card-title { margin-top: 8px; font-size: 13px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+
+    /* Status & Pagination */
+    #statusMsg { text-align: center; margin: 30px 0; font-size: 13px; color: #64748b; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 35px; }
+    .btn { background-color: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn:hover { background-color: #334155; }
+    .page-info { font-size: 13px; color: #64748b; }
   </style>
 </head>
 <body>
   <div class="container">
+    
+    <!-- Top Header Navigation -->
     <header>
-      <h1>🔥 Rilisan Terbaru <span class="badge" id="totalCount">0</span></h1>
+      <div class="header-left">
+        <img src="https://via.placeholder.com/100" alt="Profile" class="profile-avatar">
+      </div>
+      <div class="header-right">
+        <button class="icon-btn">☰</button>
+        <button class="icon-btn">🔍</button>
+      </div>
     </header>
 
-    <div id="statusMsg">Memuat rilisan terbaru...</div>
-    <div class="grid" id="donghuaGrid"></div>
+    <!-- Section 1: Lanjutkan Menonton -->
+    <section class="section-block" id="continueSection" style="display: none;">
+      <h2 class="section-title">Lanjutkan Menonton</h2>
+      <div class="scroll-row" id="continueRow"></div>
+    </section>
 
-    <!-- Tombol Pagination -->
-    <div class="pagination" id="paginationNav" style="display: none;">
-      <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
-      <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
-      <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
-    </div>
+    <!-- Section 2: Rilisan Terbaru (Menggantikan For You) -->
+    <section class="section-block">
+      <h2 class="section-title">Rilisan Terbaru</h2>
+      <p class="section-subtitle">Update Donghua Terbaru</p>
+      
+      <div id="statusMsg">Memuat data...</div>
+      <div class="grid" id="donghuaGrid"></div>
+
+      <!-- Pagination Navigation -->
+      <div class="pagination" id="paginationNav" style="display: none;">
+        <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
+        <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
+        <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
+      </div>
+    </section>
+
   </div>
 
   <script>
     let currentPage = 1;
 
-    // Ambil nomor halaman dari URL saat pertama kali dibuka (contoh: ?page=2)
     function getPageFromURL() {
       const urlParams = new URLSearchParams(window.location.search);
       const page = parseInt(urlParams.get('page'));
       return page && page > 0 ? page : 1;
     }
 
-    // Perbarui URL browser tanpa reload halaman
     function updateURL(page) {
       const newUrl = page > 1 ? `?page=${page}` : window.location.pathname;
       window.history.pushState({ page: page }, '', newUrl);
     }
 
     window.onload = () => {
+      renderContinueWatching();
       currentPage = getPageFromURL();
       loadData(currentPage);
     };
 
-    // Mendukung tombol Back/Forward browser
-    window.onpopstate = (event) => {
+    window.onpopstate = () => {
       currentPage = getPageFromURL();
       loadData(currentPage);
     };
+
+    // Render Data Lanjutkan Menonton dari LocalStorage
+    function renderContinueWatching() {
+      const history = JSON.parse(localStorage.getItem('continueHistory') || '[]');
+      const container = document.getElementById('continueSection');
+      const row = document.getElementById('continueRow');
+
+      if (history.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      row.innerHTML = '';
+
+      history.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card-continue';
+        card.innerHTML = `
+          <div class="card-continue-img-wrapper" onclick="openDonghua('${item.href}', '${item.title}', '${item.poster}')">
+            <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+            <span class="badge-ep">Ep Latest</span>
+            <button class="close-btn" onclick="event.stopPropagation(); removeHistory(${index})">✕</button>
+          </div>
+          <div class="card-title">${item.title}</div>
+        `;
+        row.appendChild(card);
+      });
+    }
+
+    function removeHistory(index) {
+      let history = JSON.parse(localStorage.getItem('continueHistory') || '[]');
+      history.splice(index, 1);
+      localStorage.setItem('continueHistory', JSON.stringify(history));
+      renderContinueWatching();
+    }
+
+    function openDonghua(href, title, poster) {
+      // Simpan ke riwayat Lanjutkan Menonton
+      let history = JSON.parse(localStorage.getItem('continueHistory') || '[]');
+      history = history.filter(item => item.href !== href);
+      history.unshift({ href, title, poster });
+      localStorage.setItem('continueHistory', JSON.stringify(history.slice(0, 10)));
+
+      window.open(href, '_blank');
+      renderContinueWatching();
+    }
 
     async function loadData(page) {
       const status = document.getElementById('statusMsg');
       const grid = document.getElementById('donghuaGrid');
-      const totalCount = document.getElementById('totalCount');
       const paginationNav = document.getElementById('paginationNav');
       const prevBtn = document.getElementById('prevBtn');
       const pageDisplay = document.getElementById('pageDisplay');
@@ -83,7 +169,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       status.style.display = 'block';
-      status.innerText = `Memuat data halaman ${page}...`;
+      status.innerText = `Memuat halaman ${page}...`;
       grid.innerHTML = '';
       paginationNav.style.display = 'none';
 
@@ -93,22 +179,19 @@
 
         if (result.success && result.data.length > 0) {
           status.style.display = 'none';
-          totalCount.innerText = result.total;
           pageDisplay.innerText = page;
 
-          // Sembunyikan tombol "Sebelumnya" jika di Halaman 1
-          if (page <= 1) {
-            prevBtn.style.display = 'none';
-          } else {
-            prevBtn.style.display = 'inline-block';
-          }
+          prevBtn.style.display = page <= 1 ? 'none' : 'inline-block';
 
-          result.data.forEach(item => {
+          result.data.forEach((item, i) => {
             const card = document.createElement('div');
-            card.className = 'card';
-            card.onclick = () => window.open(item.href, '_blank');
+            card.className = 'card-grid';
+            card.onclick = () => openDonghua(item.href, item.title, item.poster);
             card.innerHTML = `
-              <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+              <div class="card-grid-img-wrapper">
+                <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+                <span class="badge-bottom">${i + 1} EP</span>
+              </div>
               <div class="card-title">${item.title}</div>
             `;
             grid.appendChild(card);
@@ -116,10 +199,10 @@
 
           paginationNav.style.display = 'flex';
         } else {
-          status.innerText = 'Data tidak ditemukan di halaman ini.';
+          status.innerText = 'Data tidak ditemukan.';
         }
       } catch (err) {
-        status.innerText = 'Terjadi kesalahan saat memuat halaman.';
+        status.innerText = 'Gagal terhubung ke API Server.';
         console.error(err);
       }
     }
