@@ -325,20 +325,12 @@
 
             currentMainSlug = slug;
             const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
-            const isEpisodeDirect = data.episodes.some(e => e.slug === slug);
 
-            let targetEpSlug = slug;
+            // Cek Riwayat Nonton
+            const savedHistory = getSavedEpisode(slug);
+            let targetEpSlug = savedHistory ? savedHistory.epSlug : (epOne ? epOne.slug : data.episodes[0].slug);
 
-            if (!isEpisodeDirect) {
-              const savedHistory = getSavedEpisode(slug);
-              if (savedHistory && savedHistory.epSlug) {
-                targetEpSlug = savedHistory.epSlug;
-              } else {
-                targetEpSlug = epOne ? epOne.slug : data.episodes[0].slug;
-              }
-            }
-
-            // Render list episode
+            // Render tombol episode
             data.episodes.forEach((ep, index) => {
               const box = document.createElement('div');
               box.className = 'ep-box';
@@ -352,19 +344,13 @@
               epGrid.appendChild(box);
             });
 
-            // Highlight tombol aktif
+            // Highlight episode aktif
             document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
             const activeBox = document.getElementById(`ep-box-${targetEpSlug}`);
             if (activeBox) activeBox.classList.add('active');
 
-            // Ambil server video
-            if (data.servers && data.servers.length > 0) {
-              setupServers(data.servers, data.streamUrl);
-              const epNum = targetEpSlug.match(/\d+/) ? targetEpSlug.match(/\d+/)[0] : '1';
-              saveHistory(currentMainSlug, targetEpSlug, data.title, data.poster, `Ep ${epNum}`);
-            } else {
-              fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
-            }
+            // Ambil video stream episode aktif
+            fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
@@ -378,6 +364,19 @@
       }
     }
 
+    // TUKAR EPISODE TANPA PINDAH HALAMAN / REFRESH UI
+    async function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
+      document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
+      const targetBox = document.getElementById(`ep-box-${epSlug}`);
+      if (targetBox) targetBox.classList.add('active');
+
+      const mediaBox = document.getElementById('playerMediaContainer');
+      mediaBox.innerHTML = 'Memuat video...';
+
+      saveHistory(mainSlug, epSlug, title, poster, episodeName);
+      await fetchAndPlayStream(epSlug, mainSlug, title, poster);
+    }
+
     async function fetchAndPlayStream(epSlug, mainSlug, title, poster) {
       try {
         const res = await fetch(`/api/detail?slug=${epSlug}`);
@@ -388,7 +387,9 @@
           const epNum = epSlug.match(/\d+/) ? epSlug.match(/\d+/)[0] : '1';
           saveHistory(mainSlug, epSlug, title, poster, `Ep ${epNum}`);
         }
-      } catch (e) {}
+      } catch (e) {
+        document.getElementById('playerMediaContainer').innerText = 'Gagal memuat video.';
+      }
     }
 
     function setupServers(servers, fallbackUrl) {
@@ -411,15 +412,6 @@
       } else {
         document.getElementById('playerMediaContainer').innerText = 'Server video tidak tersedia.';
       }
-    }
-
-    function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
-      document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
-      const targetBox = document.getElementById(`ep-box-${epSlug}`);
-      if (targetBox) targetBox.classList.add('active');
-
-      saveHistory(mainSlug, epSlug, title, poster, episodeName);
-      openPage(epSlug);
     }
 
     function renderPlayerMedia(url) {
@@ -467,16 +459,15 @@
 
     function saveHistory(mainSlug, epSlug, title, poster, episode) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history = history.filter(item => item.mainSlug !== mainSlug && item.epSlug !== epSlug && item.targetSlug !== epSlug);
+      history = history.filter(item => item.mainSlug !== mainSlug);
       
-      const targetSlug = epSlug || mainSlug;
-      history.unshift({ mainSlug, epSlug: targetSlug, targetSlug, title, poster, episode });
+      history.unshift({ mainSlug, epSlug, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 20)));
     }
 
     function getSavedEpisode(mainSlug) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      return history.find(item => item.mainSlug === mainSlug || item.epSlug === mainSlug || item.targetSlug === mainSlug);
+      return history.find(item => item.mainSlug === mainSlug);
     }
 
     function renderContinueWatching() {
@@ -491,10 +482,9 @@
       history.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        const destination = item.targetSlug || item.epSlug || item.mainSlug;
 
         card.onclick = function() {
-          openPage(destination);
+          openPage(item.mainSlug);
         };
 
         card.innerHTML = `
