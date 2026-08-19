@@ -1,4 +1,4 @@
-const axios = require('axios');
+const cloudscraper = require('cloudscraper');
 const cheerio = require('cheerio');
 
 module.exports = async (req, res) => {
@@ -7,11 +7,13 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    const { data: html } = await axios.get('https://anichin.moe', {
+    // Request menembus Cloudflare
+    const html = await cloudscraper.get({
+      uri: 'https://anichin.moe',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-      },
-      timeout: 8000
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7'
+      }
     });
 
     const $ = cheerio.load(html);
@@ -48,7 +50,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Cloudflare Blocking: ' + error.message
     });
   }
 };
