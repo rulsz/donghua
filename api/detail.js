@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // Ambil daftar episode murni
+    // Ambil daftar episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -40,27 +40,47 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Ambil daftar server dari halaman saat ini
+    // Helper Dekode URL Embed dari Anichin
+    function parseEmbedUrl(val) {
+      if (!val) return '';
+      let decoded = val;
+
+      // Dekode Base64 jika string di-encode
+      if (val.startsWith('aHR0c') || val.length > 30 && !val.includes('http')) {
+        try { 
+          decoded = Buffer.from(val, 'base64').toString('utf-8'); 
+        } catch(e){}
+      }
+
+      // Ambil atribut src jika val berupa tag iframe HTML
+      const match = decoded.match(/src=["']([^"']+)["']/i);
+      let finalUrl = match ? match[1] : decoded;
+
+      if (finalUrl.startsWith('//')) finalUrl = 'https:' + finalUrl;
+
+      // BIFURKASI: Jika URL masih mengarah ke anichin/shortlink/dailymotion, BUANG!
+      if (finalUrl.includes('anichin.moe') || finalUrl.includes('dailymotion') || finalUrl.includes('shortlink')) {
+        return '';
+      }
+
+      return finalUrl;
+    }
+
+    // Ambil server dari halaman saat ini
     let rawServers = [];
     $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
-      let val = $(el).attr('value') || '';
+      const val = $(el).attr('value') || '';
 
-      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
-        if (val.startsWith('aHR0c')) {
-          try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
-        }
-        const match = val.match(/src=["']([^"']+)["']/);
-        let embedUrl = match ? match[1] : val;
-        if (embedUrl.startsWith('//')) embedUrl = 'https:' + embedUrl;
-        
-        if (!embedUrl.includes('anichin.moe') && !embedUrl.includes('dailymotion')) {
-          rawServers.push({ name, url: embedUrl });
+      if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
+        const cleanUrl = parseEmbedUrl(val);
+        if (cleanUrl) {
+          rawServers.push({ name, url: cleanUrl });
         }
       }
     });
 
-    // JIKA INI HALAMAN ANIME UTAMA: Backend mengambil server secara otomatis dari episode pertama
+    // Jika halaman utama anime, ambil dari episode terbaru
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
@@ -70,17 +90,12 @@ module.exports = async (req, res) => {
         const $ep = cheerio.load(epHtml);
         $ep('.mirror option, select.mirror option').each((_, el) => {
           const name = $ep(el).text().trim();
-          let val = $ep(el).attr('value') || '';
-          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('dailymotion') && !name.toLowerCase().includes('ads')) {
-            if (val.startsWith('aHR0c')) {
-              try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
-            }
-            const match = val.match(/src=["']([^"']+)["']/);
-            let embedUrl = match ? match[1] : val;
-            if (embedUrl.startsWith('//')) embedUrl = 'https:' + embedUrl;
-            
-            if (!embedUrl.includes('anichin.moe') && !embedUrl.includes('dailymotion')) {
-              rawServers.push({ name, url: embedUrl });
+          const val = $ep(el).attr('value') || '';
+
+          if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
+            const cleanUrl = parseEmbedUrl(val);
+            if (cleanUrl) {
+              rawServers.push({ name, url: cleanUrl });
             }
           }
         });
