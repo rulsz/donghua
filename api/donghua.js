@@ -24,16 +24,27 @@ module.exports = async (req, res) => {
     $('article, div.bs, div.bsx, div.post-show, .listupd .animposx').each((_, element) => {
       const card = $(element);
       
-      // Ambil satu elemen judul utama saja agar tidak terduplikat
-      const titleEl = card.find('.tt, .entry-title, h2, h3').first();
+      // Ambil elemen H2 atau H3 secara spesifik (BUKAN seluruh wadah .tt)
+      let titleEl = card.find('h2, h3, .entry-title').first();
+      if (!titleEl.length) titleEl = card.find('.tt').first();
+
       const linkEl = card.find('a').first();
       const imgEl = card.find('img').first();
-      const epEl = card.find('.epx, .bt .epx, .episode, .ep').first();
+      const epEl = card.find('.epx, .bt .epx, .episode, .ep, .typez').first();
 
       let title = titleEl.text().trim().replace(/\s+/g, ' ');
-      const href = linkEl.attr('href');
+
+      // LOGIKA PEMBERSIH JUDUL GANDA (Misal: "Lingwu ContinentLingwu Continent")
+      const halfLength = Math.floor(title.length / 2);
+      const firstHalf = title.slice(0, halfLength).trim();
+      const secondHalf = title.slice(halfLength).trim();
+      if (firstHalf === secondHalf && firstHalf.length > 0) {
+        title = firstHalf;
+      }
+
+      const href = linkEl.attr('href') || '';
       const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
-      const episode = epEl.text().trim() || 'NEW';
+      const episode = epEl.text().trim() || 'Ongoing';
 
       if (title && href) {
         donghuaList.push({
