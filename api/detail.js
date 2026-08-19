@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // 1. Ekstraksi Episode
+    // Ekstraksi Episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
       return result;
     }
 
-    // 2. Parser Server Instan tanpa HTTP Loop Berat
+    // Ekstraksi Server Stream
     function parseServers($doc) {
       const servers = [];
       $doc('.mirror option, select.mirror option').each((_, el) => {
@@ -70,18 +70,6 @@ module.exports = async (req, res) => {
     }
 
     let rawServers = parseServers($);
-
-    // Jika di halaman utama anime, ambil otomatis dari episode pertama
-    if (rawServers.length === 0 && episodes.length > 0) {
-      try {
-        const epHtml = await cloudscraper.get({
-          uri: `https://anichin.moe/${episodes[0].slug}/`,
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-        });
-        const $ep = cheerio.load(epHtml);
-        rawServers = parseServers($ep);
-      } catch (e) {}
-    }
 
     return res.status(200).json({
       success: true,
