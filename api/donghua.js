@@ -1,66 +1,50 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 module.exports = async (req, res) => {
-  // Atur Header CORS agar API bisa dipanggil dari web manapun
+  // Atur Header CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   res.setHeader('Content-Type', 'application/json');
 
-  let browser = null;
-
   try {
-    // Jalankan Chromium versi ringan khusus Serverless
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+    // Request langsung ke website Anichin dengan User-Agent Browser PC
+    const { data: html } = await axios.get('https://anichin.moe', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://anichin.moe/'
+      },
+      timeout: 8000
     });
 
-    const page = await browser.newPage();
-    
-    // Set User-Agent agar tidak terdeteksi bot biasa
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    
-    // Buka situs Anichin
-    await page.goto('https://anichin.moe', { 
-      waitUntil: 'domcontentloaded', 
-      timeout: 25000 
-    });
+    const $ = cheerio.load(html);
+    const donghuaList = [];
 
-    // Ambil data kartu donghua dari DOM
-    const donghuaList = await page.evaluate(() => {
-      const items = [];
-      const cards = document.querySelectorAll('article, div.bs, div.bsx, div.post-show');
+    // Tembak selector elemen postingan Anichin
+    $('article, div.bs, div.bsx, div.post-show').each((_, element) => {
+      const card = $(element);
+      const titleEl = card.find('div.tt, h2, h3, .title').first();
+      const linkEl = card.find('a').first();
+      const imgEl = card.find('img').first();
 
-      cards.forEach(card => {
-        const titleEl = card.querySelector('div.tt, h2, h3, .title');
-        const linkEl = card.querySelector('a');
-        const imgEl = card.querySelector('img');
+      const title = titleEl.text().trim();
+      const href = linkEl.attr('href');
+      const poster = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || '';
 
-        if (titleEl && linkEl) {
-          const title = titleEl.innerText.trim();
-          const href = linkEl.getAttribute('href');
-          let poster = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src')) : '';
-
-          if (href) {
-            items.push({
-              title: title.replace(/\s+/g, ' '),
-              href: href,
-              poster: poster || 'https://via.placeholder.com/150'
-            });
-          }
-        }
-      });
-      return items;
+      if (title && href && href.includes('anichin')) {
+        donghuaList.push({
+          title: title.replace(/\s+/g, ' '),
+          href: href,
+          poster: poster || 'https://via.placeholder.com/150'
+        });
+      }
     });
 
     // Filter duplikat berdasarkan URL
     const uniqueList = donghuaList.filter((v, i, a) => a.findIndex(t => t.href === v.href) === i);
 
-    // Kirim respon JSON
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       updated: new Date(),
       total: uniqueList.length,
@@ -68,13 +52,9 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Gagal mengambil data dari Anichin: ' + error.message
     });
-  } finally {
-    if (browser !== null) {
-      await browser.close();
-    }
   }
 };
