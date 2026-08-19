@@ -25,7 +25,7 @@
   </div>
 
   <script>
-    // Memakai Proxy Publik AllOrigins untuk mem bypass CORS
+    // Memakai Proxy AllOrigins untuk mem-bypass CORS
     const TARGET_URL = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://anichin.moe');
 
     window.onload = loadData;
@@ -38,9 +38,9 @@
         const response = await fetch(TARGET_URL);
         const result = await response.json();
         
-        if (!result.contents) throw new Error('Data tidak terambil');
+        if (!result.contents) throw new Error('Data tidak terambil dari proxy');
 
-        // Parse string HTML menjadi elemen DOM
+        // Parse string HTML menjadi elemen DOM Virtual
         const parser = new DOMParser();
         const doc = parser.parseFromString(result.contents, 'text/html');
         
@@ -53,11 +53,12 @@
           const imgEl = card.querySelector('img');
 
           if (titleEl && linkEl) {
-            const title = titleEl.innerText.trim();
+            // PERBAIKAN: Menggunakan textContent, bukan innerText
+            const title = titleEl.textContent ? titleEl.textContent.trim() : '';
             const href = linkEl.getAttribute('href');
             let poster = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazy-src')) : '';
 
-            if (href) {
+            if (href && title) {
               donghuaList.push({
                 title: title.replace(/\s+/g, ' '),
                 href: href,
@@ -67,7 +68,7 @@
           }
         });
 
-        // Hapus duplikat
+        // Hapus duplikat berdasarkan URL
         const uniqueList = donghuaList.filter((v, i, a) => a.findIndex(t => t.href === v.href) === i);
 
         if (uniqueList.length > 0) {
