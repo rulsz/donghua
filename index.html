@@ -141,7 +141,7 @@
 
     <div id="detailView">
       <div class="player-wrapper" id="playerWrapper" style="display: block;">
-        <div class="detail-player-box" id="playerMediaContainer">Memuat pemutar video...</div>
+        <div class="detail-player-box" id="playerMediaContainer">Memuat video...</div>
       </div>
 
       <div class="detail-body">
@@ -210,9 +210,9 @@
       renderList(filtered);
     }
 
-    // MEMASIKAN NAVIGASI SINGLE-PAGE TERPANGGIL DENGAN LENGKAP
     function openPage(path) {
-      window.history.pushState({}, '', path);
+      const cleanPath = path.startsWith('/') ? path : '/' + path;
+      window.history.pushState({}, '', cleanPath);
       router();
     }
 
@@ -220,7 +220,7 @@
     window.onpopstate = router;
 
     function router() {
-      const path = window.location.pathname.replace(/^\//, '');
+      const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
       const urlParams = new URLSearchParams(window.location.search);
       const page = parseInt(urlParams.get('page')) || 1;
 
@@ -284,7 +284,7 @@
         const card = document.createElement('div');
         card.className = 'card-grid';
         card.onclick = function() {
-          openPage('/' + item.slug);
+          openPage(item.slug);
         };
 
         card.innerHTML = `
@@ -323,7 +323,6 @@
             document.getElementById('dTotalEp').innerText = `Total ${data.episodes.length} Episode`;
             document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode`;
 
-            // Mencari induk slug anime
             currentMainSlug = slug;
             const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
             const isEpisodeDirect = data.episodes.some(e => e.slug === slug);
@@ -358,8 +357,14 @@
             const activeBox = document.getElementById(`ep-box-${targetEpSlug}`);
             if (activeBox) activeBox.classList.add('active');
 
-            // Mengambil streaming video khusus episode target
-            fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
+            // Ambil server video
+            if (data.servers && data.servers.length > 0) {
+              setupServers(data.servers, data.streamUrl);
+              const epNum = targetEpSlug.match(/\d+/) ? targetEpSlug.match(/\d+/)[0] : '1';
+              saveHistory(currentMainSlug, targetEpSlug, data.title, data.poster, `Ep ${epNum}`);
+            } else {
+              fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
+            }
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
@@ -414,7 +419,7 @@
       if (targetBox) targetBox.classList.add('active');
 
       saveHistory(mainSlug, epSlug, title, poster, episodeName);
-      openPage('/' + epSlug);
+      openPage(epSlug);
     }
 
     function renderPlayerMedia(url) {
@@ -462,14 +467,16 @@
 
     function saveHistory(mainSlug, epSlug, title, poster, episode) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history = history.filter(item => item.mainSlug !== mainSlug && item.epSlug !== epSlug && item.slug !== mainSlug && item.slug !== epSlug);
-      history.unshift({ mainSlug, epSlug, slug: epSlug, title, poster, episode });
+      history = history.filter(item => item.mainSlug !== mainSlug && item.epSlug !== epSlug && item.targetSlug !== epSlug);
+      
+      const targetSlug = epSlug || mainSlug;
+      history.unshift({ mainSlug, epSlug: targetSlug, targetSlug, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 20)));
     }
 
     function getSavedEpisode(mainSlug) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      return history.find(item => item.mainSlug === mainSlug || item.epSlug === mainSlug || item.slug === mainSlug);
+      return history.find(item => item.mainSlug === mainSlug || item.epSlug === mainSlug || item.targetSlug === mainSlug);
     }
 
     function renderContinueWatching() {
@@ -484,10 +491,10 @@
       history.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        const targetPath = item.epSlug || item.slug;
+        const destination = item.targetSlug || item.epSlug || item.mainSlug;
 
         card.onclick = function() {
-          openPage('/' + targetPath);
+          openPage(destination);
         };
 
         card.innerHTML = `
@@ -512,7 +519,7 @@
     function changePage(direction) {
       currentPage += direction;
       if (currentPage < 1) currentPage = 1;
-      openPage('/?page=' + currentPage);
+      openPage('?page=' + currentPage);
     }
   </script>
 </body>
