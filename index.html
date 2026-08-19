@@ -364,7 +364,7 @@
       }
     }
 
-    // TUKAR EPISODE TANPA PINDAH HALAMAN / REFRESH UI
+    // PENANGANAN TUKAR EPISODE SECARA LANGSUNG DENGAN API STREAM
     async function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
       document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
       const targetBox = document.getElementById(`ep-box-${epSlug}`);
@@ -382,10 +382,12 @@
         const res = await fetch(`/api/detail?slug=${epSlug}`);
         const result = await res.json();
 
-        if (result.success && result.data) {
+        if (result.success && result.data && result.data.servers && result.data.servers.length > 0) {
           setupServers(result.data.servers, result.data.streamUrl);
           const epNum = epSlug.match(/\d+/) ? epSlug.match(/\d+/)[0] : '1';
           saveHistory(mainSlug, epSlug, title, poster, `Ep ${epNum}`);
+        } else {
+          document.getElementById('playerMediaContainer').innerText = 'Server video episode ini belum tersedia.';
         }
       } catch (e) {
         document.getElementById('playerMediaContainer').innerText = 'Gagal memuat video.';
