@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Dekode Base64 Fast
+    // Dekode Base64
     function decodeVal(val) {
       if (!val) return '';
       let result = val;
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
       return result;
     }
 
-    // Ekstraksi Server Streaming
+    // Ekstraksi Server
     function parseServers($doc) {
       const servers = [];
       $doc('.mirror option, select.mirror option').each((_, el) => {
