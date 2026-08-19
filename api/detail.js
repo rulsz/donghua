@@ -23,42 +23,33 @@ module.exports = async (req, res) => {
 
     const $ = cheerio.load(html);
 
-    // 1. Ambil Informasi Detail
+    // Ambil Data Detail Bersih
     const title = $('.entry-title, .titl').first().text().trim();
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
     const synopsis = $('.entry-content p, .synopsis p, .desc p').text().trim() || 'Tidak ada sinopsis.';
-
-    // 2. Ambil Iframe Video (jika ini halaman episode langsung)
+    
+    // Ambil Iframe Stream Video Khusus
     const streamUrl = $('iframe').first().attr('src') || '';
 
-    // 3. Ambil Daftar Episode
+    // Ambil Daftar Episode
     const episodes = [];
     $('.eplister ul li, .eplister li, .mreplist li').each((_, el) => {
       const item = $(el);
       const link = item.find('a').attr('href');
       const epTitle = item.find('.epl-num, .epl-sub, .epl-title').text().trim() || item.find('a').text().trim();
-      const date = item.find('.epl-date').text().trim();
 
       if (link) {
-        // Ambil slug episode dari URL
         const epSlug = link.replace('https://anichin.moe/', '').replace(/\/$/, '');
         episodes.push({
           title: epTitle,
-          slug: epSlug,
-          date: date
+          slug: epSlug
         });
       }
     });
 
     return res.status(200).json({
       success: true,
-      data: {
-        title,
-        poster,
-        synopsis,
-        streamUrl,
-        episodes
-      }
+      data: { title, poster, synopsis, streamUrl, episodes }
     });
 
   } catch (error) {
