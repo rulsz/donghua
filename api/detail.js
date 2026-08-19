@@ -26,11 +26,11 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
+    // 1. Ekstraksi Episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
       const epTitle = $(el).find('.epl-num, .epl-title').text().trim() || $(el).text().trim();
-      
       if (link) {
         const cleanSlug = link.replace('https://anichin.moe/', '').replace(/\/$/, '');
         if (!cleanSlug.includes('blog') && !cleanSlug.includes('tutorial') && !cleanSlug.includes('shortlink')) {
@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
       }
     });
 
+    // Dekode Base64 Cepat
     function decodeVal(val) {
       if (!val) return '';
       let result = val;
@@ -51,81 +52,26 @@ module.exports = async (req, res) => {
       return result;
     }
 
-    // FUNGSI EKSTRAKSI DARI STREAM OK.RU KE DIRECT MP4
-    async function extractDirectMp4(embedUrl) {
-      if (!embedUrl) return null;
-
-      if (embedUrl.includes('ok.ru')) {
-        try {
-          const videoIdMatch = embedUrl.match(/(?:video\/|embed\/)(\d+)/);
-          if (videoIdMatch) {
-            const videoId = videoIdMatch[1];
-            const okPageHtml = await cloudscraper.get({
-              uri: `https://ok.ru/videoembed/${videoId}`,
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-            });
-
-            const match = okPageHtml.match(/data-options="([^"]+)"/);
-            if (match) {
-              const cleanJson = match[1].replace(/&quot;/g, '"');
-              const data = JSON.parse(cleanJson);
-              if (data.flashvars && data.flashvars.metadata) {
-                const meta = JSON.parse(data.flashvars.metadata);
-                if (meta.videos && meta.videos.length > 0) {
-                  // Mengambil file MP4 kualitas paling tinggi
-                  return meta.videos[meta.videos.length - 1].url;
-                }
-              }
-            }
-          }
-        } catch (e) {}
-      }
-      return null;
-    }
-
-    async function getDirectServers($doc) {
+    // 2. Ekstraksi Server Langsung tanpa Request Berantai (Instan)
+    function parseServers($doc) {
       const servers = [];
-      const rawOptions = [];
-
       $doc('.mirror option, select.mirror option').each((_, el) => {
         const name = $doc(el).text().trim();
         const val = $doc(el).attr('value') || $doc(el).attr('data-em') || '';
+        
         if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
-          rawOptions.push({ name, val });
+          let embedUrl = decodeVal(val);
+          if (embedUrl && !embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
+            servers.push({ name, url: embedUrl });
+          }
         }
       });
-
-      for (let opt of rawOptions) {
-        let embedUrl = decodeVal(opt.val);
-
-        if (embedUrl.includes('anichin.moe')) {
-          try {
-            const playerHtml = await cloudscraper.get({
-              uri: embedUrl,
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Referer': targetUrl }
-            });
-            const $p = cheerio.load(playerHtml);
-            const realIframe = $p('iframe').attr('src') || '';
-            if (realIframe && !realIframe.includes('anichin.moe')) {
-              embedUrl = realIframe.startsWith('//') ? 'https:' + realIframe : realIframe;
-            }
-          } catch(e){}
-        }
-
-        if (embedUrl && !embedUrl.includes('anichin.moe') && !embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
-          // EKSTRAKSI KE MP4 MURNI
-          const directMp4 = await extractDirectMp4(embedUrl);
-          const finalStreamUrl = directMp4 || embedUrl;
-
-          servers.push({ name: opt.name, url: finalStreamUrl });
-        }
-      }
-
       return servers;
     }
 
-    let rawServers = await getDirectServers($);
+    let rawServers = parseServers($);
 
+    // Jika di halaman utama anime, ambil dari halaman episode pertama
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
@@ -133,7 +79,7 @@ module.exports = async (req, res) => {
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
         });
         const $ep = cheerio.load(epHtml);
-        rawServers = await getDirectServers($ep);
+        rawServers = parseServers($ep);
       } catch (e) {}
     }
 
