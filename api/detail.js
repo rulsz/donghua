@@ -26,7 +26,6 @@ module.exports = async (req, res) => {
       synopsis = 'Tidak ada sinopsis.';
     }
 
-    // Ambil list episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -40,7 +39,6 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Dekode Base64 & Pembersih URL Embed
     function decodeVal(val) {
       if (!val) return '';
       let result = val;
@@ -53,7 +51,38 @@ module.exports = async (req, res) => {
       return result;
     }
 
-    // Ekstrak player asli tanpa meloloskan domain Anichin
+    // FUNGSI EKSTRAKSI DARI STREAM OK.RU KE DIRECT MP4
+    async function extractDirectMp4(embedUrl) {
+      if (!embedUrl) return null;
+
+      if (embedUrl.includes('ok.ru')) {
+        try {
+          const videoIdMatch = embedUrl.match(/(?:video\/|embed\/)(\d+)/);
+          if (videoIdMatch) {
+            const videoId = videoIdMatch[1];
+            const okPageHtml = await cloudscraper.get({
+              uri: `https://ok.ru/videoembed/${videoId}`,
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            });
+
+            const match = okPageHtml.match(/data-options="([^"]+)"/);
+            if (match) {
+              const cleanJson = match[1].replace(/&quot;/g, '"');
+              const data = JSON.parse(cleanJson);
+              if (data.flashvars && data.flashvars.metadata) {
+                const meta = JSON.parse(data.flashvars.metadata);
+                if (meta.videos && meta.videos.length > 0) {
+                  // Mengambil file MP4 kualitas paling tinggi
+                  return meta.videos[meta.videos.length - 1].url;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
     async function getDirectServers($doc) {
       const servers = [];
       const rawOptions = [];
@@ -68,8 +97,7 @@ module.exports = async (req, res) => {
 
       for (let opt of rawOptions) {
         let embedUrl = decodeVal(opt.val);
-        
-        // JIKA PEMUTAR MASIH MENGGUNAKAN UNWRAPPER ANICHIN: Unfold iframe-nya di backend
+
         if (embedUrl.includes('anichin.moe')) {
           try {
             const playerHtml = await cloudscraper.get({
@@ -84,9 +112,12 @@ module.exports = async (req, res) => {
           } catch(e){}
         }
 
-        // FILTER KETAT: Buang jika tetap mengarah ke Anichin, Dailymotion, atau Shortlink
         if (embedUrl && !embedUrl.includes('anichin.moe') && !embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
-          servers.push({ name: opt.name, url: embedUrl });
+          // EKSTRAKSI KE MP4 MURNI
+          const directMp4 = await extractDirectMp4(embedUrl);
+          const finalStreamUrl = directMp4 || embedUrl;
+
+          servers.push({ name: opt.name, url: finalStreamUrl });
         }
       }
 
@@ -95,7 +126,6 @@ module.exports = async (req, res) => {
 
     let rawServers = await getDirectServers($);
 
-    // JIKA MEMBUKA HALAMAN ANIME UTAMA: Scraping dialihkan otomatis ke episode pertama
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
         const epHtml = await cloudscraper.get({
