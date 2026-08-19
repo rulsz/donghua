@@ -1,12 +1,10 @@
 const cloudscraper = require('cloudscraper');
 const cheerio = require('cheerio');
 
-// Helper sederhanan untuk membedah JS packer (eval(function(p,a,c,k...)))
 function unpackJS(code) {
   try {
     const match = code.match(/eval\(function\(p,a,c,k,e,d\).*\)/);
     if (!match) return code;
-    // Logika evaluasi string packer tanpa menjalankan arbitrary code
     return code; 
   } catch (e) {
     return code;
@@ -43,7 +41,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    // FUNGSI EKSTRAKTOR LINK VIDEO MURNI (.mp4 / .m3u8)
+    // EKSTRAKSI DENGAN FALLBACK AMAN
     async function extractDirectStream(iframeUrl) {
       if (!iframeUrl) return null;
       try {
@@ -55,11 +53,9 @@ module.exports = async (req, res) => {
           }
         });
 
-        // 1. Cari tautan .m3u8 atau .mp4 langsung di dalam skrip
         const directMatch = frameHtml.match(/(https?:\/\/[^\s"'<>]+\.(?:m3u8|mp4)[^\s"'<>]*)/i);
         if (directMatch) return directMatch[1];
 
-        // 2. Ekstraksi khusus untuk server 'OK.ru' / 'Odnoklassniki'
         if (iframeUrl.includes('ok.ru')) {
           const okMatch = frameHtml.match(/data-options="([^"]+)"/);
           if (okMatch) {
@@ -68,26 +64,22 @@ module.exports = async (req, res) => {
             if (data.flashvars && data.flashvars.metadata) {
               const meta = JSON.parse(data.flashvars.metadata);
               if (meta.videos && meta.videos.length > 0) {
-                return meta.videos[meta.videos.length - 1].url; // Ambil kualitas tertinggi
+                return meta.videos[meta.videos.length - 1].url;
               }
             }
           }
         }
 
-        // 3. Ekstraksi khusus untuk server 'Vidhide' / 'Streamwish'
         if (iframeUrl.includes('vidhide') || iframeUrl.includes('streamwish')) {
           const unpacked = unpackJS(frameHtml);
           const m3u8Match = unpacked.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/i);
           if (m3u8Match) return m3u8Match[1];
         }
 
-      } catch (err) {
-        console.error('Ekstraksi gagal:', err.message);
-      }
+      } catch (err) {}
       return null;
     }
 
-    // Cari daftar server di halaman
     let rawServers = [];
     $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
@@ -102,15 +94,48 @@ module.exports = async (req, res) => {
       }
     });
 
-    // Jalankan ekstraksi untuk mendapatkan link video murni
+    // Ambil iframe default jika selector option kosong
+    let defaultIframe = $('iframe').first().attr('src') || '';
+
+    // Jika di halaman anime utama, ambil server episode pertama
+    if (rawServers.length === 0 && !defaultIframe && episodes.length > 0) {
+      try {
+        const epHtml = await cloudscraper.get({
+          uri: `https://anichin.moe/${episodes[0].slug}/`,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
+        const $ep = cheerio.load(epHtml);
+        $ep('.mirror option, select.mirror option').each((_, el) => {
+          const name = $ep(el).text().trim();
+          let val = $ep(el).attr('value') || '';
+          if (val && !name.toLowerCase().includes('pilih')) {
+            if (val.startsWith('aHR0c')) {
+              try { val = Buffer.from(val, 'base64').toString('utf-8'); } catch(e){}
+            }
+            const match = val.match(/src=["']([^"']+)["']/);
+            rawServers.push({ name, embedUrl: match ? match[1] : val });
+          }
+        });
+        if (rawServers.length === 0) {
+          defaultIframe = $ep('iframe').first().attr('src') || '';
+        }
+      } catch (e) {}
+    }
+
     const processedServers = [];
     for (let srv of rawServers) {
       const directUrl = await extractDirectStream(srv.embedUrl);
       processedServers.push({
         name: srv.name,
-        // Jika berhasil di-ekstrak, kirim URL murni. Jika tidak, kirim fallback embed URL
-        url: directUrl || srv.embedUrl,
-        isDirect: !!directUrl
+        url: directUrl || srv.embedUrl
+      });
+    }
+
+    if (processedServers.length === 0 && defaultIframe) {
+      const directUrl = await extractDirectStream(defaultIframe);
+      processedServers.push({
+        name: 'Default Server',
+        url: directUrl || defaultIframe
       });
     }
 
@@ -121,6 +146,7 @@ module.exports = async (req, res) => {
         poster,
         synopsis,
         servers: processedServers,
+        streamUrl: processedServers.length > 0 ? processedServers[0].url : '',
         episodes
       }
     });
