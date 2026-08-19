@@ -61,11 +61,12 @@
 
     .detail-body { padding: 0 0 16px 0; }
 
+    /* HEADER EPISODE LIST (DENGAN TOMBOL DIKLIK) */
     .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .ep-header-title { font-size: 16px; font-weight: 700; color: #fff; }
-    .ep-total-text { font-size: 12px; color: #64748b; }
+    .ep-total-text { font-size: 12px; color: #38bdf8; font-weight: 700; cursor: pointer; text-decoration: underline; }
 
-    .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: none; border-bottom: 1px solid #1e293b; margin-bottom: 16px; scroll-behavior: smooth; }
+    .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: none; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
     .ep-scroll-grid::-webkit-scrollbar { display: none; }
     .ep-box { flex: 0 0 54px; height: 54px; background: #161f32; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #f8fafc; cursor: pointer; transition: all 0.2s; }
     .ep-box.active { background: #581c87; border-color: #a855f7; color: #ffffff; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
@@ -82,11 +83,28 @@
     .media-title { font-size: 20px; font-weight: 800; color: #ffffff; margin-bottom: 10px; }
     .badge-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
     .tag-badge { background: #1e293b; color: #94a3b8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
-    .tag-badge.clickable { cursor: pointer; background: #334155; color: #38bdf8; transition: background 0.2s; }
-    .tag-badge.clickable:active { background: #0284c7; color: #fff; }
 
     .rating-row { display: flex; align-items: center; gap: 6px; color: #f59e0b; font-weight: 800; font-size: 14px; margin-bottom: 12px; }
     .synopsis-text { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px; }
+
+    /* BOTTOM SHEET DIALOG (PAS DI BAWAH VIDEO PLAYER) */
+    .sheet-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 200; backdrop-filter: blur(4px); }
+    .sheet-overlay.active { display: block; }
+    
+    .bottom-sheet { 
+      position: fixed; left: 0; right: 0; bottom: 0; 
+      height: calc(100vh - (100vw * 9 / 16) - 60px); max-height: 70vh; 
+      background: #0f172a; border-top-left-radius: 20px; border-top-right-radius: 20px; 
+      border-top: 1px solid #334155; z-index: 201; padding: 16px; display: flex; flex-direction: column;
+      transform: translateY(100%); transition: transform 0.3s ease-out;
+    }
+    .sheet-overlay.active .bottom-sheet { transform: translateY(0); }
+    
+    .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    .sheet-title { font-size: 16px; font-weight: 800; color: #fff; }
+    .sheet-close { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
+    
+    .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
     #statusMsg { text-align: center; margin: 40px 0; font-size: 13px; color: #64748b; }
     .pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 35px; }
@@ -148,9 +166,10 @@
       </div>
 
       <div class="detail-body">
-        <div class="ep-header-row" id="epListSection">
+        <div class="ep-header-row">
           <span class="ep-header-title">Episode List</span>
-          <span class="ep-total-text" id="epTotalInfo">0 Episode</span>
+          <!-- TOMBOL DENGAN TEKS JUMLAH EPISODE UNTUK MEMBUKA SHEET -->
+          <span class="ep-total-text" id="epTotalInfo" onclick="openEpisodeSheet()">0 Episode</span>
         </div>
         <div class="ep-scroll-grid" id="epGrid">Memuat episode...</div>
 
@@ -181,8 +200,7 @@
         <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
 
         <div class="badge-row">
-          <!-- BADGE TOTAL EPISODE BISA DIKLIK -->
-          <span class="tag-badge clickable" id="dTotalEp" onclick="scrollToEpisodeList()">Total Episode</span>
+          <span class="tag-badge" id="dTotalEp">Total Episode</span>
           <span class="tag-badge">2026</span>
           <span class="tag-badge">Donghua</span>
         </div>
@@ -198,10 +216,22 @@
 
   </div>
 
+  <!-- BOTTOM SHEET DIALOG UNTUK SEMUA EPISODE -->
+  <div class="sheet-overlay" id="sheetOverlay" onclick="closeEpisodeSheet()">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-header">
+        <span class="sheet-title">Semua Episode</span>
+        <button class="sheet-close" onclick="closeEpisodeSheet()">✕</button>
+      </div>
+      <div class="sheet-grid" id="sheetEpGrid"></div>
+    </div>
+  </div>
+
   <script>
     let currentPage = 1;
     let rawDonghuaData = [];
     let currentMainSlug = '';
+    let globalEpisodes = [];
 
     function toggleSearch() {
       document.getElementById('searchWrapper').classList.toggle('active');
@@ -324,17 +354,18 @@
           epGrid.innerHTML = '';
 
           if (data.episodes && data.episodes.length > 0) {
+            globalEpisodes = data.episodes;
             document.getElementById('dTotalEp').innerText = `Total ${data.episodes.length} Episode`;
-            document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode`;
+            document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode ➔`;
 
             currentMainSlug = slug;
             const epOne = data.episodes[data.episodes.length - 1]; // Episode 1
 
-            // Cek Riwayat Nonton
+            // Cek Riwayat
             const savedHistory = getSavedEpisode(slug);
             let targetEpSlug = savedHistory ? savedHistory.epSlug : (epOne ? epOne.slug : data.episodes[0].slug);
 
-            // Render tombol episode
+            // Render horizontal scroll list
             data.episodes.forEach((ep, index) => {
               const box = document.createElement('div');
               box.className = 'ep-box';
@@ -353,7 +384,7 @@
             const activeBox = document.getElementById(`ep-box-${targetEpSlug}`);
             if (activeBox) activeBox.classList.add('active');
 
-            // Ambil video stream episode aktif
+            // Set up stream player
             fetchAndPlayStream(targetEpSlug, currentMainSlug, data.title, data.poster);
 
           } else {
@@ -368,8 +399,8 @@
       }
     }
 
-    // TUKAR EPISODE DENGAN REFRESH/RESET SERVER
     async function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
+      closeEpisodeSheet();
       document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
       const targetBox = document.getElementById(`ep-box-${epSlug}`);
       if (targetBox) targetBox.classList.add('active');
@@ -377,7 +408,6 @@
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat video...';
 
-      // Reset dropdown server saat ganti episode
       document.getElementById('serverSelect').innerHTML = '';
       document.getElementById('serverDisplayTitle').innerText = 'Server';
 
@@ -402,7 +432,6 @@
       }
     }
 
-    // SETUP SERVER & MEMASTIKAN PENGGANTIAN SERVER SELALU REFRESH PLAYER
     function setupServers(servers, fallbackUrl) {
       const serverSelect = document.getElementById('serverSelect');
       const serverDisplayTitle = document.getElementById('serverDisplayTitle');
@@ -469,12 +498,32 @@
       }
     }
 
-    // SCROLL OTOMATIS KE EPISODE LIST SAAT "TOTAL EPISODE" DIKLIK
-    function scrollToEpisodeList() {
-      const epSection = document.getElementById('epListSection');
-      if (epSection) {
-        epSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    // FUNGSI MEMBUKA SHEET DENGAN DAFTAR LENGKAP EPISODE
+    function openEpisodeSheet() {
+      const sheetGrid = document.getElementById('sheetEpGrid');
+      const overlay = document.getElementById('sheetOverlay');
+      sheetGrid.innerHTML = '';
+
+      if (globalEpisodes.length === 0) return;
+
+      globalEpisodes.forEach((ep, index) => {
+        const box = document.createElement('div');
+        box.className = 'ep-box';
+        const epNumber = ep.title.match(/\d+/) ? ep.title.match(/\d+/)[0] : (index + 1);
+        box.innerText = epNumber;
+
+        // Buka episode langsung saat ditekan di sheet
+        box.onclick = () => {
+          selectEpisode(currentMainSlug, ep.slug, document.getElementById('dTitle').innerText, '', `Ep ${epNumber}`);
+        };
+        sheetGrid.appendChild(box);
+      });
+
+      overlay.classList.add('active');
+    }
+
+    function closeEpisodeSheet() {
+      document.getElementById('sheetOverlay').classList.remove('active');
     }
 
     function saveHistory(mainSlug, epSlug, title, poster, episode) {
