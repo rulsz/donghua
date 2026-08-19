@@ -11,16 +11,10 @@ module.exports = async (req, res) => {
     if (!slug) return res.status(400).json({ success: false, error: 'Slug dibutuhkan' });
 
     let targetUrl = `https://anichin.moe/${slug}/`;
-    let html;
-    
-    try {
-      html = await cloudscraper.get({
-        uri: targetUrl,
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
-      });
-    } catch(err) {
-      return res.status(404).json({ success: false, error: 'Halaman tidak ditemukan' });
-    }
+    let html = await cloudscraper.get({
+      uri: targetUrl,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
+    });
 
     let $ = cheerio.load(html);
 
@@ -58,7 +52,7 @@ module.exports = async (req, res) => {
 
     function parseServers($doc) {
       const servers = [];
-      $doc('.mirror option, select.mirror option, select#selectserver option').each((_, el) => {
+      $doc('.mirror option, select.mirror option').each((_, el) => {
         const name = $doc(el).text().trim();
         const val = $doc(el).attr('value') || $doc(el).attr('data-em') || '';
         
@@ -69,28 +63,16 @@ module.exports = async (req, res) => {
           }
         }
       });
-
-      // Jika option tidak ditemukan, cari tag iframe langsung
-      if (servers.length === 0) {
-        $doc('iframe').each((_, el) => {
-          let src = $doc(el).attr('src') || $doc(el).attr('data-src') || '';
-          if (src && !src.includes('facebook') && !src.includes('ads') && !src.includes('disqus')) {
-            if (src.startsWith('//')) src = 'https:' + src;
-            servers.push({ name: 'Default Server', url: src });
-          }
-        });
-      }
       return servers;
     }
 
     let rawServers = parseServers($);
 
-    // Jika dipanggil dari halaman utama anime dan server belum ada, ambil dari episode pertama
+    // Jika halaman anime utama tidak punya player langsung, ambil dari episode pertama
     if (rawServers.length === 0 && episodes.length > 0) {
       try {
-        const firstEpSlug = episodes[0].slug;
         const epHtml = await cloudscraper.get({
-          uri: `https://anichin.moe/${firstEpSlug}/`,
+          uri: `https://anichin.moe/${episodes[0].slug}/`,
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
         });
         const $ep = cheerio.load(epHtml);
