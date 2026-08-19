@@ -9,7 +9,7 @@
     body { background-color: #0b1120; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 70px; padding-bottom: 50px; }
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Header Blur */
+    /* Floating Header */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
@@ -31,7 +31,7 @@
     .section-title { font-size: 19px; font-weight: 700; color: #ffffff; margin-bottom: 16px; }
     .section-subtitle { font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 18px; }
 
-    /* Lanjutkan Menonton (3 Item) */
+    /* Lanjutkan Menonton */
     .scroll-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; scroll-snap-type: x mandatory; }
     .scroll-row::-webkit-scrollbar { display: none; }
     .card-continue { flex: 0 0 calc((100% - 28px) / 3); min-width: calc((100% - 28px) / 3); scroll-snap-align: start; cursor: pointer; }
@@ -43,13 +43,13 @@
 
     /* Grid Layout (3 Kolom) */
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .card-grid { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-    .card-grid-img-wrapper { position: relative; width: 100%; height: 165px; border-radius: 12px; overflow: hidden; background: #1e293b; }
-    .card-grid img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .card-grid { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .card-grid-img-wrapper { position: relative; width: 100%; height: 165px; border-radius: 12px; overflow: hidden; background: #1e293b; pointer-events: none; }
+    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     .badge-bottom { position: absolute; bottom: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; }
-    .card-title { margin-top: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+    .card-title { margin-top: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; pointer-events: none; }
 
-    /* Halaman Detail Donghua UI */
+    /* Detail Donghua & Player UI */
     #detailView { display: none; }
     .detail-header { display: flex; gap: 16px; margin-bottom: 20px; }
     .detail-poster { width: 110px; height: 160px; border-radius: 12px; object-fit: cover; background: #1e293b; flex-shrink: 0; }
@@ -57,13 +57,11 @@
     .detail-title { font-size: 18px; font-weight: 800; color: #38bdf8; margin-bottom: 8px; }
     .detail-synopsis { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; background: #1e293b; padding: 12px; border-radius: 10px; }
     
-    /* List Episode UI */
     .ep-list-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
     .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
     .ep-item { background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; }
     .ep-item:hover { background: #0284c7; border-color: #38bdf8; }
 
-    /* Player Container */
     .player-container { display: none; margin-bottom: 20px; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
     .player-iframe { width: 100%; height: 100%; border: none; }
 
@@ -74,7 +72,6 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header>
     <div class="header-content">
       <div class="header-left" onclick="openPage('/')">
@@ -94,7 +91,7 @@
 
   <div class="container">
 
-    <!-- VIEW BERANDA -->
+    <!-- BERANDA -->
     <div id="homeView">
       <section class="section-block" id="continueSection" style="display: none;">
         <h2 class="section-title">Lanjutkan Menonton</h2>
@@ -116,7 +113,7 @@
       </section>
     </div>
 
-    <!-- VIEW DETAIL & PLAYER -->
+    <!-- DETAIL & PLAYER -->
     <div id="detailView">
       <div class="player-container" id="playerContainer">
         <iframe class="player-iframe" id="videoFrame" src="" allowfullscreen></iframe>
@@ -207,11 +204,15 @@
     function renderList(list) {
       const grid = document.getElementById('donghuaGrid');
       grid.innerHTML = '';
+      
       list.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card-grid';
-        // Menambahkan listener klik secara tegas
-        card.addEventListener('click', () => openPage(`/${item.slug}`));
+        
+        // Panggilan Navigasi Langsung
+        card.onclick = function() {
+          openPage('/' + item.slug);
+        };
 
         card.innerHTML = `
           <div class="card-grid-img-wrapper">
@@ -256,7 +257,7 @@
               btn.innerText = ep.title;
               btn.onclick = () => {
                 saveHistory(slug, data.title, data.poster, ep.title);
-                openPage(`/${ep.slug}`);
+                openPage('/' + ep.slug);
               };
               epGrid.appendChild(btn);
             });
@@ -288,7 +289,7 @@
       history.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => openPage(`/${item.slug}`);
+        card.onclick = () => openPage('/' + item.slug);
 
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
@@ -312,7 +313,7 @@
     function changePage(direction) {
       currentPage += direction;
       if (currentPage < 1) currentPage = 1;
-      openPage(`/?page=${currentPage}`);
+      openPage('/?page=' + currentPage);
     }
   </script>
 </body>
