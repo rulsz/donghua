@@ -233,13 +233,14 @@
     .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; pointer-events: none; }
     .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     
-    /* BADGE STATUS + EPISODE DENGAN EFEK GLASS HALUS */
+    /* BADGE GLASS DENGAN TEXT FLEKSIBEL & RAPI */
     .badge-bottom { 
       position: absolute; 
       bottom: 8px; 
       left: 8px; 
       right: 8px;
-      max-width: fit-content;
+      width: max-content;
+      max-width: calc(100% - 16px);
       background: rgba(18, 24, 38, 0.78); 
       backdrop-filter: blur(8px) saturate(180%);
       -webkit-backdrop-filter: blur(8px) saturate(180%);
@@ -468,20 +469,38 @@
     let searchTimer = null;
     let isDetailPage = false;
 
-    // FUNGSI HELPER UNTUK MENGAMBIL FORMAT "Ongoing • Ep 07" ATAU "Completed • Ep 12"
+    // LOGIKA PERBAIKAN: PARSER PARSING STATUS & EPISODE DARIPADA VARIASI API ANICHIN
     function formatBadgeText(item) {
-      const status = item.status || item.type || 'Ongoing';
+      // 1. Dapatkan Status (Ongoing / Completed / Finished)
+      let rawStatus = item.status || item.type || item.state || '';
+      let status = 'Ongoing';
+
+      if (rawStatus.toLowerCase().includes('complete') || rawStatus.toLowerCase().includes('finish')) {
+        status = 'Completed';
+      } else if (rawStatus.toLowerCase().includes('ongoing')) {
+        status = 'Ongoing';
+      }
+
+      // 2. Cek Berbagai Kemungkinan Key Teks Episode dari Anichin
+      let rawEp = item.episode || item.latest_episode || item.ep || item.latest || '';
       
-      // Ambil angka episode jika tersedia
-      let epStr = '';
-      if (item.episode) {
-        const match = item.episode.match(/\d+/);
+      // Jika episode belum ada di key khusus, coba cari dari title/sub-title jika ada
+      if (!rawEp && item.sub_title) rawEp = item.sub_title;
+
+      let epNum = '';
+      if (rawEp) {
+        const match = String(rawEp).match(/\d+/);
         if (match) {
-          const num = match[0].padStart(2, '0');
-          epStr = ` • Ep ${num}`;
+          epNum = match[0].padStart(2, '0');
         }
       }
-      return `${status}${epStr}`;
+
+      // 3. Format Output
+      if (epNum) {
+        return `${status} • Ep ${epNum}`;
+      } else {
+        return status;
+      }
     }
 
     function switchTab(tabName, element) {
@@ -657,7 +676,6 @@
       }
     }
 
-    /* FUNGSI RENDER LIST DENGAN BADGE STATUS DAN EPISODE TERBARU */
     function renderList(list, targetGrid) {
       targetGrid.innerHTML = '';
       list.forEach(item => {
