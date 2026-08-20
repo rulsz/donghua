@@ -15,7 +15,7 @@
       color: #f8fafc; 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
       padding-top: 68px; 
-      padding-bottom: 50px; 
+      padding-bottom: 90px; /* Space ekstra untuk bottom nav melayang */
       transition: background 0.3s, color 0.3s; 
     }
     
@@ -47,6 +47,18 @@
     body.light-mode .bottom-sheet { background: #ffffff; border-top: 1px solid #cbd5e1; }
     body.light-mode .sheet-header { border-bottom: 1px solid #e2e8f0; }
     body.light-mode .sheet-title { color: #0b0f19; }
+
+    /* MODE TERANG UNTUK BOTTOM NAV */
+    body.light-mode .bottom-nav-container {
+      background: rgba(248, 250, 252, 0.85);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    body.light-mode .nav-item { color: #64748b; }
+    body.light-mode .nav-item.active {
+      background: rgba(0, 0, 0, 0.08);
+      color: #2563eb;
+    }
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
@@ -135,6 +147,75 @@
     /* CONTAINER HASIL PENCARIAN DI BAWAH HEADER */
     .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #0b0f19; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
+
+    /* FLOATING BOTTOM NAVIGATION BAR GAYA CAPSULE */
+    .bottom-nav-wrapper {
+      position: fixed;
+      bottom: 16px;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+
+    .bottom-nav-container {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 420px;
+      height: 62px;
+      padding: 4px 6px;
+      background: rgba(22, 30, 46, 0.75);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-radius: 35px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    .nav-item {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 28px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      transition: transform 0.2s ease, fill 0.2s ease;
+    }
+
+    .nav-item span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* ACTIVE STATE ITEM NAVIGATION */
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #38bdf8;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    }
+    .nav-item.active svg {
+      transform: translateY(-1px);
+    }
 
     .section-block { margin-top: 24px; }
     .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
@@ -329,6 +410,28 @@
 
   </div>
 
+  <!-- FLOATING BOTTOM NAVIGATION BAR -->
+  <div class="bottom-nav-wrapper">
+    <div class="bottom-nav-container">
+      <div class="nav-item active" onclick="switchTab('home', this)">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('donghua', this)">
+        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 9H3V5h9v7z"/></svg>
+        <span>Donghua</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('kdrama', this)">
+        <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+        <span>KDrama</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('film', this)">
+        <svg viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
+        <span>Film</span>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet-overlay" id="sheetOverlay" onclick="closeEpisodeSheet()">
     <div class="bottom-sheet" onclick="event.stopPropagation()">
       <div class="sheet-header">
@@ -344,6 +447,18 @@
     let globalEpisodes = [];
     let searchTimer = null;
     let isDetailPage = false;
+
+    function switchTab(tabName, element) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      element.classList.add('active');
+
+      if (tabName === 'home' || tabName === 'donghua') {
+        openPage('/');
+      } else {
+        // Placeholder aksi untuk KDrama dan Film
+        alert('Kategori ' + tabName.toUpperCase() + ' segera hadir!');
+      }
+    }
 
     function handleLeftNavClick() {
       if (isDetailPage) {
