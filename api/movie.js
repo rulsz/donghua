@@ -3,27 +3,36 @@ import * as cheerio from 'cheerio';
 export default async function handler(req, res) {
   try {
     const page = req.query.page || 1;
-    // Kita langsung mencoba domain yang sering aktif atau halaman utama ngefilm
-    let targetUrl = page > 1 
-      ? `https://new39.ngefilm.site/page/${page}/` 
-      : `https://new39.ngefilm.site/`;
-
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    
+    // 1. Mengambil domain aktif terbaru dari ngefilm.live
+    const mainResponse = await fetch('https://ngefilm.live/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    const mainHtml = await mainResponse.text();
+    const $main = cheerio.load(mainHtml);
+    
+    // Mencari link domain aktif (biasanya berupa link yang bukan ngefilm.live)
+    let activeDomain = 'https://new39.ngefilm.site'; // Fallback default
+    $main('a').each((_, el) => {
+      const href = $main(el).attr('href');
+      if (href && href.includes('ngefilm') && !href.includes('ngefilm.live')) {
+        activeDomain = href.replace(/\/$/, '');
       }
     });
 
-    if (!response.ok) {
-      return res.status(404).json({ success: false, message: 'Gagal mengakses sumber' });
-    }
+    // 2. Mengambil data dari domain aktif yang ditemukan
+    const targetUrl = page > 1 ? `${activeDomain}/page/${page}/` : `${activeDomain}/`;
+    const response = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+
+    if (!response.ok) return res.status(404).json({ success: false, message: 'Gagal akses domain baru' });
 
     const html = await response.text();
     const $ = cheerio.load(html);
     const data = [];
 
-    // Selektor baru yang lebih umum untuk struktur Ngefilm
-    // Mengecek elemen yang biasanya berisi film: .search-item, .post, .item, .movies
+    // 3. Selektor fleksibel untuk mengambil data film
     $('.item, .post, .movies, article, .ml-item').each((_, el) => {
       const title = $(el).find('h2, .title, .jt, a').first().text().trim();
       const poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
@@ -31,25 +40,13 @@ export default async function handler(req, res) {
       const quality = $(el).find('.quality, .q, .hd, .label').text().trim() || 'HD';
 
       if (title && href) {
-        // Mengubah link relatif menjadi absolut
-        if (!href.startsWith('http')) {
-          href = `https://new39.ngefilm.site${href.startsWith('/') ? '' : '/'}${href}`;
-        }
-        
-        const slug = href.replace('https://new39.ngefilm.site/', '').replace(/^\/+|\/+$/g, '');
-
-        data.push({
-          title,
-          poster,
-          slug,
-          episode: quality,
-          type: 'Movie'
-        });
+        const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
+        data.push({ title, poster, slug, episode: quality, type: 'Movie' });
       }
     });
 
     return res.status(200).json({ success: true, data });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Gagal memproses data' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 }
