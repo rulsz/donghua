@@ -28,11 +28,22 @@
     }
     body.light-mode .brand-title { color: #0b0f19 !important; }
     body.light-mode .icon-circle-btn,
-    body.light-mode .search-input-header,
-    body.light-mode .bottom-nav-container { 
+    body.light-mode .search-input-header { 
       background: rgba(0, 0, 0, 0.05); 
       border: 1px solid rgba(0, 0, 0, 0.08); 
       color: #0b0f19; 
+    }
+    body.light-mode .bottom-nav-container {
+      background: rgba(240, 243, 248, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    body.light-mode .glass-banner {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.08);
+      color: #0b0f19;
+    }
+    body.light-mode .glass-banner .banner-subtitle {
+      color: #475569;
     }
     body.light-mode .nav-item { color: #64748b; }
     body.light-mode .nav-item.active {
@@ -136,7 +147,7 @@
     .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
 
-    /* FLOATING BOTTOM NAVIGATION BAR (WARNA GLASS DISAMAKAN DENGAN HEADER) */
+    /* FLOATING BOTTOM NAVIGATION BAR - GLASS LEBIH GELAP */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: 16px;
@@ -163,13 +174,13 @@
       max-width: 420px;
       height: 62px;
       padding: 4px 6px;
-      /* DIsamakan presisi dengan warna glass tombol header */
-      background: rgba(255, 255, 255, 0.08); 
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      /* Background glass lebih gelap (Dark Navy Transparan) */
+      background: rgba(18, 24, 38, 0.85); 
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
       border-radius: 35px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     }
 
     .nav-item {
@@ -203,7 +214,7 @@
 
     /* ACTIVE STATE ITEM NAVIGATION */
     .nav-item.active {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.1);
       color: #38bdf8;
     }
     .nav-item.active svg {
@@ -212,7 +223,54 @@
 
     .section-block { margin-top: 24px; }
     .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
-    .section-subtitle { font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 16px; }
+
+    /* BANNER BANNER GLASS DONGHUA RAPI */
+    .glass-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 16px;
+      border-radius: 16px;
+      margin-bottom: 18px;
+    }
+
+    .banner-left-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .banner-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #38bdf8;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #38bdf8;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    .banner-title-text {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #f8fafc;
+    }
+
+    .banner-subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
 
     .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; scroll-snap-type: x mandatory; }
     .scroll-row::-webkit-scrollbar { display: none; }
@@ -338,7 +396,15 @@
 
       <section class="section-block">
         <h2 class="section-title" id="sectionTitle">Rilisan Terbaru</h2>
-        <p class="section-subtitle">Update Donghua Terbaru</p>
+        
+        <!-- BANNER DONGHUA BERGAYA GLASS -->
+        <div class="glass-banner">
+          <div class="banner-left-info">
+            <div class="banner-dot"></div>
+            <span class="banner-title-text">DONGHUA</span>
+          </div>
+          <span class="banner-subtitle">Update Terbaru</span>
+        </div>
 
         <div id="statusMsg">Memuat data...</div>
         <div class="grid-3" id="donghuaGrid"></div>
