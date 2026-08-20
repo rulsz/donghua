@@ -4,7 +4,7 @@
     { "source": "/api/movie", "destination": "/api/movie.js" },
     { "source": "/api/detail", "destination": "/api/detail.js" },
     { "source": "/api/search", "destination": "/api/search.js" },
-    { "source": "/api/player", "destination": "/api/player.js" },
+    { "source": "/api/proxy", "destination": "/api/proxy.js" },
     { "source": "/detail/(.*)", "destination": "/detail.html?slug=$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
