@@ -54,7 +54,16 @@ export default async function handler(req, res) {
 
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
-    const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
+    
+    // Extrak dan bersihkan sinopsis agar hanya mengambil bagian Bahasa Indonesia
+    let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
+    let synopsis = rawSynopsis;
+
+    if (rawSynopsis.includes('Indonesia')) {
+      synopsis = rawSynopsis.split('Indonesia').pop().trim();
+    } else if (rawSynopsis.includes('Indonesian')) {
+      synopsis = rawSynopsis.split('Indonesian').pop().trim();
+    }
 
     // Ambil daftar episode
     const episodes = [];
@@ -68,11 +77,13 @@ export default async function handler(req, res) {
       }
     });
 
-    // Urutkan episode dari episode 1 ke atas jika urutannya terbalik dari sumber
+    // Pastikan urutan episode berurutan dari episode terbesar ke terkecil (145 ke 1)
     if (episodes.length > 1) {
       const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
       const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
-      if (firstEpNum > lastEpNum) {
+      
+      // Jika episode pertama lebih kecil dari episode terakhir, balikkan urutannya
+      if (firstEpNum < lastEpNum) {
         episodes.reverse();
       }
     }
