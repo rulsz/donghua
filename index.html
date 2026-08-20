@@ -703,9 +703,9 @@
       const safePath = cleanPath(pathName);
 
       try {
-        // Frontend Timeout 8 Detik
+        // Frontend Timeout 6 Detik
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`, {
           signal: controller.signal
