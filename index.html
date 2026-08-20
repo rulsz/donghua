@@ -28,7 +28,7 @@
     .icon-btn { background: none; border: none; color: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; }
     .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
-    /* KOLOM PENCARIAN DI HEADER (SEMBUNYIKAN HEADER LAIN SAAT AKTIF) */
+    /* KOTAK PENCARIAN DI HEADER */
     .header-search-box { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; gap: 10px; background: rgba(11, 15, 25, 0.95); z-index: 10; }
     .header-search-box.active { display: flex; }
     .search-input-header { flex: 1; background: #1e293b; border: 1px solid #334155; padding: 6px 12px; border-radius: 8px; color: #fff; font-size: 15px !important; outline: none; }
@@ -123,7 +123,6 @@
 
   <header>
     <div class="header-content">
-      <!-- KELOMPOK NORMAL (DISEMBUNYIKAN SAAT PENCARIAN AKTIF) -->
       <div class="header-normal-group" id="headerNormalGroup">
         <div class="header-left" onclick="openPage('/')" style="display: flex; align-items: center; gap: 12px; flex: 1;">
           <button class="icon-btn" id="navBackBtn" style="display: none;" aria-label="Kembali">
@@ -141,7 +140,6 @@
         </div>
       </div>
 
-      <!-- KOTAK PENCARIAN DI HEADER -->
       <div class="header-search-box" id="headerSearchBox">
         <input type="text" class="search-input-header" id="searchInputHeader" placeholder="Cari judul donghua..." onkeyup="handleSearchInput(event)">
         <button class="icon-btn" onclick="toggleSearch()" aria-label="Tutup">
@@ -151,9 +149,8 @@
     </div>
   </header>
 
-  <!-- LIST HASIL PENCARIAN DI BAWAH HEADER -->
   <div class="search-results-dropdown" id="searchResultsDropdown">
-    <h3 class="section-title" style="margin-top: 4px;">Hasil Pencarian</h3>
+    <h3 class="section-title" style="margin-top: 4px;">Hasil Pencarian Global</h3>
     <div class="grid-3" id="searchResultGrid"></div>
   </div>
 
@@ -232,7 +229,6 @@
 
   </div>
 
-  <!-- BOTTOM SHEET DIALOG -->
   <div class="sheet-overlay" id="sheetOverlay" onclick="closeEpisodeSheet()">
     <div class="bottom-sheet" onclick="event.stopPropagation()">
       <div class="sheet-header">
@@ -245,9 +241,8 @@
 
   <script>
     let currentPage = 1;
-    let rawDonghuaData = [];
-    let currentMainSlug = '';
     let globalEpisodes = [];
+    let searchTimer = null;
 
     function toggleSearch() {
       const searchBox = document.getElementById('headerSearchBox');
@@ -265,10 +260,13 @@
       }
     }
 
+    // PENCARIAN GLOBAL KE SERVER UNTUK SEMUA HALAMAN
     function handleSearchInput(event) {
-      const query = event.target.value.toLowerCase().trim();
+      const query = event.target.value.trim();
       const dropdown = document.getElementById('searchResultsDropdown');
       const resultGrid = document.getElementById('searchResultGrid');
+
+      clearTimeout(searchTimer);
 
       if (query === '') {
         dropdown.classList.remove('active');
@@ -277,31 +275,41 @@
       }
 
       dropdown.classList.add('active');
-      const filtered = rawDonghuaData.filter(item => item.title.toLowerCase().includes(query));
-      
-      resultGrid.innerHTML = '';
-      if (filtered.length === 0) {
-        resultGrid.innerHTML = '<p style="color: #64748b; font-size: 13px; grid-column: span 3;">Tidak ditemukan.</p>';
-        return;
-      }
+      resultGrid.innerHTML = '<p style="color: #64748b; font-size: 13px; grid-column: span 3; text-align: center;">Mencari...</p>';
 
-      filtered.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'card-grid';
-        card.onclick = function() {
-          toggleSearch();
-          openPage(item.slug);
-        };
+      searchTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+          const result = await res.json();
 
-        card.innerHTML = `
-          <div class="card-grid-img-wrapper">
-            <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-            <span class="badge-bottom">${item.episode}</span>
-          </div>
-          <div class="card-title">${item.title}</div>
-        `;
-        resultGrid.appendChild(card);
-      });
+          resultGrid.innerHTML = '';
+          if (!result.success || !result.data || result.data.length === 0) {
+            resultGrid.innerHTML = '<p style="color: #64748b; font-size: 13px; grid-column: span 3; text-align: center;">Tidak ditemukan.</p>';
+            return;
+          }
+
+          resultGrid.innerHTML = '';
+          result.data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card-grid';
+            card.onclick = function() {
+              toggleSearch();
+              openPage(item.slug);
+            };
+
+            card.innerHTML = `
+              <div class="card-grid-img-wrapper">
+                <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+                <span class="badge-bottom">${item.episode}</span>
+              </div>
+              <div class="card-title">${item.title}</div>
+            `;
+            resultGrid.appendChild(card);
+          });
+        } catch (err) {
+          resultGrid.innerHTML = '<p style="color: #ef4444; font-size: 13px; grid-column: span 3; text-align: center;">Gagal memuat hasil pencarian.</p>';
+        }
+      }, 400);
     }
 
     function openPage(path) {
@@ -365,8 +373,7 @@
           document.getElementById('pageDisplay').innerText = page;
           document.getElementById('prevBtn').style.display = page <= 1 ? 'none' : 'inline-block';
 
-          rawDonghuaData = result.data;
-          renderList(rawDonghuaData);
+          renderList(result.data, grid);
           paginationNav.style.display = 'flex';
         }
       } catch (err) {
@@ -374,10 +381,8 @@
       }
     }
 
-    function renderList(list) {
-      const grid = document.getElementById('donghuaGrid');
-      grid.innerHTML = '';
-      
+    function renderList(list, targetGrid) {
+      targetGrid.innerHTML = '';
       list.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card-grid';
@@ -392,7 +397,7 @@
           </div>
           <div class="card-title">${item.title}</div>
         `;
-        grid.appendChild(card);
+        targetGrid.appendChild(card);
       });
     }
 
@@ -561,7 +566,7 @@
     function openEpisodeSheet() {
       const sheetGrid = document.getElementById('sheetEpGrid');
       const overlay = document.getElementById('sheetOverlay');
-      sheetGrid.innerHTML = '';
+      sheetGrid.innerHTML = ``;
 
       if (globalEpisodes.length === 0) return;
 
