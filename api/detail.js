@@ -23,11 +23,11 @@ export default async function handler(req, res) {
 
   let html = null;
 
+  // Coba fetch HTML via Jina Reader Proxy untuk bypass Cloudflare Anichin
   for (const variant of slugVariants) {
     const targetUrl = `https://anichin.site/anime/${variant}/`;
     
     try {
-      // Menggunakan Proxy Jina Reader untuk bypass Cloudflare Anichin
       const proxyApiUrl = `https://r.jina.ai/${targetUrl}`;
       const response = await fetch(proxyApiUrl, {
         headers: {
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
       if (response.ok) {
         const text = await response.text();
-        if (text && text.includes('eplister')) {
+        if (text && (text.includes('eplister') || text.includes('entry-title'))) {
           html = text;
           break;
         }
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback 2: Jika Anichin gagal, coba fetch direct HTML via proxy alternative
+  // Fallback alternatif via AllOrigins proxy
   if (!html) {
     for (const variant of slugVariants) {
       try {
