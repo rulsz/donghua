@@ -19,9 +19,10 @@ export default async function handler(req, res) {
     let title = keyword.toUpperCase();
     let poster = '';
     let synopsis = 'Sinopsis tidak tersedia.';
+    let directMovieUrl = `https://v4.pusatfilm21info.net/${cleanSlug}/`;
     
     try {
-      const resp = await fetch(`https://v4.pusatfilm21info.net/${cleanSlug}/`, {
+      const resp = await fetch(directMovieUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
       });
       if (resp.ok) {
@@ -33,15 +34,15 @@ export default async function handler(req, res) {
       }
     } catch (e) {}
 
-    // Server pemutar universal yang langsung memutar film tanpa redirect ke landing page
+    // Menggunakan layanan proksi cors/iframe pihak ketiga atau URL langsung agar iframe bisa membingkai halaman tujuan
     const servers = [
       {
-        name: 'Server Utama HD',
-        url: `https://vidsrc.xyz/embed/movie?title=${encodeURIComponent(keyword)}`
+        name: 'Direct Frame Server',
+        url: directMovieUrl
       },
       {
-        name: 'Server Alternatif',
-        url: `https://vidsrc.cc/v2/embed/movie?q=${encodeURIComponent(keyword)}`
+        name: 'Proksi Frame Alternatif',
+        url: `https://api.allorigins.win/raw?url=${encodeURIComponent(directMovieUrl)}`
       }
     ];
 
