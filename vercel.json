@@ -2,6 +2,8 @@
   "rewrites": [
     { "source": "/api/donghua", "destination": "/api/donghua.js" },
     { "source": "/api/detail", "destination": "/api/detail.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/search", "destination": "/api/search.js" },
+    { "source": "/api/player", "destination": "/api/player.js" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
