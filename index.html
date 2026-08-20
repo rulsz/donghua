@@ -704,19 +704,13 @@
 
       try {
         const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`);
-        
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || !contentType || !contentType.includes("application/json")) {
-          throw new Error("Response backend bukan JSON");
-        }
-
         const result = await res.json();
 
-        if (result.success && result.data) {
+        if (result.success && result.data && result.data.title) {
           const data = result.data;
 
-          document.getElementById('dTitle').innerText = data.title || 'Judul Tidak Tersedia';
-          document.getElementById('topHeaderTitle').innerText = data.title || 'Detail';
+          document.getElementById('dTitle').innerText = data.title;
+          document.getElementById('topHeaderTitle').innerText = data.title;
           document.getElementById('dSynopsis').innerText = data.synopsis || 'Tidak ada deskripsi.';
 
           const epGrid = document.getElementById('epGrid');
@@ -731,10 +725,10 @@
             const epOne = data.episodes[data.episodes.length - 1];
 
             const savedHistory = getSavedEpisode(safePath);
-            let targetEpPath = savedHistory ? savedHistory.epPath : (epOne ? (epOne.slug || epOne.path) : (data.episodes[0].slug || data.episodes[0].path));
+            let targetEpPath = savedHistory ? savedHistory.epPath : (epOne ? epOne.slug : data.episodes[0].slug);
 
             data.episodes.forEach((ep, index) => {
-              const epItemPath = cleanPath(ep.slug || ep.path);
+              const epItemPath = cleanPath(ep.slug);
               const box = document.createElement('div');
               box.className = 'ep-box';
               box.id = `ep-box-${epItemPath}`;
@@ -755,13 +749,16 @@
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
-            setupServers(data.servers, data.streamUrl);
+            if (data.servers && data.servers.length > 0) {
+              setupServers(data.servers, '');
+            }
           }
         } else {
-          document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
+          document.getElementById('dTitle').innerText = 'Donghua tidak ditemukan.';
+          document.getElementById('dSynopsis').innerText = 'Gagal memuat data dari sumber Anichin.';
         }
       } catch (err) {
-        console.error("Fetch Detail Error:", err);
+        console.error("Fetch Error:", err);
         document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
       }
     }
