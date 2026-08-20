@@ -137,8 +137,10 @@
         </div>
       </div>
 
-      <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
-      <p class="synopsis-text" id="dSynopsis">Memuat deskripsi...</p>
+      <main>
+        <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
+        <p class="synopsis-text" id="dSynopsis">Memuat deskripsi...</p>
+      </main>
     </div>
   </div>
 
@@ -165,6 +167,11 @@
         .replace(/^\/?anime\//, '')
         .replace(/^\/?movie\//, '')
         .replace(/^\/+|\/+$/g, '');
+    }
+
+    function getEpNumber(title, fallback) {
+      const match = title ? title.match(/\d+/) : null;
+      return match ? match[0] : fallback;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -203,15 +210,15 @@
         } else {
           document.getElementById('epContainer').style.display = 'block';
           
-          // Balik urutan episode agar index 0 menjadi Episode 1
-          globalEpisodes = (data.episodes || []).slice().reverse();
+          // Mengikuti urutan asli dari sumber (Terbaru di awal, misal 154)
+          globalEpisodes = data.episodes || [];
           document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
 
           const epGrid = document.getElementById('epGrid');
           epGrid.innerHTML = '';
 
           globalEpisodes.forEach((ep, i) => {
-            const epNum = i + 1;
+            const epNum = getEpNumber(ep.title, globalEpisodes.length - i);
             const box = document.createElement('div');
             box.className = 'ep-box';
             box.innerText = epNum;
@@ -222,8 +229,10 @@
             epGrid.appendChild(box);
           });
 
+          // Otomatis putar episode pertama di list (Episode terbaru/154)
           if (globalEpisodes.length > 0) {
-            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, 'Ep 1');
+            const firstEpNum = getEpNumber(globalEpisodes[0].title, globalEpisodes.length);
+            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstEpNum}`);
           }
         }
       } else {
@@ -314,7 +323,7 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, i) => {
-        const epNum = i + 1;
+        const epNum = getEpNumber(ep.title, globalEpisodes.length - i);
         const box = document.createElement('div');
         box.className = 'ep-box';
         box.innerText = epNum;
@@ -332,7 +341,7 @@
     }
 
     function saveHistory(mainPath, epPath, title, poster, episode) {
-      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      let history = JSON.parse(localStorage.getItem('rz_continue_history'] || '[]');
       history = history.filter(item => item.mainPath !== mainPath);
       history.unshift({ mainPath, epPath, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 10)));
