@@ -52,7 +52,8 @@
     .detail-player-box { width: 100%; aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
     .player-iframe { width: 100%; height: 100%; border: none; }
 
-    .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; }
+    .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; scrollbar-width: none; }
+    .ep-scroll-grid::-webkit-scrollbar { display: none; }
     .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; cursor: pointer; }
     .ep-box.active { background: #581c87; border-color: #a855f7; color: #fff; }
 
@@ -124,7 +125,6 @@
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat player...';
 
-      // Coba API Donghua, fallback ke API Movie
       let res = await fetch(`/api/detail?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
       if (!res || !res.success) {
         res = await fetch(`/api/movie?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
