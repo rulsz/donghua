@@ -213,7 +213,12 @@
 
     function cleanPath(input) {
       if (!input) return '';
-      return String(input).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/anime\//, '').replace(/^\/movie\//, '').replace(/^\/+|\/+$/g, '');
+      return String(input)
+        .replace(/^https?:\/\/[^\/]+/, '')
+        .replace(/^\/detail\//, '')
+        .replace(/^\/anime\//, '')
+        .replace(/^\/movie\//, '')
+        .replace(/^\/+|\/+$/g, '');
     }
 
     function toggleDarkMode() {
@@ -266,7 +271,7 @@
     }
 
     function goToDetail(slug) {
-      window.location.href = `detail.html?slug=${encodeURIComponent(cleanPath(slug))}`;
+      window.location.href = `/detail/${cleanPath(slug)}`;
     }
 
     async function loadMainContent() {
