@@ -4,19 +4,23 @@ export default async function handler(req, res) {
   let { slug } = req.query;
 
   if (!slug) {
-    return res.status(400).json({ success: false, message: 'Slug/Path diperlukan' });
+    return res.status(400).json({ success: false, message: 'Slug diperlukan' });
   }
 
+  // Bersihkan slug dari prefix/suffix URL
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
-    .replace(/^\/anime\//, '')
-    .replace(/^\/episode\//, '')
+    .replace(/^\/?detail\//, '')
+    .replace(/^\/?anime\//, '')
+    .replace(/^\/?episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
+  // Daftar variasi pola URL untuk Animexin
   const urlsToTry = [
-    `https://animexin.dev/anime/${cleanSlug}/`,
     `https://animexin.dev/${cleanSlug}/`,
-    `https://animexin.dev/anime/${cleanSlug.replace(/-sub-indo$/, '')}/`
+    `https://animexin.dev/anime/${cleanSlug}/`,
+    `https://animexin.dev/${cleanSlug}-sub-indo/`,
+    `https://animexin.dev/anime/${cleanSlug}-sub-indo/`
   ];
 
   let html = null;
@@ -31,7 +35,7 @@ export default async function handler(req, res) {
 
       if (response.ok) {
         const text = await response.text();
-        if (text && (text.includes('eplister') || text.includes('entry-title') || text.includes('infox'))) {
+        if (text && (text.includes('eplister') || text.includes('entry-title') || text.includes('infox') || text.includes('embed') || text.includes('iframe'))) {
           html = text;
           break;
         }
@@ -42,32 +46,71 @@ export default async function handler(req, res) {
   }
 
   if (!html) {
-    return res.status(404).json({ success: false, message: 'Donghua tidak ditemukan di Animexin' });
+    return res.status(404).json({ success: false, message: 'Donghua/Episode tidak ditemukan di Animexin' });
   }
 
   try {
     const $ = cheerio.load(html);
 
-    const title = $('.entry-title').text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
+    const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
 
+    // Ambil daftar episode
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
       const epHref = $(el).attr('href') || '';
+      
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
       if (epSlug && !episodes.some(e => e.slug === epSlug)) {
         episodes.push({ title: epTitle, slug: epSlug });
       }
     });
 
+    // Urutkan episode dari episode 1 ke atas jika urutannya terbalik dari sumber
+    if (episodes.length > 1) {
+      const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
+      const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
+      if (firstEpNum > lastEpNum) {
+        episodes.reverse();
+      }
+    }
+
+    // Ekstrak Server Video / Player Iframe
     const servers = [];
-    $('.mirror option, select.mirror option').each((_, el) => {
+
+    // Iframe bawaan di halaman
+    $('iframe, embed').each((_, el) => {
+      let src = $(el).attr('src') || $(el).attr('data-src');
+      if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
+        if (src.startsWith('//')) src = 'https:' + src;
+        servers.push({ name: 'Server Utama', url: src });
+      }
+    });
+
+    // Opsi pilihan Server Mirror
+    $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
       const name = $(el).text().trim();
-      const value = $(el).attr('value');
+      let value = $(el).attr('value');
+      
       if (value && value !== '') {
-        servers.push({ name, url: value });
+        // Dekode jika nilai di-encode Base64
+        if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
+          try {
+            const decoded = Buffer.from(value, 'base64').toString('utf-8');
+            if (decoded.includes('http') || decoded.includes('iframe')) {
+              const match = decoded.match(/src=["']([^"']+)["']/);
+              value = match ? match[1] : decoded;
+            }
+          } catch (e) {}
+        }
+
+        if (value.startsWith('//')) value = 'https:' + value;
+        
+        if (value.includes('http') && !servers.some(s => s.url === value)) {
+          servers.push({ name: name || 'Server Mirror', url: value });
+        }
       }
     });
 
