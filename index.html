@@ -241,7 +241,7 @@
       right: 8px;
       width: max-content;
       max-width: calc(100% - 16px);
-      background: rgba(18, 24, 38, 0.78); 
+      background: rgba(18, 24, 38, 0.85); 
       backdrop-filter: blur(8px) saturate(180%);
       -webkit-backdrop-filter: blur(8px) saturate(180%);
       color: #38bdf8; 
@@ -469,38 +469,36 @@
     let searchTimer = null;
     let isDetailPage = false;
 
-    // LOGIKA PERBAIKAN: PARSER PARSING STATUS & EPISODE DARIPADA VARIASI API ANICHIN
+    // FUNGSI PARSER KURSUS UNTUK MEMBACA DONGHUA STATUS DAN EPISODE DARI ANICHIN
     function formatBadgeText(item) {
-      // 1. Dapatkan Status (Ongoing / Completed / Finished)
-      let rawStatus = item.status || item.type || item.state || '';
-      let status = 'Ongoing';
+      if (!item) return 'Ongoing';
 
-      if (rawStatus.toLowerCase().includes('complete') || rawStatus.toLowerCase().includes('finish')) {
-        status = 'Completed';
-      } else if (rawStatus.toLowerCase().includes('ongoing')) {
-        status = 'Ongoing';
+      // 1. Ekstrak Status (Ongoing / Completed)
+      const rawStatus = String(item.status || item.type || item.state || item.status_series || '').toLowerCase();
+      let statusText = 'Ongoing';
+      if (rawStatus.includes('complete') || rawStatus.includes('finish') || rawStatus.includes('tamat')) {
+        statusText = 'Completed';
+      } else if (rawStatus.includes('ongoing') || rawStatus.includes('lanjut')) {
+        statusText = 'Ongoing';
       }
 
-      // 2. Cek Berbagai Kemungkinan Key Teks Episode dari Anichin
-      let rawEp = item.episode || item.latest_episode || item.ep || item.latest || '';
+      // 2. Ekstrak Angka Episode dari Semua Kemungkinan Key Properti
+      let rawEp = item.episode || item.latest_episode || item.ep || item.latest || item.sub_title || item.title || item.slug || '';
       
-      // Jika episode belum ada di key khusus, coba cari dari title/sub-title jika ada
-      if (!rawEp && item.sub_title) rawEp = item.sub_title;
-
       let epNum = '';
       if (rawEp) {
-        const match = String(rawEp).match(/\d+/);
-        if (match) {
-          epNum = match[0].padStart(2, '0');
+        // Mencari pola angka setelah kata 'episode', 'ep', atau sekadar kumpulan angka
+        const epMatch = String(rawEp).match(/(?:episode|ep|\b)(\d+)/i);
+        if (epMatch && epMatch[1]) {
+          epNum = epMatch[1].padStart(2, '0');
+        } else {
+          const simpleMatch = String(rawEp).match(/\d+/);
+          if (simpleMatch) epNum = simpleMatch[0].padStart(2, '0');
         }
       }
 
-      // 3. Format Output
-      if (epNum) {
-        return `${status} • Ep ${epNum}`;
-      } else {
-        return status;
-      }
+      // 3. Gabungkan Format Output
+      return epNum ? `${statusText} • Ep ${epNum}` : statusText;
     }
 
     function switchTab(tabName, element) {
