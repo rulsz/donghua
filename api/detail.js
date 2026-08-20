@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     cleanSlug.replace(/-sub-indo$/, '')
   ];
 
-  // Fungsi Fetch dengan Timeout otomatis agar API Vercel tidak menggantung/stuck
-  const fetchWithTimeout = async (url, options = {}, timeout = 5000) => {
+  // Helper fetch dengan timeout ketat 3.5 detik agar Vercel tidak menggantung
+  const fetchWithTimeout = async (url, options = {}, timeout = 3500) => {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
@@ -32,78 +32,68 @@ export default async function handler(req, res) {
     }
   };
 
-  let rawHtml = '';
+  let fetchedData = null;
 
+  // Coba ambil via Consumet Scraper API
   for (const variant of slugVariants) {
-    const targetUrl = `https://anichin.site/anime/${variant}/`;
-    
-    // Coba Jalur Scraper Proxy 1
-    const res1 = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, {}, 4000);
-    if (res1 && res1.ok) {
-      const json1 = await res1.json();
-      if (json1.contents && (json1.contents.includes('eplister') || json1.contents.includes('entry-title'))) {
-        rawHtml = json1.contents;
-        break;
-      }
-    }
+    const apiUrl = `https://api.consumet.org/anime/anichin/info/${variant}`;
+    const response = await fetchWithTimeout(apiUrl, {}, 3500);
 
-    // Coba Jalur Scraper Proxy 2 (Fallback)
-    const res2 = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 4000);
-    if (res2 && res2.ok) {
-      const text2 = await res2.text();
-      if (text2 && (text2.includes('eplister') || text2.includes('entry-title'))) {
-        rawHtml = text2;
-        break;
+    if (response && response.ok) {
+      try {
+        const json = await response.json();
+        if (json && json.title) {
+          fetchedData = {
+            title: json.title,
+            poster: json.image || '',
+            synopsis: json.description || 'Tidak ada deskripsi.',
+            episodes: (json.episodes || []).map(ep => ({
+              title: ep.title || `Episode ${ep.number}`,
+              slug: ep.id || ep.slug
+            }))
+          };
+          break;
+        }
+      } catch (e) {}
+    }
+  }
+
+  // Fallback ke Secondary JSON API jika Consumet sibuk
+  if (!fetchedData) {
+    for (const variant of slugVariants) {
+      const altApiUrl = `https://anichin-api.vercel.app/api/detail/${variant}`;
+      const responseAlt = await fetchWithTimeout(altApiUrl, {}, 3500);
+
+      if (responseAlt && responseAlt.ok) {
+        try {
+          const jsonAlt = await responseAlt.json();
+          if (jsonAlt && jsonAlt.title) {
+            fetchedData = {
+              title: jsonAlt.title,
+              poster: jsonAlt.poster || jsonAlt.image || '',
+              synopsis: jsonAlt.synopsis || jsonAlt.description || 'Tidak ada deskripsi.',
+              episodes: (jsonAlt.episodes || []).map(ep => ({
+                title: ep.title || ep.name || 'Episode',
+                slug: ep.slug || ep.id
+              }))
+            };
+            break;
+          }
+        } catch (e) {}
       }
     }
   }
 
-  // Jika semua jalur terblokir/timeout, kembalikan respon ganti secara aman
-  if (!rawHtml) {
+  // Jika semua serverless scraper mengalami timeout/terblokir, kembalikan pesan ganti secara graceful
+  if (!fetchedData) {
     return res.status(200).json({ 
       success: false, 
-      message: 'Situs sumber (Anichin) sedang memblokir koneksi atau mengalami timeout.' 
+      message: 'Server Anichin sedang mengalami hambatan koneksi/terblokir. Silakan coba beberapa saat lagi.' 
     });
   }
 
-  try {
-    const titleMatch = rawHtml.match(/<h1[^>]*class="entry-title"[^>]*>(.*?)<\/h1>/i) || rawHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
-    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : 'Judul Donghua';
-
-    const posterMatch = rawHtml.match(/<div[^>]*class="[^\"]*thumb[^\"]*"[^>]*>\s*<img[^>]*src="([^"]+)"/i) || rawHtml.match(/<img[^>]*src="([^"]+)"/i);
-    const poster = posterMatch ? posterMatch[1] : '';
-
-    const synopsisMatch = rawHtml.match(/<div[^>]*class="entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-    let synopsis = synopsisMatch ? synopsisMatch[1].replace(/<[^>]+>/g, '').trim() : 'Tidak ada deskripsi.';
-
-    const episodes = [];
-    const epRegex = /<li[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/li>/gi;
-    let match;
-
-    while ((match = epRegex.exec(rawHtml)) !== null) {
-      const href = match[1];
-      const content = match[2];
-      
-      const epSlug = href.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
-      const epTitleMatch = content.match(/class="epl-title"[^>]*>(.*?)<\/div>/i);
-      const epTitle = epTitleMatch ? epTitleMatch[1].trim() : content.replace(/<[^>]+>/g, '').trim();
-
-      if (epSlug && !episodes.some(e => e.slug === epSlug)) {
-        episodes.push({ title: epTitle, slug: epSlug });
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        title,
-        poster,
-        synopsis,
-        episodes
-      }
-    });
-
-  } catch (error) {
-    return res.status(200).json({ success: false, message: 'Gagal ekstrak detail' });
-  }
+  return res.status(200).json({
+    success: true,
+    data: fetchedData
+  });
 }
