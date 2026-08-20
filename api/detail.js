@@ -13,7 +13,10 @@ module.exports = async (req, res) => {
     let targetUrl = `https://anichin.moe/${slug}/`;
     let html = await cloudscraper.get({
       uri: targetUrl,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' }
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://anichin.moe/'
+      }
     });
 
     let $ = cheerio.load(html);
@@ -24,6 +27,7 @@ module.exports = async (req, res) => {
     let synopsis = $('.entry-content p, .synopsis p, .desc p').first().text().trim();
     if (!synopsis || synopsis.toLowerCase().includes('shortlink')) synopsis = 'Tidak ada sinopsis.';
 
+    // 1. Ekstraksi Episode
     const episodes = [];
     $('.eplister ul li a, .eplister li a').each((_, el) => {
       const link = $(el).attr('href');
@@ -36,45 +40,90 @@ module.exports = async (req, res) => {
       }
     });
 
-    // FUNGSI EKSTRAKSI LEBIH KUAT
+    // 2. Fungsi Ekstraksi URL Player Super Lengkap
+    function extractEmbedUrl(val) {
+      if (!val) return '';
+      let str = val.trim();
+
+      // Dekode Base64 jika string terenkripsi
+      if (!str.startsWith('http') && !str.startsWith('//') && str.length > 15) {
+        try {
+          let decoded = Buffer.from(str, 'base64').toString('utf-8');
+          if (decoded.includes('http') || decoded.includes('iframe') || decoded.includes('src=')) {
+            str = decoded;
+          }
+        } catch (e) {}
+      }
+
+      // Ambil URL dari tag iframe jika berupa HTML string
+      const match = str.match(/src=["']([^"']+)["']/i);
+      if (match) str = match[1];
+
+      // Format protocol URL
+      if (str.startsWith('//')) str = 'https:' + str;
+
+      return str.startsWith('http') ? str : '';
+    }
+
     function parseServers($doc) {
       const servers = [];
-      
-      // 1. Cek Dropdown Server (Mirror)
-      $doc('.mirror option, select#selectserver option').each((_, el) => {
+      const addedUrls = new Set();
+
+      // Method A: Ambil dari Option Dropdown Server (Paling Umum)
+      $doc('.mirror option, select#selectserver option, select.mirror option').each((_, el) => {
         const name = $doc(el).text().trim();
-        const val = $doc(el).attr('value') || '';
-        if (val && !name.toLowerCase().includes('pilih')) {
-          // Coba dekode jika base64
-          let url = val;
-          if (val.length > 20 && !val.startsWith('http')) {
-             try { url = Buffer.from(val, 'base64').toString('utf-8'); } catch(e) {}
-             const match = url.match(/src=["']([^"']+)["']/i);
-             if (match) url = match[1];
+        const val = $doc(el).attr('value') || $doc(el).attr('data-em') || $doc(el).attr('data-content') || '';
+        
+        if (val && !name.toLowerCase().includes('pilih') && !name.toLowerCase().includes('ads')) {
+          const embedUrl = extractEmbedUrl(val);
+          if (embedUrl && !addedUrls.has(embedUrl) && !embedUrl.includes('dailymotion') && !embedUrl.includes('shortlink')) {
+            addedUrls.add(embedUrl);
+            servers.push({ name, url: embedUrl });
           }
-          if (url.startsWith('//')) url = 'https:' + url;
-          if (!url.includes('ads')) servers.push({ name, url });
         }
       });
 
-      // 2. Jika tidak ada di dropdown, cari iframe di konten
-      if (servers.length === 0) {
-        $doc('iframe').each((_, el) => {
-          let src = $doc(el).attr('src') || '';
-          if (src && !src.includes('ads') && !src.includes('disqus')) {
-            if (src.startsWith('//')) src = 'https:' + src;
-            servers.push({ name: 'Mirror Server', url: src });
-          }
-        });
-      }
+      // Method B: Ambil dari Iframe Langsung di Player Box
+      $doc('.player-embed iframe, #pembed iframe, .responsive-embed-stream iframe, iframe').each((_, el) => {
+        let src = $doc(el).attr('src') || $doc(el).attr('data-src') || $doc(el).attr('data-lazy-src') || '';
+        const embedUrl = extractEmbedUrl(src);
+        
+        if (embedUrl && !addedUrls.has(embedUrl) && !embedUrl.includes('facebook') && !embedUrl.includes('disqus') && !embedUrl.includes('ads')) {
+          addedUrls.add(embedUrl);
+          servers.push({ name: 'Server Utama', url: embedUrl });
+        }
+      });
+
       return servers;
     }
 
     let rawServers = parseServers($);
 
+    // 3. Fallback: Jika Halaman Anime Utama Tidak Punya Server, Ambil dari Episode Pertama
+    if (rawServers.length === 0 && episodes.length > 0) {
+      try {
+        const firstEpHtml = await cloudscraper.get({
+          uri: `https://anichin.moe/${episodes[0].slug}/`,
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Referer': 'https://anichin.moe/'
+          }
+        });
+        const $ep = cheerio.load(firstEpHtml);
+        rawServers = parseServers($ep);
+      } catch (e) {}
+    }
+
     return res.status(200).json({
       success: true,
-      data: { title, poster, synopsis, servers: rawServers, episodes }
+      data: {
+        title,
+        poster,
+        synopsis,
+        servers: rawServers,
+        streamUrl: rawServers.length > 0 ? rawServers[0].url : '',
+        episodes
+      }
     });
 
   } catch (error) {
