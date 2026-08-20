@@ -99,11 +99,26 @@
     let globalEpisodes = [];
     let currentMainTitle = '';
 
-    function cleanSlug(str) { return String(str).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/?detail\//, '').replace(/^\/?anime\//, '').replace(/^\/?movie\//, '').replace(/^\/+|\/+$/g, ''); }
-    function getEpNumber(title, fallback) { const match = title ? title.match(/\d+/) : null; return match ? parseInt(match[0]) : fallback; }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    let targetSlug = cleanSlug(urlParams.get('slug') || window.location.pathname);
+    function cleanSlug(str) {
+      const urlParams = new URLSearchParams(window.location.search);
+      let paramSlug = urlParams.get('slug');
+      if (paramSlug) str = paramSlug;
+      if (!str) str = window.location.pathname;
+      return String(str)
+        .replace(/^https?:\/\/[^\/]+/, '')
+        .replace(/^\/?detail\//, '')
+        .replace(/^\/?anime\//, '')
+        .replace(/^\/?movie\//, '')
+        .replace(/^\/?film\//, '')
+        .replace(/^\/+|\/+$/g, '');
+    }
+
+    function getEpNumber(title, fallback) {
+      const match = title ? title.match(/\d+/) : null;
+      return match ? parseInt(match[0]) : fallback;
+    }
+
+    let targetSlug = cleanSlug();
 
     function goBack() { window.location.href = '/'; }
 
@@ -111,9 +126,18 @@
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat player...';
 
+      if (!targetSlug) {
+        document.getElementById('dTitle').innerText = 'Slug tidak ditemukan';
+        mediaBox.innerHTML = 'Media tidak ditemukan.';
+        return;
+      }
+
+      // Coba ambil sebagai Donghua terlebih dahulu
       let res = await fetch(`/api/detail?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
-      if (!res || !res.success) {
-        res = await fetch(`/api/movie?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
+      
+      // Jika gagal atau bukan donghua, ambil sebagai Movie dari PusatFilm21
+      if (!res || !res.success || (!res.data?.episodes?.length && !res.data?.servers?.length)) {
+        res = await fetch(`/api/movie-detail?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
       }
 
       if (res && res.success && res.data) {
@@ -123,7 +147,7 @@
         document.getElementById('topHeaderTitle').innerText = data.title;
         document.getElementById('dSynopsis').innerText = data.synopsis || 'Tidak ada deskripsi.';
 
-        if (data.isMovie) {
+        if (data.isMovie || !data.episodes || data.episodes.length === 0) {
           document.getElementById('epContainer').style.display = 'none';
           setupServers(data.servers);
           saveHistory(targetSlug, targetSlug, data.title, data.poster, 'Movie');
@@ -183,7 +207,7 @@
       serverSelect.innerHTML = '';
 
       if (servers && servers.length > 0) {
-        let defaultIndex = servers.findIndex(s => /indo|sub indo/i.test(s.name));
+        let defaultIndex = servers.findIndex(s => /indo|sub indo|utama/i.test(s.name));
         if (defaultIndex === -1) defaultIndex = 0;
 
         servers.forEach((srv, index) => {
