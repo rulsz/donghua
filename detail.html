@@ -109,13 +109,19 @@
   </div>
 
   <script>
-    // Ambil slug dari query parameter Vercel Rewrite atau URL Path
-    const urlParams = new URLSearchParams(window.location.search);
-    let targetSlug = urlParams.get('slug');
-
-    if (!targetSlug) {
-      targetSlug = window.location.pathname.replace(/^\/detail\//, '').replace(/\/$/, '');
+    function cleanSlug(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/^https?:\/\/[^\/]+/, '')
+        .replace(/^\/?detail\//, '')
+        .replace(/^\/?anime\//, '')
+        .replace(/^\/?movie\//, '')
+        .replace(/^\/+|\/+$/g, '');
     }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let rawSlug = urlParams.get('slug') || window.location.pathname;
+    let targetSlug = cleanSlug(rawSlug);
 
     function goBack() {
       window.location.href = '/';
@@ -161,16 +167,18 @@
             box.onclick = () => {
               document.querySelectorAll('.ep-box').forEach(b => b.classList.remove('active'));
               box.classList.add('active');
-              saveHistory(targetSlug, ep.slug, data.title, data.poster, `Ep ${i + 1}`);
-              fetchAndPlayStream(ep.slug);
+              const cleanEpSlug = cleanSlug(ep.slug);
+              saveHistory(targetSlug, cleanEpSlug, data.title, data.poster, `Ep ${i + 1}`);
+              fetchAndPlayStream(cleanEpSlug);
             };
             epGrid.appendChild(box);
           });
 
           if (data.episodes && data.episodes.length > 0) {
             epGrid.children[0].classList.add('active');
-            saveHistory(targetSlug, data.episodes[0].slug, data.title, data.poster, 'Ep 1');
-            fetchAndPlayStream(data.episodes[0].slug);
+            const cleanFirstEpSlug = cleanSlug(data.episodes[0].slug);
+            saveHistory(targetSlug, cleanFirstEpSlug, data.title, data.poster, 'Ep 1');
+            fetchAndPlayStream(cleanFirstEpSlug);
           }
         }
       } else {
@@ -182,7 +190,8 @@
     async function fetchAndPlayStream(epSlug) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat video...';
-      const res = await fetch(`/api/detail?slug=${encodeURIComponent(epSlug)}`).then(r => r.json()).catch(() => null);
+      const cleanEp = cleanSlug(epSlug);
+      const res = await fetch(`/api/detail?slug=${encodeURIComponent(cleanEp)}`).then(r => r.json()).catch(() => null);
 
       if (res && res.success && res.data && res.data.servers && res.data.servers.length > 0) {
         mediaBox.innerHTML = `<iframe class="player-iframe" src="${res.data.servers[0].url}" allowfullscreen></iframe>`;
