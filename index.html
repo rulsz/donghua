@@ -8,9 +8,6 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
 
-  <!-- Three.js Library untuk WebGL Shader Liquid Glass -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
     body { 
@@ -29,9 +26,10 @@
     }
     body.light-mode .brand-title { color: #0b0f19 !important; }
     body.light-mode .icon-circle-btn { 
-      color: #0f172a; 
-      border-color: rgba(0, 0, 0, 0.12);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      background: rgba(0, 0, 0, 0.05); 
+      border: 1px solid rgba(0, 0, 0, 0.08); 
+      color: #0b0f19; 
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     body.light-mode .search-input-header { background: #e2e8f0; border-color: #cbd5e1; color: #0b0f19; }
     body.light-mode .header-search-box { background: rgba(248, 250, 252, 0.95); }
@@ -46,7 +44,7 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* HEADER POLOS DENGAN BAYANGAN GRADASI HALUS */
+    /* HEADER POLOS DENGAN GRADASI HALUS */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       background: linear-gradient(to bottom, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.5) 70%, rgba(11, 15, 25, 0) 100%); 
@@ -67,39 +65,29 @@
     .header-left-group { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
-    /* TOMBOL BULAT LIQUID GLASS (44px) */
+    /* TOMBOL BULAT GLASSMORPHISM CSS PURE */
     .icon-circle-btn { 
       position: relative;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.08); 
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
       color: #ffffff; 
       border-radius: 50%; 
       width: 44px; height: 44px; 
       cursor: pointer; 
       display: flex; align-items: center; justify-content: center; 
       flex-shrink: 0; 
-      transition: transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease; 
-      overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
     }
     .icon-circle-btn:active {
       transform: scale(0.92);
-    }
-    
-    /* CANVAS WEBGL GLASS OVERLAY */
-    .glass-canvas {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 1;
-      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
     }
 
     .icon-circle-btn svg { 
-      position: relative;
-      z-index: 2;
       width: 20px; height: 20px; 
       fill: none; stroke: currentColor; stroke-width: 2.2; 
       stroke-linecap: round; stroke-linejoin: round;
@@ -207,7 +195,6 @@
       <div class="header-normal-group" id="headerNormalGroup">
         <div class="header-left-group" onclick="handleLeftNavClick()">
           <button class="icon-circle-btn" id="mainNavBtn" aria-label="Navigation">
-            <canvas class="glass-canvas"></canvas>
             <svg id="iconHamburger" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             <svg id="iconBack" viewBox="0 0 24 24" style="display: none;"><path d="m15 18-6-6 6-6"/></svg>
           </button>
@@ -215,11 +202,9 @@
         </div>
         <div class="header-right-group">
           <button class="icon-circle-btn" onclick="toggleDarkMode()" aria-label="Mode Gelap">
-            <canvas class="glass-canvas"></canvas>
             <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
           <button class="icon-circle-btn" onclick="toggleSearch()" aria-label="Search">
-            <canvas class="glass-canvas"></canvas>
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </button>
         </div>
@@ -228,7 +213,6 @@
       <div class="header-search-box" id="headerSearchBox">
         <input type="text" class="search-input-header" id="searchInputHeader" placeholder="Cari judul donghua (semua halaman)..." onkeyup="handleSearchInput(event)">
         <button class="icon-circle-btn" onclick="toggleSearch()" aria-label="Tutup">
-          <canvas class="glass-canvas"></canvas>
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -325,103 +309,6 @@
     </div>
   </div>
 
-  <!-- INISIALISASI WEBGL SHADER LIQUID GLASS DENGAN DUKUNGAN TEMA DYNAMIC -->
-  <script>
-    let glassUniformsList = [];
-
-    function initLiquidGlassShaders() {
-      const vertexShader = `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = vec4(position, 1.0);
-        }
-      `;
-
-      // Shader Liquid Glass dengan Refraksi & Warna Menyesuaikan Tema
-      const fragmentShader = `
-        uniform vec2 u_resolution;
-        uniform float u_time;
-        uniform float u_isLight;
-        varying vec2 vUv;
-
-        void main() {
-          vec2 st = gl_FragCoord.xy / u_resolution.xy;
-          vec2 center = vec2(0.5);
-          float dist = distance(st, center);
-          
-          // Refraksi Cembung Kaca
-          float refraction = smoothstep(0.5, 0.0, dist) * 0.12;
-          vec2 offset = (st - center) * refraction;
-          
-          // Warna Base Glass Menyesuaikan Mode Dark / Light
-          vec3 darkBase = vec3(0.12, 0.16, 0.25);
-          vec3 lightBase = vec3(0.92, 0.95, 0.98);
-          vec3 baseColor = mix(darkBase, lightBase, u_isLight);
-
-          // Kilauan & Refleksi Cahaya Kaca
-          float glassHighlight = pow(1.0 - dist, 3.0) * mix(0.45, 0.7, u_isLight);
-          float rimLight = smoothstep(0.42, 0.49, dist) * smoothstep(0.5, 0.48, dist) * mix(0.85, 0.5, u_isLight);
-          
-          vec3 highlightColor = mix(vec3(1.0), vec3(0.7, 0.85, 1.0), u_isLight);
-          vec3 color = baseColor + (highlightColor * glassHighlight) + (highlightColor * rimLight);
-          
-          float alpha = smoothstep(0.5, 0.48, dist) * mix(0.85, 0.65, u_isLight);
-
-          gl_FragColor = vec4(color, alpha);
-        }
-      `;
-
-      document.querySelectorAll('.icon-circle-btn').forEach(btn => {
-        const canvas = btn.querySelector('.glass-canvas');
-        if (!canvas) return;
-
-        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-        renderer.setSize(44, 44);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-        const isLight = document.body.classList.contains('light-mode') ? 1.0 : 0.0;
-
-        const uniforms = {
-          u_resolution: { value: new THREE.Vector2(44 * window.devicePixelRatio, 44 * window.devicePixelRatio) },
-          u_time: { value: 0 },
-          u_isLight: { value: isLight }
-        };
-
-        glassUniformsList.push(uniforms);
-
-        const material = new THREE.ShaderMaterial({
-          vertexShader: vertexShader,
-          fragmentShader: fragmentShader,
-          uniforms: uniforms,
-          transparent: true
-        });
-
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-
-        function animate(time) {
-          uniforms.u_time.value = time * 0.001;
-          renderer.render(scene, camera);
-          requestAnimationFrame(animate);
-        }
-        requestAnimationFrame(animate);
-      });
-    }
-
-    function updateGlassTheme(isLight) {
-      glassUniformsList.forEach(u => {
-        u.u_isLight.value = isLight ? 1.0 : 0.0;
-      });
-    }
-
-    window.addEventListener('load', initLiquidGlassShaders);
-  </script>
-
   <script>
     let currentPage = 1;
     let globalEpisodes = [];
@@ -440,7 +327,6 @@
       document.body.classList.toggle('light-mode');
       const isLight = document.body.classList.contains('light-mode');
       localStorage.setItem('rz_theme', isLight ? 'light' : 'dark');
-      updateGlassTheme(isLight);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
