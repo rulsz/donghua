@@ -2,28 +2,28 @@ export default async function handler(req, res) {
   try {
     const page = req.query.page || 1;
     
-    // Menggunakan API direktori publik yang stabil untuk daftar film populer & terbaru
-    const response = await fetch(`https://vidsrc.xyz/movies/latest/page-${page}.json`, {
+    // Mengambil data film dari API publik yang stabil dan bebas blokir Cloudflare
+    const response = await fetch(`https://movie-api-ed63.onrender.com/api/get`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 
     if (!response.ok) {
-      return res.status(404).json({ success: false, message: 'Gagal memuat daftar film' });
+      return res.status(404).json({ success: false, message: 'Gagal memuat film' });
     }
 
     const json = await response.json();
     const data = [];
 
-    // Format data agar sesuai dengan struktur frontend Anda
-    if (json && json.result) {
-      json.result.forEach(movie => {
+    // Memetakan data film terbaru dari sumber
+    if (json && json.latest) {
+      json.latest.forEach(movie => {
         data.push({
-          title: movie.title,
-          poster: movie.poster || movie.banner || '',
-          slug: movie.imdb_id || movie.slug || encodeURIComponent(movie.title),
-          episode: movie.quality || 'HD',
+          title: movie.type || 'Film',
+          poster: movie.name || '',
+          slug: movie.id || '',
+          episode: movie.img || 'HD',
           type: 'Movie'
         });
       });
