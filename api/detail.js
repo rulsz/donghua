@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     
+    // Sinopsis Bahasa Indonesia saja
     let synopsis = 'Tidak ada deskripsi.';
     try {
       let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || '';
@@ -67,16 +68,25 @@ export default async function handler(req, res) {
       }
     } catch (err) {}
 
-    const episodes = [];
+    // Ambil daftar episode dan urutkan berdasarkan angka episode secara rapi (Ascending: 1 ke 154)
+    let episodes = [];
     try {
       $('.eplister ul li a, .eplist ul li a').each((_, el) => {
         const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
         const epHref = $(el).attr('href') || '';
         const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
-        if (epSlug && !episodes.some(e => e.slug === epSlug)) {
-          episodes.push({ title: epTitle || 'Episode', slug: epSlug });
+        
+        if (epSlug) {
+          const matchNum = epTitle.match(/\d+/);
+          const epNum = matchNum ? parseInt(matchNum[0]) : 0;
+          if (!episodes.some(e => e.slug === epSlug)) {
+            episodes.push({ title: epTitle, slug: epSlug, num: epNum });
+          }
         }
       });
+
+      // Urutkan dari angka episode terkecil ke terbesar (1, 2, 3 ... 154)
+      episodes.sort((a, b) => a.num - b.num);
     } catch (err) {}
 
     const servers = [];
