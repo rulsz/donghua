@@ -1,45 +1,36 @@
-import * as cheerio from 'cheerio';
-
 export default async function handler(req, res) {
   let { slug } = req.query;
 
   if (!slug) {
-    return res.status(400).json({ success: false, message: 'Path/Slug diperlukan' });
+    return res.status(400).json({ success: false, message: 'Slug diperlukan' });
   }
 
-  // Sanitasi slug dari URL penuh atau prefix
+  // Sanitasi slug
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/anime\//, '')
     .replace(/^\/episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  // Daftar variasi rute Anichin
   const slugVariants = [
     cleanSlug,
     `${cleanSlug}-sub-indo`,
     cleanSlug.replace(/-sub-indo$/, '')
   ];
 
-  let html = null;
+  let rawHtml = '';
 
-  // Coba fetch HTML via Jina Reader Proxy untuk bypass Cloudflare Anichin
+  // Gunakan Scraper Proxy yang mengembalikan HTML murni tanpa konversi Markdown
   for (const variant of slugVariants) {
     const targetUrl = `https://anichin.site/anime/${variant}/`;
-    
     try {
-      const proxyApiUrl = `https://r.jina.ai/${targetUrl}`;
-      const response = await fetch(proxyApiUrl, {
-        headers: {
-          'X-Target-Url': targetUrl,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const response = await fetch(proxyUrl);
+      
       if (response.ok) {
-        const text = await response.text();
-        if (text && (text.includes('eplister') || text.includes('entry-title'))) {
-          html = text;
+        const json = await response.json();
+        if (json.contents && (json.contents.includes('eplister') || json.contents.includes('entry-title'))) {
+          rawHtml = json.contents;
           break;
         }
       }
@@ -48,55 +39,38 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback alternatif via AllOrigins proxy
-  if (!html) {
-    for (const variant of slugVariants) {
-      try {
-        const altUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://anichin.site/anime/${variant}/`)}`;
-        const resAlt = await fetch(altUrl);
-        if (resAlt.ok) {
-          const textAlt = await resAlt.text();
-          if (textAlt && (textAlt.includes('eplister') || textAlt.includes('entry-title'))) {
-            html = textAlt;
-            break;
-          }
-        }
-      } catch (e) {
-        continue;
-      }
-    }
-  }
-
-  if (!html) {
-    return res.status(404).json({ success: false, message: 'Detail donghua tidak ditemukan' });
+  if (!rawHtml) {
+    return res.status(404).json({ success: false, message: 'Donghua tidak ditemukan' });
   }
 
   try {
-    const $ = cheerio.load(html);
-    
-    // Parsing Data Detail
-    const title = $('.entry-title').text().trim() || $('h1').first().text().trim() || 'Judul Tidak Diketahui';
-    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
-    const synopsis = $('.entry-content p').text().trim() || $('.synopsis p').text().trim() || 'Tidak ada deskripsi.';
+    // Regex parsing ringan tanpa kebergantungan DOMParser/Cheerio yang rentan crash
+    const titleMatch = rawHtml.match(/<h1[^>]*class="entry-title"[^>]*>(.*?)<\/h1>/i) || rawHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : 'Judul Donghua';
 
+    const posterMatch = rawHtml.match(/<div[^>]*class="[^\"]*thumb[^\"]*"[^>]*>\s*<img[^>]*src="([^"]+)"/i) || rawHtml.match(/<img[^>]*src="([^"]+)"/i);
+    const poster = posterMatch ? posterMatch[1] : '';
+
+    const synopsisMatch = rawHtml.match(/<div[^>]*class="entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    let synopsis = synopsisMatch ? synopsisMatch[1].replace(/<[^>]+>/g, '').trim() : 'Tidak ada deskripsi.';
+
+    // Extract Episode List
     const episodes = [];
-    $('.eplister ul li a').each((_, el) => {
-      const epTitle = $(el).find('.epl-title').text().trim() || $(el).text().trim();
-      const epHref = $(el).attr('href') || '';
-      const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
-      if (epSlug) {
+    const epRegex = /<li[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/li>/gi;
+    let match;
+
+    while ((match = epRegex.exec(rawHtml)) !== null) {
+      const href = match[1];
+      const content = match[2];
+      
+      const epSlug = href.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
+      const epTitleMatch = content.match(/class="epl-title"[^>]*>(.*?)<\/div>/i);
+      const epTitle = epTitleMatch ? epTitleMatch[1].trim() : content.replace(/<[^>]+>/g, '').trim();
+
+      if (epSlug && !episodes.some(e => e.slug === epSlug)) {
         episodes.push({ title: epTitle, slug: epSlug });
       }
-    });
-
-    const servers = [];
-    $('.mirror option').each((_, el) => {
-      const name = $(el).text().trim();
-      const value = $(el).attr('value');
-      if (value && value !== '') {
-        servers.push({ name, url: value });
-      }
-    });
+    }
 
     return res.status(200).json({
       success: true,
@@ -104,11 +78,11 @@ export default async function handler(req, res) {
         title,
         poster,
         synopsis,
-        episodes,
-        servers
+        episodes
       }
     });
+
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Gagal melakukan parsing data HTML' });
+    return res.status(500).json({ success: false, message: 'Gagal ekstrak detail' });
   }
 }
