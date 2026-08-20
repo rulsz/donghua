@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     
-    // Sinopsis Bahasa Indonesia saja
+    // Pembersihan sinopsis (hanya mengambil teks Bahasa Indonesia)
     let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
     let synopsis = rawSynopsis;
     const matchIndo = rawSynopsis.match(/(indonesia|indonesian)([\s\S]*)/i);
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       synopsis = rawSynopsis.replace(/^English/i, '').trim();
     }
 
-    // Ambil daftar episode secara natural persis dari sumber
+    // Ambil daftar episode secara stabil
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
