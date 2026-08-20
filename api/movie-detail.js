@@ -29,11 +29,10 @@ export default async function handler(req, res) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    const title = $('.entry-title, h1.title, .mvic-desc h3').first().text().trim() || 'Judul Film';
-    const poster = $('.mvic-thumb img, .poster img, .thumb img').attr('src') || '';
-    const synopsis = $('.desc, .entry-content, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.';
+    const title = $('.entry-title').first().text().trim() || $('h1.title').text().trim() || $('h1').first().text().trim() || 'Judul Film';
+    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || $('.mvic-thumb img').attr('src') || '';
+    const synopsis = $('.desc p, .entry-content p, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.';
 
-    // Cari server video / iframe player
     const servers = [];
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
@@ -43,8 +42,8 @@ export default async function handler(req, res) {
       }
     });
 
-    // Ambil pilihan server dari dropdown/mirror jika ada
-    $('.player-option select option, .dropdown-menu a, .server-item').each((_, el) => {
+    // Ambil opsi dari dropdown mirror/server jika ada
+    $('.player-option select option, .dropdown-menu a, .server_select option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value') || $(el).attr('data-url') || $(el).attr('href');
       if (value && value.includes('http') && !servers.some(s => s.url === value)) {
