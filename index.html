@@ -3,374 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RZ Media Player - Beranda</title>
-
+  <title>RZ Stream - Animexin</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-    
-    body { 
-      background-color: #000000; 
-      color: #f8fafc; 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      padding-top: 68px; 
-      padding-bottom: 90px; 
-      transition: background 0.3s, color 0.3s; 
-    }
-    
-    body.light-mode { background-color: #f8fafc; color: #0b0f19; }
-    body.light-mode header { 
-      background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95) 0%, rgba(248, 250, 252, 0.6) 70%, rgba(248, 250, 252, 0) 100%); 
-    }
-    body.light-mode .brand-title { color: #0b0f19 !important; }
-    body.light-mode .icon-circle-btn,
-    body.light-mode .search-input-header { 
-      background: rgba(0, 0, 0, 0.05); 
-      border: 1px solid rgba(0, 0, 0, 0.08); 
-      color: #0b0f19; 
-    }
-    body.light-mode .bottom-nav-container {
-      background: rgba(240, 243, 248, 0.9);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-    body.light-mode .badge-bottom {
-      background: rgba(255, 255, 255, 0.85);
-      border-color: rgba(0, 0, 0, 0.15);
-      color: #0284c7;
-    }
-    body.light-mode .nav-item { color: #64748b; }
-    body.light-mode .nav-item.active { background: rgba(0, 0, 0, 0.08); color: #2563eb; }
-
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
-
-    header { 
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 70%, rgba(0, 0, 0, 0) 100%); 
-      padding: 10px 16px 16px 16px; 
-      pointer-events: none;
-    }
-    .header-content { 
-      max-width: 1000px; margin: 0 auto; 
-      display: flex; justify-content: space-between; align-items: center; 
-      position: relative; height: 44px; 
-      pointer-events: auto;
-    }
-    
-    .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-    .header-left-group { display: flex; align-items: center; gap: 12px; }
-    .header-right-group { display: flex; align-items: center; gap: 8px; }
-
-    .icon-circle-btn { 
-      background: rgba(255, 255, 255, 0.08); 
-      backdrop-filter: blur(12px);
-      color: #ffffff; 
-      border-radius: 50%; 
-      width: 44px; height: 44px; 
-      cursor: pointer; 
-      display: flex; align-items: center; justify-content: center; 
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .icon-circle-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; }
-    .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; }
-
-    .header-search-box { 
-      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 44px; align-items: center; gap: 10px; z-index: 10; 
-    }
-    .header-search-box.active { display: flex; }
-    .search-input-header { 
-      flex: 1; height: 44px; background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15); padding: 0 18px; border-radius: 22px; color: #ffffff; font-size: 15px; outline: none; 
-    }
-
-    .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
-    .search-results-dropdown.active { display: block; }
-
-    .bottom-nav-wrapper {
-      position: fixed; bottom: 16px; left: 0; right: 0; z-index: 100;
-      display: flex; justify-content: center; padding: 0 16px; pointer-events: none;
-    }
-
-    .bottom-nav-container {
-      pointer-events: auto; display: flex; align-items: center; justify-content: space-around;
-      width: 100%; max-width: 420px; height: 62px; padding: 4px 6px;
-      background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(16px);
-      border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-item {
-      flex: 1; height: 100%; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px; color: #94a3b8;
-      text-decoration: none; border-radius: 28px; cursor: pointer;
-    }
-    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-item span { font-size: 11px; font-weight: 600; }
-    .nav-item.active { background: rgba(255, 255, 255, 0.1); color: #38bdf8; }
-
-    .section-block { margin-top: 24px; }
-    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
-
-    .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-    .scroll-row::-webkit-scrollbar { display: none; }
-    .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
-    .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; }
-    .card-continue img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: rgba(56, 189, 248, 0.95); color: #0f172a; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
-
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .card-grid { cursor: pointer; }
-    .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; }
-    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
-    
-    .badge-bottom { 
-      position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px);
-      background: rgba(18, 24, 38, 0.85); color: #38bdf8; border: 1px solid rgba(255, 255, 255, 0.18); 
-      font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    #statusMsg { text-align: center; margin: 40px 0; font-size: 13px; color: #64748b; }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 35px; }
-    .btn { background-color: #111827; color: #38bdf8; border: 1px solid #1e293b; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 12px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #0b0f19; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 30px; }
+    header { position: sticky; top: 0; z-index: 100; background: #0f172a; border-bottom: 1px solid #1e293b; padding: 14px 16px; }
+    .brand-title { font-size: 18px; font-weight: 800; color: #38bdf8; text-align: center; }
+    .container { max-width: 1000px; margin: 16px auto; padding: 0 16px; }
+    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #f1f5f9; }
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+    .card { background: #1e293b; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
+    .poster-box { position: relative; width: 100%; aspect-ratio: 3/4; background: #0f172a; }
+    .poster-box img { width: 100%; height: 100%; object-fit: cover; }
+    .badge-ep { position: absolute; bottom: 6px; right: 6px; background: rgba(56, 189, 248, 0.9); color: #000; font-weight: 800; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+    .card-info { padding: 8px; }
+    .card-title { font-size: 12px; font-weight: 700; line-height: 1.3; color: #f8fafc; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-content">
-      <div class="header-normal-group">
-        <div class="header-left-group">
-          <button class="icon-circle-btn">
-            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-          <span class="brand-title">RZ Media</span>
-        </div>
-        <div class="header-right-group">
-          <button class="icon-circle-btn" onclick="toggleDarkMode()">
-            <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </button>
-          <button class="icon-circle-btn" onclick="toggleSearch()">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="header-search-box" id="headerSearchBox">
-        <input type="text" class="search-input-header" id="searchInputHeader" placeholder="Cari judul..." onkeyup="handleSearchInput(event)">
-        <button class="icon-circle-btn" onclick="toggleSearch()">
-          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-    </div>
+    <div class="brand-title">RZ STREAM</div>
   </header>
 
-  <div class="search-results-dropdown" id="searchResultsDropdown">
-    <h3 class="section-title">Hasil Pencarian</h3>
-    <div class="grid-3" id="searchResultGrid"></div>
-  </div>
-
   <div class="container">
-    <section class="section-block" id="continueSection" style="display: none;">
-      <h2 class="section-title">Lanjutkan Menonton</h2>
-      <div class="scroll-row" id="continueRow"></div>
-    </section>
-
-    <section class="section-block">
-      <h2 class="section-title" id="sectionTitle">Beranda (Donghua & Movie)</h2>
-      <div id="statusMsg">Memuat data...</div>
-      <div class="grid-3" id="mainGrid"></div>
-
-      <div class="pagination" id="paginationNav" style="display: none;">
-        <button class="btn" id="prevBtn" onclick="changePage(-1)">← Sebelumnya</button>
-        <span class="page-info">Halaman <strong id="pageDisplay" style="color: #38bdf8;">1</strong></span>
-        <button class="btn" id="nextBtn" onclick="changePage(1)">Selanjutnya →</button>
-      </div>
-    </section>
-  </div>
-
-  <div class="bottom-nav-wrapper">
-    <div class="bottom-nav-container">
-      <div class="nav-item active" id="tabHome" onclick="switchTab('home')">
-        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-        <span>Home</span>
-      </div>
-      <div class="nav-item" id="tabDonghua" onclick="switchTab('donghua')">
-        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 9H3V5h9v7z"/></svg>
-        <span>Donghua</span>
-      </div>
-      <div class="nav-item" id="tabFilm" onclick="switchTab('film')">
-        <svg viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
-        <span>Movie</span>
-      </div>
-    </div>
+    <div class="section-title">Update Terbaru Animexin</div>
+    <div class="grid-container" id="animeGrid">Memuat data...</div>
   </div>
 
   <script>
-    let currentTab = 'home';
-    let currentPage = 1;
-    let searchTimer = null;
-
-    function cleanPath(input) {
-      if (!input) return '';
-      return String(input)
-        .replace(/^https?:\/\/[^\/]+/, '')
-        .replace(/^\/detail\//, '')
-        .replace(/^\/anime\//, '')
-        .replace(/^\/movie\//, '')
-        .replace(/^\/+|\/+$/g, '');
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle('light-mode');
-    }
-
-    function toggleSearch() {
-      const searchBox = document.getElementById('headerSearchBox');
-      const dropdown = document.getElementById('searchResultsDropdown');
-      searchBox.classList.toggle('active');
-      if (!searchBox.classList.contains('active')) dropdown.classList.remove('active');
-    }
-
-    function handleSearchInput(event) {
-      const query = event.target.value.trim();
-      const dropdown = document.getElementById('searchResultsDropdown');
-      const resultGrid = document.getElementById('searchResultGrid');
-
-      clearTimeout(searchTimer);
-      if (query === '') { dropdown.classList.remove('active'); return; }
-
-      dropdown.classList.add('active');
-      resultGrid.innerHTML = '<p style="color: #64748b; font-size: 13px; grid-column: span 3; text-align: center;">Mencari...</p>';
-
-      searchTimer = setTimeout(async () => {
-        try {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json());
-          resultGrid.innerHTML = '';
-          if (res.success && res.data && res.data.length > 0) {
-            renderGrid(res.data, resultGrid);
-          } else {
-            resultGrid.innerHTML = '<p style="color: #64748b; font-size: 13px; grid-column: span 3; text-align: center;">Tidak ditemukan.</p>';
-          }
-        } catch (e) {
-          resultGrid.innerHTML = '<p style="color: #ef4444; font-size: 13px; grid-column: span 3; text-align: center;">Gagal memuat hasil.</p>';
-        }
-      }, 400);
-    }
-
-    function switchTab(tab) {
-      currentTab = tab;
-      currentPage = 1;
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      
-      if (tab === 'home') document.getElementById('tabHome').classList.add('active');
-      if (tab === 'donghua') document.getElementById('tabDonghua').classList.add('active');
-      if (tab === 'film') document.getElementById('tabFilm').classList.add('active');
-
-      loadMainContent();
-    }
-
-    function goToDetail(slug) {
-      window.location.href = `/detail/${cleanPath(slug)}`;
-    }
-
-    async function loadMainContent() {
-      const status = document.getElementById('statusMsg');
-      const grid = document.getElementById('mainGrid');
-      status.style.display = 'block';
-      status.innerText = 'Memuat data...';
-      grid.innerHTML = '';
-
+    async function loadAnime() {
+      const grid = document.getElementById('animeGrid');
       try {
-        let combinedData = [];
-
-        if (currentTab === 'home') {
-          document.getElementById('sectionTitle').innerText = 'Beranda (Donghua & Movie)';
-          const [resDonghua, resMovie] = await Promise.all([
-            fetch(`/api/donghua?page=${currentPage}`).then(r => r.json()).catch(() => ({ data: [] })),
-            fetch(`/api/movie?page=${currentPage}`).then(r => r.json()).catch(() => ({ data: [] }))
-          ]);
-
-          const listDonghua = resDonghua.data || [];
-          const listMovie = resMovie.data || [];
-
-          const maxLen = Math.max(listDonghua.length, listMovie.length);
-          for (let i = 0; i < maxLen; i++) {
-            if (listDonghua[i]) combinedData.push(listDonghua[i]);
-            if (listMovie[i]) combinedData.push(listMovie[i]);
-          }
-        } else if (currentTab === 'donghua') {
-          document.getElementById('sectionTitle').innerText = 'Rilisan Donghua Terbaru';
-          const res = await fetch(`/api/donghua?page=${currentPage}`).then(r => r.json());
-          combinedData = res.data || [];
-        } else if (currentTab === 'film') {
-          document.getElementById('sectionTitle').innerText = 'Rilisan Movie Terbaru';
-          const res = await fetch(`/api/movie?page=${currentPage}`).then(r => r.json());
-          combinedData = res.data || [];
+        const res = await fetch('/api/detail').then(r => r.json());
+        
+        if (res.success && res.data && res.data.length > 0) {
+          grid.innerHTML = '';
+          res.data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => window.location.href = `/detail.html?slug=${encodeURIComponent(item.slug)}`;
+            card.innerHTML = `
+              <div class="poster-box">
+                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                <span class="badge-ep">${item.episode || 'Ongoing'}</span>
+              </div>
+              <div class="card-info">
+                <div class="card-title">${item.title}</div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        } else {
+          grid.innerHTML = 'Gagal memuat daftar anime.';
         }
-
-        status.style.display = 'none';
-        renderGrid(combinedData, grid);
-        document.getElementById('paginationNav').style.display = 'flex';
-        document.getElementById('pageDisplay').innerText = currentPage;
       } catch (e) {
-        status.innerText = 'Gagal memuat data.';
+        grid.innerHTML = 'Terjadi kesalahan sistem.';
       }
     }
 
-    function renderGrid(list, targetGrid) {
-      targetGrid.innerHTML = '';
-      list.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'card-grid';
-        card.onclick = () => goToDetail(item.slug);
-
-        card.innerHTML = `
-          <div class="card-grid-img-wrapper">
-            <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-            <span class="badge-bottom">${item.type || 'Media'} ${item.episode ? '• ' + item.episode : ''}</span>
-          </div>
-          <div class="card-title">${item.title}</div>
-        `;
-        targetGrid.appendChild(card);
-      });
-    }
-
-    function renderContinueWatching() {
-      const history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      const container = document.getElementById('continueSection');
-      const row = document.getElementById('continueRow');
-
-      if (history.length === 0) { container.style.display = 'none'; return; }
-      container.style.display = 'block';
-      row.innerHTML = '';
-
-      history.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'card-continue';
-        card.onclick = () => goToDetail(item.mainPath);
-
-        card.innerHTML = `
-          <div class="card-continue-img-wrapper">
-            <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-            <span class="badge-ep">${item.episode || 'Lanjut'}</span>
-          </div>
-          <div class="card-title">${item.title}</div>
-        `;
-        row.appendChild(card);
-      });
-    }
-
-    function changePage(dir) {
-      currentPage += dir;
-      if (currentPage < 1) currentPage = 1;
-      loadMainContent();
-    }
-
-    window.onload = () => {
-      renderContinueWatching();
-      loadMainContent();
-    };
+    window.onload = loadAnime;
   </script>
 </body>
 </html>
