@@ -704,6 +704,11 @@
 
       try {
         const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`);
+        
+        if (!res.ok) {
+          throw new Error("HTTP Error " + res.status);
+        }
+
         const result = await res.json();
 
         if (result.success && result.data && result.data.title) {
@@ -749,17 +754,17 @@
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
-            if (data.servers && data.servers.length > 0) {
-              setupServers(data.servers, '');
-            }
           }
         } else {
-          document.getElementById('dTitle').innerText = 'Donghua tidak ditemukan.';
-          document.getElementById('dSynopsis').innerText = 'Gagal memuat data dari sumber Anichin.';
+          document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
+          document.getElementById('dSynopsis').innerText = 'Data donghua tidak ditemukan.';
+          document.getElementById('epGrid').innerText = '-';
         }
       } catch (err) {
         console.error("Fetch Error:", err);
         document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
+        document.getElementById('dSynopsis').innerText = 'Terjadi kesalahan koneksi.';
+        document.getElementById('epGrid').innerText = '-';
       }
     }
 
