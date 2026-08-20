@@ -1,3 +1,5 @@
+import * as cheerio from 'cheerio';
+
 export default async function handler(req, res) {
   let { slug } = req.query;
 
@@ -5,95 +7,82 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Slug/Path diperlukan' });
   }
 
-  // Sanitasi slug dari URL penuh atau prefix
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/anime\//, '')
     .replace(/^\/episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  const slugVariants = [
-    cleanSlug,
-    `${cleanSlug}-sub-indo`,
-    cleanSlug.replace(/-sub-indo$/, '')
+  const urlsToTry = [
+    `https://animexin.dev/anime/${cleanSlug}/`,
+    `https://animexin.dev/${cleanSlug}/`,
+    `https://animexin.dev/anime/${cleanSlug.replace(/-sub-indo$/, '')}/`
   ];
 
-  // Helper fetch dengan timeout ketat 3.5 detik agar Vercel tidak menggantung
-  const fetchWithTimeout = async (url, options = {}, timeout = 3500) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
+  let html = null;
+
+  for (const targetUrl of urlsToTry) {
     try {
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(id);
-      return response;
-    } catch (e) {
-      clearTimeout(id);
-      return null;
-    }
-  };
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
 
-  let fetchedData = null;
-
-  // Coba ambil via Consumet Scraper API
-  for (const variant of slugVariants) {
-    const apiUrl = `https://api.consumet.org/anime/anichin/info/${variant}`;
-    const response = await fetchWithTimeout(apiUrl, {}, 3500);
-
-    if (response && response.ok) {
-      try {
-        const json = await response.json();
-        if (json && json.title) {
-          fetchedData = {
-            title: json.title,
-            poster: json.image || '',
-            synopsis: json.description || 'Tidak ada deskripsi.',
-            episodes: (json.episodes || []).map(ep => ({
-              title: ep.title || `Episode ${ep.number}`,
-              slug: ep.id || ep.slug
-            }))
-          };
+      if (response.ok) {
+        const text = await response.text();
+        if (text && (text.includes('eplister') || text.includes('entry-title') || text.includes('infox'))) {
+          html = text;
           break;
         }
-      } catch (e) {}
-    }
-  }
-
-  // Fallback ke Secondary JSON API jika Consumet sibuk
-  if (!fetchedData) {
-    for (const variant of slugVariants) {
-      const altApiUrl = `https://anichin-api.vercel.app/api/detail/${variant}`;
-      const responseAlt = await fetchWithTimeout(altApiUrl, {}, 3500);
-
-      if (responseAlt && responseAlt.ok) {
-        try {
-          const jsonAlt = await responseAlt.json();
-          if (jsonAlt && jsonAlt.title) {
-            fetchedData = {
-              title: jsonAlt.title,
-              poster: jsonAlt.poster || jsonAlt.image || '',
-              synopsis: jsonAlt.synopsis || jsonAlt.description || 'Tidak ada deskripsi.',
-              episodes: (jsonAlt.episodes || []).map(ep => ({
-                title: ep.title || ep.name || 'Episode',
-                slug: ep.slug || ep.id
-              }))
-            };
-            break;
-          }
-        } catch (e) {}
       }
+    } catch (e) {
+      continue;
     }
   }
 
-  // Jika semua serverless scraper mengalami timeout/terblokir, kembalikan pesan ganti secara graceful
-  if (!fetchedData) {
-    return res.status(200).json({ 
-      success: false, 
-      message: 'Server Anichin sedang mengalami hambatan koneksi/terblokir. Silakan coba beberapa saat lagi.' 
-    });
+  if (!html) {
+    return res.status(404).json({ success: false, message: 'Donghua tidak ditemukan di Animexin' });
   }
 
-  return res.status(200).json({
-    success: true,
-    data: fetchedData
-  });
+  try {
+    const $ = cheerio.load(html);
+
+    const title = $('.entry-title').text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
+    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
+    const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
+
+    const episodes = [];
+    $('.eplister ul li a, .eplist ul li a').each((_, el) => {
+      const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
+      const epHref = $(el).attr('href') || '';
+      const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
+      if (epSlug && !episodes.some(e => e.slug === epSlug)) {
+        episodes.push({ title: epTitle, slug: epSlug });
+      }
+    });
+
+    const servers = [];
+    $('.mirror option, select.mirror option').each((_, el) => {
+      const name = $(el).text().trim();
+      const value = $(el).attr('value');
+      if (value && value !== '') {
+        servers.push({ name, url: value });
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        title,
+        poster,
+        synopsis,
+        episodes,
+        servers
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Gagal parsing data Animexin' });
+  }
 }
