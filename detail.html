@@ -55,7 +55,7 @@
 
     .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; scrollbar-width: none; }
     .ep-scroll-grid::-webkit-scrollbar { display: none; }
-    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; cursor: pointer; }
     .ep-box.active { background: #581c87; border-color: #a855f7; color: #fff; }
 
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; }
@@ -137,10 +137,8 @@
         </div>
       </div>
 
-      <main>
-        <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
-        <p class="synopsis-text" id="dSynopsis">Memuat deskripsi...</p>
-      </main>
+      <h1 class="media-title" id="dTitle">Memuat Judul...</h1>
+      <p class="synopsis-text" id="dSynopsis">Memuat deskripsi...</p>
     </div>
   </div>
 
@@ -167,11 +165,6 @@
         .replace(/^\/?anime\//, '')
         .replace(/^\/?movie\//, '')
         .replace(/^\/+|\/+$/g, '');
-    }
-
-    function getEpNumber(title, fallback) {
-      const match = title ? title.match(/\d+/) : null;
-      return match ? match[0] : fallback;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -209,8 +202,6 @@
           saveHistory(targetSlug, targetSlug, data.title, data.poster, 'Movie');
         } else {
           document.getElementById('epContainer').style.display = 'block';
-          
-          // Mengikuti urutan asli dari sumber (Terbaru di awal, misal 154)
           globalEpisodes = data.episodes || [];
           document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
 
@@ -218,21 +209,18 @@
           epGrid.innerHTML = '';
 
           globalEpisodes.forEach((ep, i) => {
-            const epNum = getEpNumber(ep.title, globalEpisodes.length - i);
             const box = document.createElement('div');
             box.className = 'ep-box';
-            box.innerText = epNum;
+            box.innerText = i + 1;
             box.id = `ep-box-${cleanSlug(ep.slug)}`;
             box.onclick = () => {
-              selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNum}`);
+              selectEpisode(ep.slug, data.title, data.poster, `Ep ${i + 1}`);
             };
             epGrid.appendChild(box);
           });
 
-          // Otomatis putar episode pertama di list (Episode terbaru/154)
           if (globalEpisodes.length > 0) {
-            const firstEpNum = getEpNumber(globalEpisodes[0].title, globalEpisodes.length);
-            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstEpNum}`);
+            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, 'Ep 1');
           }
         }
       } else {
@@ -275,6 +263,7 @@
       if (servers && servers.length > 0) {
         let defaultIndex = 0;
 
+        // Cari server yang memiliki nama Sub Indo / Indonesia
         const indoIndex = servers.findIndex(srv => 
           /indo|indonesia|sub indo/i.test(srv.name)
         );
@@ -323,12 +312,11 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, i) => {
-        const epNum = getEpNumber(ep.title, globalEpisodes.length - i);
         const box = document.createElement('div');
         box.className = 'ep-box';
-        box.innerText = epNum;
+        box.innerText = i + 1;
         box.onclick = () => {
-          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${epNum}`);
+          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${i + 1}`);
         };
         sheetGrid.appendChild(box);
       });
@@ -341,7 +329,7 @@
     }
 
     function saveHistory(mainPath, epPath, title, poster, episode) {
-      let history = JSON.parse(localStorage.getItem('rz_continue_history'] || '[]');
+      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
       history = history.filter(item => item.mainPath !== mainPath);
       history.unshift({ mainPath, epPath, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 10)));
