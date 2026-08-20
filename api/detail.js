@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
 
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
-    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src'] || '';
+    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     
     // Sinopsis Bahasa Indonesia saja
     let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
@@ -63,11 +63,11 @@ export default async function handler(req, res) {
       synopsis = rawSynopsis.replace(/^English/i, '').trim();
     }
 
-    // Ambil daftar episode persis urutan dari web sumber (terbaru di atas)
+    // Ambil daftar episode secara natural persis dari sumber
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
-      const epHref = $(el).attr('href'] || '';
+      const epHref = $(el).attr('href') || '';
       
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
       if (epSlug && !episodes.some(e => e.slug === epSlug)) {
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
 
         if (value.startsWith('//')) value = 'https:' + value;
         
-        if (value.includes('http'] && !servers.some(s => s.url === value)) {
+        if (value.includes('http') && !servers.some(s => s.url === value)) {
           servers.push({ name: name || 'Server Mirror', url: value });
         }
       }
