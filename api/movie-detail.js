@@ -1,5 +1,3 @@
-import * as cheerio from 'cheerio';
-
 export default async function handler(req, res) {
   try {
     let { slug } = req.query;
@@ -8,50 +6,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Slug diperlukan' });
     }
 
-    const cleanSlug = String(slug)
-      .replace(/^https?:\/\/[^\/]+/, '')
-      .replace(/^\/?film\//, '')
-      .replace(/^\/?movie\//, '')
-      .replace(/^\/+|\/+$/g, '');
-
+    const cleanSlug = String(slug).trim();
     const keyword = cleanSlug.replace(/-/g, ' ').replace(/\b(2025|2026)\b/g, '').trim();
 
-    let title = keyword.toUpperCase();
-    let poster = '';
-    let synopsis = 'Sinopsis tidak tersedia.';
-    
-    // Coba ambil metadata asli jika slug valid
-    try {
-      const resp = await fetch(`https://new39.ngefilm.site/${cleanSlug}/`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-      });
-      if (resp.ok) {
-        const html = await resp.text();
-        const $ = cheerio.load(html);
-        title = $('.entry-title').first().text().trim() || $('h1.title').first().text().trim() || title;
-        poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
-        synopsis = $('.desc p, .entry-content p, .konten-sinopsis').text().trim() || synopsis;
-      }
-    } catch (e) {}
-
-    // Server pemutar video universal yang bersih dan stabil di dalam iframe
+    // Server pemutar video universal yang langsung merender film dengan bersih tanpa iklan landing page
     const servers = [
       {
         name: 'Server Utama HD',
-        url: `https://vidsrc.xyz/embed/movie?title=${encodeURIComponent(keyword)}`
+        url: cleanSlug.startsWith('tt') ? `https://vidsrc.xyz/embed/movie?imdb=${cleanSlug}` : `https://vidsrc.xyz/embed/movie?title=${encodeURIComponent(keyword)}`
       },
       {
         name: 'Server Alternatif',
-        url: `https://vidsrc.cc/v2/embed/movie?q=${encodeURIComponent(keyword)}`
+        url: cleanSlug.startsWith('tt') ? `https://vidsrc.cc/v2/embed/movie/${cleanSlug}` : `https://vidsrc.cc/v2/embed/movie?q=${encodeURIComponent(keyword)}`
       }
     ];
 
     return res.status(200).json({
       success: true,
       data: {
-        title,
-        poster,
-        synopsis,
+        title: keyword.toUpperCase(),
+        poster: '',
+        synopsis: 'Nikmati streaming film kualitas HD dengan server tercepat dan bebas gangguan.',
         isMovie: true,
         servers
       }
