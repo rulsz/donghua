@@ -1,28 +1,44 @@
 import * as cheerio from 'cheerio';
 
-// Helper untuk mengekstrak direct MP4 dari OK.ru
-async function resolveOkRu(okUrl) {
+// Helper: Resolver Universal untuk berbagai provider video
+async function resolveDirectStream(url) {
+  if (!url) return null;
+
   try {
-    const res = await fetch(okUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    });
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    
-    // Cari JSON metadata video di attribute data-options
-    const optionsAttr = $('[data-options]').attr('data-options');
-    if (optionsAttr) {
-      const json = JSON.parse(optionsAttr);
-      const metadata = JSON.parse(json.flashvars.metadata);
-      if (metadata && metadata.videos) {
-        // Ambil kualitas tertinggi (misal: hd, full, mobile, sd)
-        const highestVid = metadata.videos.reverse()[0];
-        return highestVid.url;
+    // 1. Resolver untuk OK.RU
+    if (url.includes('ok.ru')) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      const optionsAttr = $('[data-options]').attr('data-options');
+      if (optionsAttr) {
+        const json = JSON.parse(optionsAttr);
+        const metadata = JSON.parse(json.flashvars.metadata);
+        if (metadata && metadata.videos) {
+          // Ambil kualitas tertinggi
+          return { directUrl: metadata.videos.reverse()[0].url, referer: 'https://ok.ru/' };
+        }
       }
+    }
+
+    // 2. Resolver untuk Blogger / Google Video
+    if (url.includes('blogger.com') || url.includes('getvideo')) {
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const html = await res.text();
+      const match = html.match(/"play_url"\s*:\s*"([^"]+)"/);
+      if (match) {
+        return { directUrl: match[1].replace(/\\u0026/g, '&'), referer: 'https://www.blogger.com/' };
+      }
+    }
+
+    // 3. Resolver untuk Direct Link (.mp4 / .m3u8)
+    if (/\.(mp4|m3u8)(\?.*)?$/i.test(url)) {
+      return { directUrl: url, referer: '' };
     }
   } catch (e) {
     return null;
   }
+
   return null;
 }
 
@@ -37,24 +53,38 @@ export default async function handler(req, res) {
     .replace(/^\/?movie\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  const targetUrl = `https://animexin.dev/${cleanSlug}/`;
+  const urlsToTry = [
+    `https://animexin.dev/${cleanSlug}/`,
+    `https://animexin.dev/anime/${cleanSlug}/`,
+    `https://animexin.dev/${cleanSlug}-sub-indo/`
+  ];
+
+  let html = null;
+  for (const targetUrl of urlsToTry) {
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      });
+      if (response.ok) {
+        const text = await response.text();
+        if (text && (text.includes('eplister') || text.includes('entry-title') || text.includes('embed'))) {
+          html = text;
+          break;
+        }
+      }
+    } catch (e) { continue; }
+  }
+
+  if (!html) return res.status(404).json({ success: false, message: 'Media tidak ditemukan' });
 
   try {
-    const response = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    });
-
-    if (!response.ok) return res.status(404).json({ success: false, message: 'Tidak ditemukan' });
-
-    const html = await response.text();
     const $ = cheerio.load(html);
-
     const title = $('.entry-title').first().text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || '';
     const synopsis = $('.entry-content p').text().trim() || '';
 
     const episodes = [];
-    $('.eplister ul li a').each((_, el) => {
+    $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).text().trim();
       const epHref = $(el).attr('href') || '';
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
@@ -63,10 +93,10 @@ export default async function handler(req, res) {
     episodes.reverse();
 
     const rawServers = [];
-    $('.mirror option, select.mirror option').each((_, el) => {
+    $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value');
-      if (value) {
+      if (value && value !== '') {
         if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
           try {
             const decoded = Buffer.from(value, 'base64').toString('utf-8');
@@ -75,20 +105,21 @@ export default async function handler(req, res) {
           } catch (e) {}
         }
         if (value.startsWith('//')) value = 'https:' + value;
-        rawServers.push({ name: name || 'Server', url: value });
+        rawServers.push({ name: name || 'Server', rawUrl: value });
       }
     });
 
-    // Proses konversi server ke Direct File URL jika memungkinkan
+    // Proses konversi seluruh server menjadi stream langsung / proxy stream
     const processedServers = await Promise.all(
       rawServers.map(async (srv) => {
-        if (srv.url.includes('ok.ru')) {
-          const directMp4 = await resolveOkRu(srv.url);
-          if (directMp4) {
-            return { name: `${srv.name} (Direct MP4)`, url: directMp4, isDirect: true };
-          }
+        const resolved = await resolveDirectStream(srv.rawUrl);
+        if (resolved && resolved.directUrl) {
+          // Bungkus dalam URL Proxy agar tidak error CORS / Angka 10
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(resolved.directUrl)}&referer=${encodeURIComponent(resolved.referer || '')}`;
+          return { name: srv.name, url: proxyUrl, isDirect: true };
         }
-        return srv;
+        // Jika gagal diekstrak, kembalikan URL asli
+        return { name: srv.name, url: srv.rawUrl, isDirect: false };
       })
     );
 
@@ -98,6 +129,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Error Server' });
+    return res.status(500).json({ success: false, message: 'Gagal parsing server' });
   }
 }
