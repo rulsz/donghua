@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Slug diperlukan' });
   }
 
-  // Bersihkan slug dari prefix apapun
+  // Bersihkan slug dari prefix/suffix URL
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/?detail\//, '')
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     .replace(/^\/?episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  // Variasi URL yang dicoba di Animexin
+  // Daftar variasi pola URL untuk Animexin
   const urlsToTry = [
     `https://animexin.dev/${cleanSlug}/`,
     `https://animexin.dev/anime/${cleanSlug}/`,
@@ -56,26 +56,31 @@ export default async function handler(req, res) {
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
 
-    // Ambil daftar episode (bisa berupa tautan dengan nama slug yang berbeda seperti ancient-god-sovereign)
+    // Ambil daftar episode
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
       const epHref = $(el).attr('href') || '';
       
-      // Ambil slug episode penuh dari href Animexin
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
       if (epSlug && !episodes.some(e => e.slug === epSlug)) {
         episodes.push({ title: epTitle, slug: epSlug });
       }
     });
 
-    // Urutkan episode dari 1, 2, 3...
-    episodes.reverse();
+    // Urutkan episode dari episode 1 ke atas jika urutannya terbalik dari sumber
+    if (episodes.length > 1) {
+      const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
+      const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
+      if (firstEpNum > lastEpNum) {
+        episodes.reverse();
+      }
+    }
 
-    // Ekstrak server video (Iframe / Mirror Video)
+    // Ekstrak Server Video / Player Iframe
     const servers = [];
 
-    // Cek Iframe utama di halaman
+    // Iframe bawaan di halaman
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
       if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
@@ -84,13 +89,13 @@ export default async function handler(req, res) {
       }
     });
 
-    // Cek opsi pilihan mirror / player
+    // Opsi pilihan Server Mirror
     $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value');
       
       if (value && value !== '') {
-        // Dekode jika berbentuk Base64
+        // Dekode jika nilai di-encode Base64
         if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
           try {
             const decoded = Buffer.from(value, 'base64').toString('utf-8');
