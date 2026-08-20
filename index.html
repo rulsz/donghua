@@ -703,8 +703,15 @@
       const safePath = cleanPath(pathName);
 
       try {
-        const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`);
-        
+        // Frontend Timeout 8 Detik
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
           throw new Error("HTTP Error " + res.status);
         }
@@ -756,15 +763,17 @@
             epGrid.innerText = 'Tidak ada episode.';
           }
         } else {
-          document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
-          document.getElementById('dSynopsis').innerText = 'Data donghua tidak ditemukan.';
+          document.getElementById('dTitle').innerText = 'Gagal Memuat Detail';
+          document.getElementById('dSynopsis').innerText = result.message || 'Situs Anichin tidak dapat diakses saat ini.';
           document.getElementById('epGrid').innerText = '-';
+          mediaBox.innerHTML = 'Gagal memuat player.';
         }
       } catch (err) {
         console.error("Fetch Error:", err);
-        document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
-        document.getElementById('dSynopsis').innerText = 'Terjadi kesalahan koneksi.';
+        document.getElementById('dTitle').innerText = 'Koneksi Terputus / Timeout';
+        document.getElementById('dSynopsis').innerText = 'Situs sumber merespon terlalu lambat.';
         document.getElementById('epGrid').innerText = '-';
+        mediaBox.innerHTML = 'Gagal memuat player.';
       }
     }
 
