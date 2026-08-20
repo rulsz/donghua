@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   try {
     let { slug } = req.query;
 
-    // Jika slug kosong, kembalikan daftar anime/donghua terbaru dari Animexin
     if (!slug) {
       const response = await fetch('https://animexin.vip/', {
         headers: {
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, data: listData });
     }
 
-    // Jika slug ada, ambil detail & episode Animexin
     const cleanSlug = String(slug).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
     const targetUrl = `https://animexin.vip/${cleanSlug}/`;
 
@@ -52,7 +50,6 @@ export default async function handler(req, res) {
     const poster = $('.thumb img, .poster img').first().attr('src') || '';
     const synopsis = $('.entry-content p, .desc p, .sinopsis').text().trim() || 'Sinopsis tidak tersedia.';
 
-    // Ambil Daftar Episode
     const episodes = [];
     $('.episodelist ul li, .daftar-episode ul li, .lsteps ul li').each((_, el) => {
       const epTitle = $(el).find('a').text().trim();
@@ -63,7 +60,6 @@ export default async function handler(req, res) {
       }
     });
 
-    // Ambil Iframe Pemutar Video
     const servers = [];
     $('iframe, .mobius').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
