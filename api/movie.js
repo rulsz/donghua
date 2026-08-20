@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 export default async function handler(req, res) {
   const { page = 1, slug } = req.query;
 
-  // Jika ada parameter slug, ambil detail film
+  // Handler jika meminta detail film berdasarkan slug
   if (slug) {
     const cleanSlug = String(slug)
       .replace(/^https?:\/\/[^\/]+/, '')
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // Jika tidak ada slug, ambil daftar rilis film terbaru
+  // Handler jika meminta daftar rilis film terbaru
   try {
     const targetUrl = `https://themoviebox.xyz/movie/page/${page}/`;
     const response = await fetch(targetUrl, {
