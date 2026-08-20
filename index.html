@@ -11,7 +11,6 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
     
-    /* TEMA GELAP TOTAL (PURE BLACK) */
     body { 
       background-color: #000000; 
       color: #f8fafc; 
@@ -21,7 +20,6 @@
       transition: background 0.3s, color 0.3s; 
     }
     
-    /* MODE TERANG */
     body.light-mode { background-color: #f8fafc; color: #0b0f19; }
     body.light-mode header { 
       background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95) 0%, rgba(248, 250, 252, 0.6) 70%, rgba(248, 250, 252, 0) 100%); 
@@ -60,7 +58,6 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* HEADER POLOS */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 70%, rgba(0, 0, 0, 0) 100%); 
@@ -81,7 +78,6 @@
     .header-left-group { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
-    /* TOMBOL BULAT GLASSMORPHISM */
     .icon-circle-btn { 
       position: relative;
       background: rgba(255, 255, 255, 0.08); 
@@ -112,7 +108,6 @@
 
     .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: 0.3px; white-space: nowrap; }
     
-    /* KOTAK PENCARIAN DI HEADER */
     .header-search-box { 
       display: none; 
       position: absolute; top: 0; left: 0; 
@@ -140,11 +135,9 @@
       color: #94a3b8;
     }
 
-    /* CONTAINER HASIL PENCARIAN DI BAWAH HEADER */
     .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
 
-    /* FLOATING BOTTOM NAVIGATION BAR */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: 16px;
@@ -233,7 +226,6 @@
     .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; pointer-events: none; }
     .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     
-    /* BADGE GLASS DENGAN TEXT FLEKSIBEL & RAPI */
     .badge-bottom { 
       position: absolute; 
       bottom: 8px; 
@@ -297,7 +289,6 @@
 
     .synopsis-text { font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
 
-    /* BOTTOM SHEET DIALOG */
     .sheet-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; backdrop-filter: blur(4px); }
     .sheet-overlay.active { display: block; }
     
@@ -431,7 +422,6 @@
 
   </div>
 
-  <!-- FLOATING BOTTOM NAVIGATION BAR -->
   <div class="bottom-nav-wrapper" id="bottomNavWrapper">
     <div class="bottom-nav-container">
       <div class="nav-item active" onclick="switchTab('home', this)">
@@ -468,12 +458,15 @@
     let globalEpisodes = [];
     let searchTimer = null;
     let isDetailPage = false;
+    let currentMainSlug = '';
 
-    // SANITASI SLUG AGAR TIDAK ERROR SAAT FETCH DETAIL
+    // ESTRAKSI DAN CLEANING SLUG ANICHIN
     function cleanSlug(slug) {
       if (!slug) return '';
       return String(slug)
         .replace(/^https?:\/\/[^\/]+/, '')
+        .replace(/^\/anime\//, '')
+        .replace(/^\/episode\//, '')
         .replace(/^\/+|\/+$/g, '');
     }
 
@@ -481,21 +474,20 @@
     function formatBadgeText(item) {
       if (!item) return 'Ongoing';
 
-      // 1. Ekstrak Status
-      const rawStatus = String(item.status || item.type || item.state || item.status_series || '').toLowerCase();
+      const rawStatus = String(item.status || item.type || item.state || '').toLowerCase();
       let statusText = 'Ongoing';
       if (rawStatus.includes('complete') || rawStatus.includes('finish') || rawStatus.includes('tamat')) {
         statusText = 'Completed';
       }
 
-      // 2. Ekstrak Episode
-      let epStr = item.episode || item.latest_episode || item.ep || item.latest || item.sub_title || item.title || '';
+      // Ambil episode dari berbagai opsi key API scraper
+      let epStr = item.episode || item.latest_episode || item.ep || item.sub_title || item.title || item.slug || '';
       let epNum = '';
 
       if (epStr) {
-        const match = String(epStr).match(/(?:episode|ep|\b)(\d+)/i);
-        if (match && match[1]) {
-          epNum = match[1].padStart(2, '0');
+        const epMatch = String(epStr).match(/(?:episode|ep|ep-|\b)(\d+)/i);
+        if (epMatch && epMatch[1]) {
+          epNum = epMatch[1].padStart(2, '0');
         } else {
           const numOnly = String(epStr).match(/\d+/);
           if (numOnly) epNum = numOnly[0].padStart(2, '0');
@@ -580,7 +572,7 @@
             card.className = 'card-grid';
             card.onclick = function() {
               toggleSearch();
-              openPage(cleanSlug(item.slug));
+              openPage('?slug=' + cleanSlug(item.slug));
             };
 
             const statusLabel = formatBadgeText(item);
@@ -600,9 +592,14 @@
       }, 400);
     }
 
-    function openPage(path) {
-      const cleanPath = path.startsWith('/') ? path : '/' + path;
-      window.history.pushState({}, '', cleanPath);
+    function openPage(target) {
+      if (target === '/') {
+        window.history.pushState({}, '', '/');
+      } else if (target.startsWith('?')) {
+        window.history.pushState({}, '', target);
+      } else {
+        window.history.pushState({}, '', '?slug=' + cleanSlug(target));
+      }
       router();
     }
 
@@ -610,8 +607,8 @@
     window.onpopstate = router;
 
     function router() {
-      const rawPath = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
       const urlParams = new URLSearchParams(window.location.search);
+      const slug = urlParams.get('slug');
       const page = parseInt(urlParams.get('page')) || 1;
 
       const iconHamburger = document.getElementById('iconHamburger');
@@ -622,7 +619,7 @@
       document.getElementById('searchResultsDropdown').classList.remove('active');
       document.getElementById('headerSearchBox').classList.remove('active');
 
-      if (rawPath === '' || window.location.search.includes('page')) {
+      if (!slug) {
         isDetailPage = false;
         document.getElementById('homeView').style.display = 'block';
         document.getElementById('detailView').style.display = 'none';
@@ -646,7 +643,7 @@
 
         bottomNavWrapper.classList.add('hidden');
 
-        loadDetail(rawPath);
+        loadDetail(slug);
       }
     }
 
@@ -682,7 +679,7 @@
         const card = document.createElement('div');
         card.className = 'card-grid';
         card.onclick = function() {
-          openPage(cleanSlug(item.slug));
+          openPage('?slug=' + cleanSlug(item.slug));
         };
 
         const statusLabel = formatBadgeText(item);
@@ -714,8 +711,8 @@
         if (result.success && result.data) {
           const data = result.data;
 
-          document.getElementById('dTitle').innerText = data.title;
-          document.getElementById('topHeaderTitle').innerText = data.title;
+          document.getElementById('dTitle').innerText = data.title || 'Judul Tidak Tersedia';
+          document.getElementById('topHeaderTitle').innerText = data.title || 'Detail';
           document.getElementById('dSynopsis').innerText = data.synopsis || 'Tidak ada deskripsi.';
 
           const epGrid = document.getElementById('epGrid');
@@ -915,7 +912,7 @@
         card.className = 'card-continue';
 
         card.onclick = function() {
-          openPage(cleanSlug(item.mainSlug));
+          openPage('?slug=' + cleanSlug(item.mainSlug));
         };
 
         card.innerHTML = `
