@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Slug diperlukan' });
   }
 
-  // Bersihkan slug dari prefix/suffix URL
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/?detail\//, '')
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
     .replace(/^\/?episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  // Daftar variasi pola URL untuk Animexin
   const urlsToTry = [
     `https://animexin.dev/${cleanSlug}/`,
     `https://animexin.dev/anime/${cleanSlug}/`,
@@ -56,7 +54,6 @@ export default async function handler(req, res) {
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
 
-    // Ambil daftar episode
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
@@ -68,7 +65,6 @@ export default async function handler(req, res) {
       }
     });
 
-    // Urutkan episode dari episode 1 ke atas jika urutannya terbalik dari sumber
     if (episodes.length > 1) {
       const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
       const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
@@ -77,10 +73,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // Ekstrak Server Video / Player Iframe
     const servers = [];
 
-    // Iframe bawaan di halaman
+    // Iframe bawaan
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
       if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
@@ -89,13 +84,12 @@ export default async function handler(req, res) {
       }
     });
 
-    // Opsi pilihan Server Mirror
+    // Pilihan Server Mirror
     $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value');
       
       if (value && value !== '') {
-        // Dekode jika nilai di-encode Base64
         if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
           try {
             const decoded = Buffer.from(value, 'base64').toString('utf-8');
@@ -109,6 +103,10 @@ export default async function handler(req, res) {
         if (value.startsWith('//')) value = 'https:' + value;
         
         if (value.includes('http') && !servers.some(s => s.url === value)) {
+          // Jika URL berasal dari OK.ru, konversi ke player URL jika memungkinkan
+          if (value.includes('ok.ru/videoembed/')) {
+            value = value.replace('ok.ru/videoembed/', 'ok.ru/video/');
+          }
           servers.push({ name: name || 'Server Mirror', url: value });
         }
       }
