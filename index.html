@@ -458,12 +458,12 @@
     let globalEpisodes = [];
     let searchTimer = null;
     let isDetailPage = false;
-    let currentMainSlug = '';
+    let currentMainPath = '';
 
-    // ESTRAKSI SLUG SANITASI BERSIH
-    function cleanSlug(slug) {
-      if (!slug) return '';
-      return String(slug)
+    // ESTRAKSI DAN CLEANING PATH NAMA JUDUL
+    function cleanPath(input) {
+      if (!input) return '';
+      return String(input)
         .replace(/^https?:\/\/[^\/]+/, '')
         .replace(/^\/anime\//, '')
         .replace(/^\/episode\//, '')
@@ -571,7 +571,7 @@
             card.className = 'card-grid';
             card.onclick = function() {
               toggleSearch();
-              openPage(cleanSlug(item.slug));
+              openPage(cleanPath(item.slug || item.path));
             };
 
             const statusLabel = formatBadgeText(item);
@@ -591,14 +591,14 @@
       }, 400);
     }
 
-    // NAVIGASI DENGAN URL BERSIH LANGSUNG /JUDUL
+    // NAVIGASI URL MURNI DIRECT /JUDUL
     function openPage(target) {
-      const clean = cleanSlug(target);
+      const route = cleanPath(target);
       
-      if (!clean || target === '/') {
+      if (!route || target === '/') {
         window.history.pushState({}, '', '/');
       } else {
-        window.history.pushState({}, '', '/' + clean);
+        window.history.pushState({}, '', '/' + route);
       }
       
       router();
@@ -680,7 +680,7 @@
         const card = document.createElement('div');
         card.className = 'card-grid';
         card.onclick = function() {
-          openPage(cleanSlug(item.slug));
+          openPage(cleanPath(item.slug || item.path));
         };
 
         const statusLabel = formatBadgeText(item);
@@ -696,17 +696,23 @@
       });
     }
 
-    async function loadDetail(slug) {
+    async function loadDetail(pathName) {
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat video...';
       document.getElementById('dTitle').innerText = 'Memuat Judul...';
       document.getElementById('dSynopsis').innerText = 'Sedang mengambil deskripsi...';
       document.getElementById('epGrid').innerHTML = 'Memuat list episode...';
 
-      const safeSlug = cleanSlug(slug);
+      const safePath = cleanPath(pathName);
 
       try {
-        const res = await fetch(`/api/detail?slug=${encodeURIComponent(safeSlug)}`);
+        const res = await fetch(`/api/detail?slug=${encodeURIComponent(safePath)}`);
+        
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType || !contentType.includes("application/json")) {
+          throw new Error("Response backend bukan JSON");
+        }
+
         const result = await res.json();
 
         if (result.success && result.data) {
@@ -724,30 +730,31 @@
             document.getElementById('dTotalEp').innerText = `Total ${data.episodes.length} Episode`;
             document.getElementById('epTotalInfo').innerText = `${data.episodes.length} Episode ➔`;
 
-            currentMainSlug = safeSlug;
+            currentMainPath = safePath;
             const epOne = data.episodes[data.episodes.length - 1];
 
-            const savedHistory = getSavedEpisode(safeSlug);
-            let targetEpSlug = savedHistory ? savedHistory.epSlug : (epOne ? epOne.slug : data.episodes[0].slug);
+            const savedHistory = getSavedEpisode(safePath);
+            let targetEpPath = savedHistory ? savedHistory.epPath : (epOne ? (epOne.slug || epOne.path) : (data.episodes[0].slug || data.episodes[0].path));
 
             data.episodes.forEach((ep, index) => {
+              const epItemPath = cleanPath(ep.slug || ep.path);
               const box = document.createElement('div');
               box.className = 'ep-box';
-              box.id = `ep-box-${cleanSlug(ep.slug)}`;
+              box.id = `ep-box-${epItemPath}`;
               const epNumber = ep.title.match(/\d+/) ? ep.title.match(/\d+/)[0] : (index + 1);
               box.innerText = epNumber;
 
               box.onclick = () => {
-                selectEpisode(currentMainSlug, cleanSlug(ep.slug), data.title, data.poster, `Ep ${epNumber}`);
+                selectEpisode(currentMainPath, epItemPath, data.title, data.poster, `Ep ${epNumber}`);
               };
               epGrid.appendChild(box);
             });
 
             document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
-            const activeBox = document.getElementById(`ep-box-${cleanSlug(targetEpSlug)}`);
+            const activeBox = document.getElementById(`ep-box-${cleanPath(targetEpPath)}`);
             if (activeBox) activeBox.classList.add('active');
 
-            fetchAndPlayStream(cleanSlug(targetEpSlug), currentMainSlug, data.title, data.poster);
+            fetchAndPlayStream(cleanPath(targetEpPath), currentMainPath, data.title, data.poster);
 
           } else {
             epGrid.innerText = 'Tidak ada episode.';
@@ -757,14 +764,15 @@
           document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
         }
       } catch (err) {
+        console.error("Fetch Detail Error:", err);
         document.getElementById('dTitle').innerText = 'Gagal memuat detail.';
       }
     }
 
-    async function selectEpisode(mainSlug, epSlug, title, poster, episodeName) {
+    async function selectEpisode(mainPath, epPath, title, poster, episodeName) {
       closeEpisodeSheet();
       document.querySelectorAll('.ep-box').forEach(el => el.classList.remove('active'));
-      const targetBox = document.getElementById(`ep-box-${cleanSlug(epSlug)}`);
+      const targetBox = document.getElementById(`ep-box-${cleanPath(epPath)}`);
       if (targetBox) targetBox.classList.add('active');
 
       const mediaBox = document.getElementById('playerMediaContainer');
@@ -773,19 +781,19 @@
       document.getElementById('serverSelect').innerHTML = '';
       document.getElementById('serverDisplayTitle').innerText = 'Server';
 
-      saveHistory(mainSlug, epSlug, title, poster, episodeName);
-      await fetchAndPlayStream(epSlug, mainSlug, title, poster);
+      saveHistory(mainPath, epPath, title, poster, episodeName);
+      await fetchAndPlayStream(epPath, mainPath, title, poster);
     }
 
-    async function fetchAndPlayStream(epSlug, mainSlug, title, poster) {
+    async function fetchAndPlayStream(epPath, mainPath, title, poster) {
       try {
-        const res = await fetch(`/api/detail?slug=${encodeURIComponent(cleanSlug(epSlug))}`);
+        const res = await fetch(`/api/detail?slug=${encodeURIComponent(cleanPath(epPath))}`);
         const result = await res.json();
 
         if (result.success && result.data && result.data.servers && result.data.servers.length > 0) {
           setupServers(result.data.servers, result.data.streamUrl);
-          const epNum = epSlug.match(/\d+/) ? epSlug.match(/\d+/)[0] : '1';
-          saveHistory(mainSlug, epSlug, title, poster, `Ep ${epNum}`);
+          const epNum = epPath.match(/\d+/) ? epPath.match(/\d+/)[0] : '1';
+          saveHistory(mainPath, epPath, title, poster, `Ep ${epNum}`);
         } else {
           document.getElementById('playerMediaContainer').innerText = 'Server video episode ini belum tersedia.';
         }
@@ -868,13 +876,14 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, index) => {
+        const epItemPath = cleanPath(ep.slug || ep.path);
         const box = document.createElement('div');
         box.className = 'ep-box';
         const epNumber = ep.title.match(/\d+/) ? ep.title.match(/\d+/)[0] : (index + 1);
         box.innerText = epNumber;
 
         box.onclick = () => {
-          selectEpisode(currentMainSlug, cleanSlug(ep.slug), document.getElementById('dTitle').innerText, '', `Ep ${epNumber}`);
+          selectEpisode(currentMainPath, epItemPath, document.getElementById('dTitle').innerText, '', `Ep ${epNumber}`);
         };
         sheetGrid.appendChild(box);
       });
@@ -886,17 +895,17 @@
       document.getElementById('sheetOverlay').classList.remove('active');
     }
 
-    function saveHistory(mainSlug, epSlug, title, poster, episode) {
+    function saveHistory(mainPath, epPath, title, poster, episode) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      history = history.filter(item => item.mainSlug !== mainSlug);
+      history = history.filter(item => item.mainPath !== mainPath);
       
-      history.unshift({ mainSlug, epSlug, title, poster, episode });
+      history.unshift({ mainPath, epPath, title, poster, episode });
       localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 20)));
     }
 
-    function getSavedEpisode(mainSlug) {
+    function getSavedEpisode(mainPath) {
       let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      return history.find(item => item.mainSlug === mainSlug);
+      return history.find(item => item.mainPath === mainPath);
     }
 
     function renderContinueWatching() {
@@ -913,7 +922,7 @@
         card.className = 'card-continue';
 
         card.onclick = function() {
-          openPage(cleanSlug(item.mainSlug));
+          openPage(cleanPath(item.mainPath));
         };
 
         card.innerHTML = `
