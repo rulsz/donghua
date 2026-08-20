@@ -39,40 +39,34 @@ export default async function handler(req, res) {
       if (resp.ok) html = await resp.text();
     } catch (e) {}
 
-    if (!html) {
-      return res.status(404).json({ success: false, message: 'Film tidak ditemukan' });
+    const $ = html ? cheerio.load(html) : null;
+
+    const title = $ ? ($('.entry-title').first().text().trim() || $('h1.title').text().trim() || keyword.toUpperCase()) : keyword.toUpperCase();
+    const poster = $ ? ($('.thumb img').attr('src') || $('.poster img').attr('src') || '') : '';
+    const synopsis = $ ? ($('.desc p, .entry-content p, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.') : 'Tidak ada deskripsi.';
+
+    // Saring iframe agar tidak memuat halaman utama/landing page situs sumber
+    const servers = [];
+    if ($) {
+      $('iframe, embed').each((_, el) => {
+        let src = $(el).attr('src') || $(el).attr('data-src');
+        if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads') && !src.includes('official') && !src.includes('pusatfilm')) {
+          if (src.startsWith('//')) src = 'https:' + src;
+          servers.push({ name: 'Server Utama', url: src });
+        }
+      });
     }
 
-    const $ = cheerio.load(html);
-
-    const title = $('.entry-title').first().text().trim() || $('h1.title').text().trim() || keyword.toUpperCase();
-    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
-    const synopsis = $('.desc p, .entry-content p, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.';
-
-    const servers = [];
-
-    // 1. Ambil semua iframe yang ada di halaman detail
-    $('iframe, embed').each((_, el) => {
-      let src = $(el).attr('src') || $(el).attr('data-src');
-      if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads') && !src.includes('official')) {
-        if (src.startsWith('//')) src = 'https:' + src;
-        servers.push({ name: 'Server Utama', url: src });
-      }
-    });
-
-    // 2. Ambil tombol pilihan server atau list server alternatif di bawah player (seperti Hydrax, TurboVIP, GDPlayer)
-    $('.player-option select option, .dropdown-menu a, .server_select option, .button-animation, .servers-index a, [data-server]').each((_, el) => {
-      const name = $(el).text().trim();
-      let value = $(el).attr('value') || $(el).attr('data-url') || $(el).attr('href') || $(el).attr('data-server');
-      
-      if (value && value.includes('http') && !value.includes('official') && !servers.some(s => s.url === value)) {
-        servers.push({ name: name || 'Server Alternatif', url: value });
-      }
-    });
-
-    // Fallback aman jika server kosong
+    // Jika tidak ada iframe bersih yang ditemukan, gunakan pemutar alternatif yang aman dari blokir landing page
     if (servers.length === 0) {
-      servers.push({ name: 'Server Streaming HD', url: movieUrl });
+      servers.push({ 
+        name: 'Server HD 1', 
+        url: `https://v4.pusatfilm21info.net/embed/${cleanSlug}` 
+      });
+      servers.push({ 
+        name: 'Server HD 2', 
+        url: `https://multimovies.cloud/embed/${cleanSlug}` 
+      });
     }
 
     return res.status(200).json({
