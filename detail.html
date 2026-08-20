@@ -55,7 +55,7 @@
 
     .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; scrollbar-width: none; }
     .ep-scroll-grid::-webkit-scrollbar { display: none; }
-    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; }
     .ep-box.active { background: #581c87; border-color: #a855f7; color: #fff; }
 
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; }
@@ -167,6 +167,14 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
+    function getEpDisplayLabel(ep, index, totalLength) {
+      // Ambil angka dari judul episode (misal: "Episode 54" -> 54)
+      const match = ep.title ? ep.title.match(/\d+/) : null;
+      if (match) return match[0];
+      // Fallback jika tidak ada angka di judul: hitung dari total (misal: index 0 dari 54 ep -> 54)
+      return totalLength - index;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     let rawSlug = urlParams.get('slug') || window.location.pathname;
     let targetSlug = cleanSlug(rawSlug);
@@ -209,18 +217,20 @@
           epGrid.innerHTML = '';
 
           globalEpisodes.forEach((ep, i) => {
+            const epNumText = getEpDisplayLabel(ep, i, globalEpisodes.length);
             const box = document.createElement('div');
             box.className = 'ep-box';
-            box.innerText = i + 1;
+            box.innerText = epNumText;
             box.id = `ep-box-${cleanSlug(ep.slug)}`;
             box.onclick = () => {
-              selectEpisode(ep.slug, data.title, data.poster, `Ep ${i + 1}`);
+              selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNumText}`);
             };
             epGrid.appendChild(box);
           });
 
           if (globalEpisodes.length > 0) {
-            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, 'Ep 1');
+            const firstNumText = getEpDisplayLabel(globalEpisodes[0], 0, globalEpisodes.length);
+            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstNumText}`);
           }
         }
       } else {
@@ -263,7 +273,6 @@
       if (servers && servers.length > 0) {
         let defaultIndex = 0;
 
-        // Cari server yang memiliki nama Sub Indo / Indonesia
         const indoIndex = servers.findIndex(srv => 
           /indo|indonesia|sub indo/i.test(srv.name)
         );
@@ -312,11 +321,12 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, i) => {
+        const epNumText = getEpDisplayLabel(ep, i, globalEpisodes.length);
         const box = document.createElement('div');
         box.className = 'ep-box';
-        box.innerText = i + 1;
+        box.innerText = epNumText;
         box.onclick = () => {
-          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${i + 1}`);
+          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${epNumText}`);
         };
         sheetGrid.appendChild(box);
       });
