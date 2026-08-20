@@ -10,13 +10,27 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-    body { background-color: #0b0f19; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 60px; padding-bottom: 50px; transition: background 0.3s, color 0.3s; }
+    body { 
+      background-color: #0b0f19; 
+      color: #f8fafc; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      padding-top: 68px; 
+      padding-bottom: 50px; 
+      transition: background 0.3s, color 0.3s; 
+    }
     
     /* MODE TERANG */
     body.light-mode { background-color: #f8fafc; color: #0b0f19; }
-    body.light-mode header { background: rgba(248, 250, 252, 0.95); border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+    body.light-mode header { 
+      background: rgba(248, 250, 252, 0.75); 
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+    }
     body.light-mode .brand-title { color: #0b0f19 !important; }
-    body.light-mode .icon-circle-btn { background: #e2e8f0; color: #0b0f19; }
+    body.light-mode .icon-circle-btn { 
+      background: rgba(0, 0, 0, 0.05); 
+      border: 1px solid rgba(0, 0, 0, 0.1); 
+      color: #0b0f19; 
+    }
     body.light-mode .search-input-header { background: #e2e8f0; border-color: #cbd5e1; color: #0b0f19; }
     body.light-mode .header-search-box { background: rgba(248, 250, 252, 0.95); }
     body.light-mode .search-results-dropdown { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
@@ -30,12 +44,20 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
+    /* HEADER GAYA iOS (FROSTED GLASS GELAP) */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 10px 16px; 
+      background: rgba(11, 15, 25, 0.75); 
+      backdrop-filter: blur(20px) saturate(180%); 
+      -webkit-backdrop-filter: blur(20px) saturate(180%); 
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+      padding: 10px 16px; 
     }
-    .header-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative; height: 38px; }
+    .header-content { 
+      max-width: 1000px; margin: 0 auto; 
+      display: flex; justify-content: space-between; align-items: center; 
+      position: relative; height: 44px; 
+    }
     
     .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; transition: opacity 0.2s; }
     .header-normal-group.hidden { display: none; }
@@ -43,24 +65,39 @@
     .header-left-group { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
-    /* TOMBOL BULAT ALA iOS / GEMINI */
+    /* TOMBOL BULAT GLASSMORPHISM (44px) */
     .icon-circle-btn { 
-      background: #1e293b; color: #f8fafc; border: none; border-radius: 50%; 
-      width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; 
-      flex-shrink: 0; transition: background 0.2s; 
+      background: rgba(255, 255, 255, 0.08); 
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #ffffff; 
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%; 
+      width: 44px; height: 44px; 
+      cursor: pointer; 
+      display: flex; align-items: center; justify-content: center; 
+      flex-shrink: 0; transition: all 0.2s; 
     }
-    .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    
+    /* IKON TEPAT DI TENAH */
+    .icon-circle-btn svg { 
+      width: 20px; height: 20px; 
+      fill: none; stroke: currentColor; stroke-width: 2.2; 
+      stroke-linecap: round; stroke-linejoin: round;
+      display: block;
+      margin: auto;
+    }
 
     /* JUDUL PUTIH BERSIH */
-    .brand-title { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 0.3px; white-space: nowrap; }
+    .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: 0.3px; white-space: nowrap; }
     
     /* KOTAK PENCARIAN DI HEADER */
-    .header-search-box { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; gap: 10px; background: rgba(11, 15, 25, 0.95); z-index: 10; }
+    .header-search-box { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; gap: 10px; background: rgba(11, 15, 25, 0.85); z-index: 10; }
     .header-search-box.active { display: flex; }
-    .search-input-header { flex: 1; background: #1e293b; border: 1px solid #334155; padding: 8px 14px; border-radius: 18px; color: #fff; font-size: 15px !important; outline: none; }
+    .search-input-header { flex: 1; background: #1e293b; border: 1px solid #334155; padding: 8px 14px; border-radius: 20px; color: #fff; font-size: 15px !important; outline: none; }
 
     /* CONTAINER HASIL PENCARIAN DI BAWAH HEADER */
-    .search-results-dropdown { display: none; position: fixed; top: 60px; left: 0; right: 0; background: #0b0f19; z-index: 99; padding: 16px; max-height: calc(100vh - 60px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
+    .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #0b0f19; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
 
     .section-block { margin-top: 24px; }
@@ -151,7 +188,7 @@
     <div class="header-content">
       <div class="header-normal-group" id="headerNormalGroup">
         <div class="header-left-group" onclick="openPage('/')">
-          <!-- TOMBOL BULAT MENU DUA BARIS DI KIRI -->
+          <!-- TOMBOL BULAT MENU DUA BARIS (44px) -->
           <button class="icon-circle-btn" aria-label="Menu">
             <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16"/></svg>
           </button>
