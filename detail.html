@@ -101,6 +101,7 @@
 
     function cleanSlug(str) { return String(str).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/?detail\//, '').replace(/^\/?anime\//, '').replace(/^\/?movie\//, '').replace(/^\/+|\/+$/g, ''); }
     function getEpNumber(title, fallback) { const match = title ? title.match(/\d+/) : null; return match ? parseInt(match[0]) : fallback; }
+    
     const urlParams = new URLSearchParams(window.location.search);
     let targetSlug = cleanSlug(urlParams.get('slug') || window.location.pathname);
 
@@ -108,73 +109,141 @@
 
     async function loadDetail() {
       const mediaBox = document.getElementById('playerMediaContainer');
+      mediaBox.innerHTML = 'Memuat player...';
+
       let res = await fetch(`/api/detail?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
-      if (res?.success && res.data) {
+      if (!res || !res.success) {
+        res = await fetch(`/api/movie?slug=${encodeURIComponent(targetSlug)}`).then(r => r.json()).catch(() => null);
+      }
+
+      if (res && res.success && res.data) {
         const data = res.data;
         currentMainTitle = data.title;
         document.getElementById('dTitle').innerText = data.title;
         document.getElementById('topHeaderTitle').innerText = data.title;
         document.getElementById('dSynopsis').innerText = data.synopsis || 'Tidak ada deskripsi.';
 
-        globalEpisodes = data.episodes || [];
-        document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
-        
-        const epGrid = document.getElementById('epGrid');
-        epGrid.innerHTML = '';
-        globalEpisodes.forEach((ep, i) => {
-          const epNum = getEpNumber(ep.title, i + 1);
-          const box = document.createElement('div');
-          box.className = 'ep-box';
-          box.innerText = epNum;
-          box.id = `ep-box-${cleanSlug(ep.slug)}`;
-          box.onclick = () => selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNum}`);
-          epGrid.appendChild(box);
-        });
+        if (data.isMovie) {
+          document.getElementById('epContainer').style.display = 'none';
+          setupServers(data.servers);
+          saveHistory(targetSlug, targetSlug, data.title, data.poster, 'Movie');
+        } else {
+          document.getElementById('epContainer').style.display = 'block';
+          globalEpisodes = data.episodes || [];
+          document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
 
-        if (globalEpisodes.length > 0) selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${getEpNumber(globalEpisodes[0].title, 1)}`);
+          const epGrid = document.getElementById('epGrid');
+          epGrid.innerHTML = '';
+
+          globalEpisodes.forEach((ep, i) => {
+            const epNum = getEpNumber(ep.title, i + 1);
+            const box = document.createElement('div');
+            box.className = 'ep-box';
+            box.innerText = epNum;
+            box.id = `ep-box-${cleanSlug(ep.slug)}`;
+            box.onclick = () => selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNum}`);
+            epGrid.appendChild(box);
+          });
+
+          if (globalEpisodes.length > 0) {
+            const firstNum = getEpNumber(globalEpisodes[0].title, 1);
+            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstNum}`);
+          }
+        }
+      } else {
+        document.getElementById('dTitle').innerText = 'Gagal Memuat Detail';
+        mediaBox.innerHTML = 'Media tidak ditemukan.';
       }
     }
 
     async function selectEpisode(epSlug, title, poster, episodeName) {
       closeEpisodeSheet();
+      const cleanEp = cleanSlug(epSlug);
+      
       document.querySelectorAll('.ep-box').forEach(b => b.classList.remove('active'));
-      const activeBox = document.getElementById(`ep-box-${cleanSlug(epSlug)}`);
+      const activeBox = document.getElementById(`ep-box-${cleanEp}`);
       if (activeBox) activeBox.classList.add('active');
+
+      saveHistory(targetSlug, cleanEp, title, poster, episodeName);
+      
       const mediaBox = document.getElementById('playerMediaContainer');
       mediaBox.innerHTML = 'Memuat video...';
-      const res = await fetch(`/api/detail?slug=${encodeURIComponent(epSlug)}`).then(r => r.json()).catch(() => null);
-      if (res?.success && res.data?.servers?.length > 0) setupServers(res.data.servers);
+      
+      const res = await fetch(`/api/detail?slug=${encodeURIComponent(cleanEp)}`).then(r => r.json()).catch(() => null);
+      if (res && res.success && res.data && res.data.servers && res.data.servers.length > 0) {
+        setupServers(res.data.servers);
+      } else {
+        mediaBox.innerHTML = 'Server video episode ini belum tersedia.';
+      }
     }
 
     function setupServers(servers) {
       const serverSelect = document.getElementById('serverSelect');
       const serverDisplayTitle = document.getElementById('serverDisplayTitle');
       serverSelect.innerHTML = '';
-      let defaultIdx = servers.findIndex(s => /indo|sub indo/i.test(s.name)) || 0;
-      servers.forEach((s, i) => {
-        const opt = document.createElement('option');
-        opt.value = s.url; opt.innerText = s.name;
-        if (i === defaultIdx) opt.selected = true;
-        serverSelect.appendChild(opt);
-      });
-      serverDisplayTitle.innerText = servers[defaultIdx].name;
-      document.getElementById('playerMediaContainer').innerHTML = `<iframe class="player-iframe" src="${servers[defaultIdx].url}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+
+      if (servers && servers.length > 0) {
+        let defaultIndex = servers.findIndex(s => /indo|sub indo/i.test(s.name));
+        if (defaultIndex === -1) defaultIndex = 0;
+
+        servers.forEach((srv, index) => {
+          const opt = document.createElement('option');
+          opt.value = srv.url;
+          opt.innerText = srv.name;
+          if (index === defaultIndex) opt.selected = true;
+          serverSelect.appendChild(opt);
+        });
+
+        serverSelect.selectedIndex = defaultIndex;
+        serverDisplayTitle.innerText = servers[defaultIndex].name;
+        renderPlayerMedia(servers[defaultIndex].url);
+      } else {
+        document.getElementById('playerMediaContainer').innerText = 'Server video tidak tersedia.';
+      }
     }
 
-    function switchServer(url, name) { document.getElementById('serverDisplayTitle').innerText = name; document.getElementById('playerMediaContainer').innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`; }
-    function openEpisodeSheet() { 
-      const sheet = document.getElementById('sheetEpGrid');
-      sheet.innerHTML = '';
+    function switchServer(url, name) {
+      if (url) {
+        document.getElementById('serverDisplayTitle').innerText = name || 'Server';
+        renderPlayerMedia(url);
+      }
+    }
+
+    function renderPlayerMedia(url) {
+      const mediaBox = document.getElementById('playerMediaContainer');
+      if (!url) return;
+      mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+    }
+
+    function openEpisodeSheet() {
+      const sheetGrid = document.getElementById('sheetEpGrid');
+      const overlay = document.getElementById('sheetOverlay');
+      sheetGrid.innerHTML = '';
+
+      if (globalEpisodes.length === 0) return;
+
       globalEpisodes.forEach((ep, i) => {
         const epNum = getEpNumber(ep.title, i + 1);
         const box = document.createElement('div');
-        box.className = 'ep-box'; box.innerText = epNum;
+        box.className = 'ep-box';
+        box.innerText = epNum;
         box.onclick = () => selectEpisode(ep.slug, currentMainTitle, '', `Ep ${epNum}`);
-        sheet.appendChild(box);
+        sheetGrid.appendChild(box);
       });
-      document.getElementById('sheetOverlay').classList.add('active');
+
+      overlay.classList.add('active');
     }
-    function closeEpisodeSheet() { document.getElementById('sheetOverlay').classList.remove('active'); }
+
+    function closeEpisodeSheet() {
+      document.getElementById('sheetOverlay').classList.remove('active');
+    }
+
+    function saveHistory(mainPath, epPath, title, poster, episode) {
+      let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      history = history.filter(item => item.mainPath !== mainPath);
+      history.unshift({ mainPath, epPath, title, poster, episode });
+      localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 10)));
+    }
 
     window.onload = loadDetail;
   </script>
