@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RZ Media Player - Detail</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
     
@@ -48,8 +45,8 @@
     .icon-circle-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; }
     .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
 
-    .player-wrapper { margin-left: -16px; margin-right: -16px; width: calc(100% + 32px); background: #000; margin-bottom: 16px; }
-    .detail-player-box { width: 100%; aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
+    .player-wrapper { margin-left: -16px; margin-right: -16px; width: calc(100% + 32px); background: #000; margin-bottom: 16px; position: relative; aspect-ratio: 16/9; }
+    .detail-player-box { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
     .player-iframe { width: 100%; height: 100%; border: none; }
 
     .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -304,35 +301,7 @@
       const mediaBox = document.getElementById('playerMediaContainer');
       if (!url) return;
 
-      mediaBox.innerHTML = '';
-
-      // Deteksi stream langsung (.mp4 atau .m3u8)
-      const isDirectMp4 = /\.mp4(\?.*)?$/i.test(url);
-      const isHls = /\.m3u8(\?.*)?$/i.test(url);
-
-      if (isDirectMp4 || isHls) {
-        // Pemutar Video HTML5 / Custom Player
-        const videoElement = document.createElement('video');
-        videoElement.id = 'customVideoPlayer';
-        videoElement.controls = true;
-        videoElement.autoplay = true;
-        videoElement.style.width = '100%';
-        videoElement.style.height = '100%';
-        videoElement.style.objectFit = 'contain';
-
-        mediaBox.appendChild(videoElement);
-
-        if (isHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(url);
-          hls.attachMedia(videoElement);
-        } else {
-          videoElement.src = url;
-        }
-      } else {
-        // Fallback Iframe untuk server terlindung (seperti OK.ru / Blogger)
-        mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen></iframe>`;
-      }
+      mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
     }
 
     function openEpisodeSheet() {
