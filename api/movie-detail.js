@@ -19,11 +19,10 @@ export default async function handler(req, res) {
     let title = keyword.toUpperCase();
     let poster = '';
     let synopsis = 'Sinopsis tidak tersedia.';
-    let movieUrl = `https://v4.pusatfilm21info.net/${cleanSlug}/`;
-
-    // Ambil metadata dari situs sumber secara langsung tanpa proksi berbayar
+    
+    // Coba ambil metadata asli jika slug valid
     try {
-      const resp = await fetch(movieUrl, {
+      const resp = await fetch(`https://new39.ngefilm.site/${cleanSlug}/`, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
       });
       if (resp.ok) {
@@ -35,7 +34,7 @@ export default async function handler(req, res) {
       }
     } catch (e) {}
 
-    // Gunakan server embed player publik yang stabil, aman, dan langsung merender iframe video film
+    // Server pemutar video universal yang bersih dan stabil di dalam iframe
     const servers = [
       {
         name: 'Server Utama HD',
@@ -44,10 +43,6 @@ export default async function handler(req, res) {
       {
         name: 'Server Alternatif',
         url: `https://vidsrc.cc/v2/embed/movie?q=${encodeURIComponent(keyword)}`
-      },
-      {
-        name: 'Server Cadangan',
-        url: `https://database.gdriveplayer.us/player.php?imdb=${encodeURIComponent(keyword)}`
       }
     ];
 
