@@ -51,12 +51,11 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
 
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
-    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
+    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src'] || '';
     
-    // Pembersihan sinopsis (hanya mengambil teks Bahasa Indonesia)
+    // Sinopsis Bahasa Indonesia saja
     let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
     let synopsis = rawSynopsis;
-
     const matchIndo = rawSynopsis.match(/(indonesia|indonesian)([\s\S]*)/i);
     if (matchIndo && matchIndo[2]) {
       synopsis = matchIndo[2].trim();
@@ -64,11 +63,11 @@ export default async function handler(req, res) {
       synopsis = rawSynopsis.replace(/^English/i, '').trim();
     }
 
-    // Ambil daftar episode dari sumber secara natural
+    // Ambil daftar episode persis urutan dari web sumber (terbaru di atas)
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
-      const epHref = $(el).attr('href') || '';
+      const epHref = $(el).attr('href'] || '';
       
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
       if (epSlug && !episodes.some(e => e.slug === epSlug)) {
@@ -76,16 +75,7 @@ export default async function handler(req, res) {
       }
     });
 
-    // Urutkan episode secara ASCENDING (Dari Episode 1 ke Episode terbesar / 1 ke 154)
-    episodes.sort((a, b) => {
-      const numA = parseInt((a.title.match(/\d+/) || [0])[0]);
-      const numB = parseInt((b.title.match(/\d+/) || [0])[0]);
-      return numA - numB;
-    });
-
-    // Ekstrak Server Video / Player Iframe
     const servers = [];
-
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
       if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
@@ -111,7 +101,7 @@ export default async function handler(req, res) {
 
         if (value.startsWith('//')) value = 'https:' + value;
         
-        if (value.includes('http') && !servers.some(s => s.url === value)) {
+        if (value.includes('http'] && !servers.some(s => s.url === value)) {
           servers.push({ name: name || 'Server Mirror', url: value });
         }
       }
