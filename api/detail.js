@@ -53,20 +53,18 @@ export default async function handler(req, res) {
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     
-    // === FIX 1: FILTER SINOPSIS INDONESIA KETAT ===
+    // Pembersihan sinopsis (hanya mengambil teks Bahasa Indonesia)
     let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
     let synopsis = rawSynopsis;
 
-    // Cari kata kunci Indonesia / Indonesian tanpa memedulikan huruf besar/kecil
     const matchIndo = rawSynopsis.match(/(indonesia|indonesian)([\s\S]*)/i);
     if (matchIndo && matchIndo[2]) {
       synopsis = matchIndo[2].trim();
     } else if (rawSynopsis.includes('English')) {
-      // Jika hanya ada teks English tanpa penanda Indonesia jelas, hapus header "English"
       synopsis = rawSynopsis.replace(/^English/i, '').trim();
     }
 
-    // === FIX 2: AMBIL & BALIK EPISODE LIST (DARI TERBESAR KE TERKECIL) ===
+    // Ambil daftar episode dari sumber secara natural
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
@@ -78,14 +76,14 @@ export default async function handler(req, res) {
       }
     });
 
-    // Pastikan susunan selalu dari Episode Terbesar (paling baru) ke Terkecil (misal 54 -> 1)
+    // Urutkan episode secara ASCENDING (Dari Episode 1 ke Episode terbesar / 1 ke 154)
     episodes.sort((a, b) => {
       const numA = parseInt((a.title.match(/\d+/) || [0])[0]);
       const numB = parseInt((b.title.match(/\d+/) || [0])[0]);
-      return numB - numA; // Urutkan descending (besar ke kecil)
+      return numA - numB;
     });
 
-    // Ekstrak Server Video
+    // Ekstrak Server Video / Player Iframe
     const servers = [];
 
     $('iframe, embed').each((_, el) => {
