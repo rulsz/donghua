@@ -264,16 +264,30 @@
       serverSelect.innerHTML = '';
 
       if (servers && servers.length > 0) {
-        servers.forEach((srv) => {
+        let defaultIndex = 0;
+
+        // Cari server yang memiliki kata 'indo' atau 'indonesia'
+        const indoIndex = servers.findIndex(srv => 
+          /indo|indonesia|sub indo/i.test(srv.name)
+        );
+
+        if (indoIndex !== -1) {
+          defaultIndex = indoIndex;
+        }
+
+        servers.forEach((srv, index) => {
           const opt = document.createElement('option');
           opt.value = srv.url;
           opt.innerText = srv.name;
+          if (index === defaultIndex) {
+            opt.selected = true;
+          }
           serverSelect.appendChild(opt);
         });
 
-        serverSelect.selectedIndex = 0;
-        serverDisplayTitle.innerText = servers[0].name;
-        renderPlayerMedia(servers[0].url);
+        serverSelect.selectedIndex = defaultIndex;
+        serverDisplayTitle.innerText = servers[defaultIndex].name;
+        renderPlayerMedia(servers[defaultIndex].url);
       } else {
         document.getElementById('playerMediaContainer').innerText = 'Server video tidak tersedia.';
       }
