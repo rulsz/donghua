@@ -22,8 +22,7 @@
     /* MODE TERANG */
     body.light-mode { background-color: #f8fafc; color: #0b0f19; }
     body.light-mode header { 
-      background: rgba(248, 250, 252, 0.75); 
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+      background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0)); 
     }
     body.light-mode .brand-title { color: #0b0f19 !important; }
     body.light-mode .icon-circle-btn { 
@@ -44,14 +43,12 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* HEADER GAYA iOS (FROSTED GLASS GELAP) */
+    /* HEADER POLOS TANPA LINE DENGAN BAYANGAN GRADASI */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      background: rgba(11, 15, 25, 0.75); 
-      backdrop-filter: blur(20px) saturate(180%); 
-      -webkit-backdrop-filter: blur(20px) saturate(180%); 
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-      padding: 10px 16px; 
+      background: linear-gradient(to bottom, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.6) 70%, rgba(11, 15, 25, 0) 100%); 
+      border: none; 
+      padding: 10px 16px 16px 16px; 
     }
     .header-content { 
       max-width: 1000px; margin: 0 auto; 
@@ -79,7 +76,6 @@
       flex-shrink: 0; transition: all 0.2s; 
     }
     
-    /* IKON TEPAT DI TENAH */
     .icon-circle-btn svg { 
       width: 20px; height: 20px; 
       fill: none; stroke: currentColor; stroke-width: 2.2; 
@@ -88,7 +84,6 @@
       margin: auto;
     }
 
-    /* JUDUL PUTIH BERSIH */
     .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; letter-spacing: 0.3px; white-space: nowrap; }
     
     /* KOTAK PENCARIAN DI HEADER */
@@ -187,19 +182,17 @@
   <header>
     <div class="header-content">
       <div class="header-normal-group" id="headerNormalGroup">
-        <div class="header-left-group" onclick="openPage('/')">
-          <!-- TOMBOL BULAT MENU DUA BARIS (44px) -->
-          <button class="icon-circle-btn" aria-label="Menu">
-            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16"/></svg>
+        <div class="header-left-group" onclick="handleLeftNavClick()">
+          <!-- TOMBOL KIRI: DINAMIS ANTARA HAMBURGER 3 BARIS & BACK -->
+          <button class="icon-circle-btn" id="mainNavBtn" aria-label="Navigation">
+            <!-- HAMBURGER 3 BARIS -->
+            <svg id="iconHamburger" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <!-- ICON BACK (DISEMBUNYIKAN PADA HOMEPAGE) -->
+            <svg id="iconBack" viewBox="0 0 24 24" style="display: none;"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <!-- JUDUL PUTIH BERSIH -->
           <span class="brand-title" id="topHeaderTitle">RZ Donghua</span>
         </div>
         <div class="header-right-group">
-          <!-- TOMBOL KEMBALI / BACK KHUSUS DETAIL -->
-          <button class="icon-circle-btn" id="navBackBtn" style="display: none;" onclick="openPage('/')" aria-label="Kembali">
-            <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
           <!-- TOMBOL BULAT MODE GELAP -->
           <button class="icon-circle-btn" onclick="toggleDarkMode()" aria-label="Mode Gelap">
             <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -314,6 +307,15 @@
     let currentPage = 1;
     let globalEpisodes = [];
     let searchTimer = null;
+    let isDetailPage = false;
+
+    function handleLeftNavClick() {
+      if (isDetailPage) {
+        openPage('/');
+      } else {
+        // Aksi menu hamburger jika di halaman utama
+      }
+    }
 
     function toggleDarkMode() {
       document.body.classList.toggle('light-mode');
@@ -405,26 +407,31 @@
       const urlParams = new URLSearchParams(window.location.search);
       const page = parseInt(urlParams.get('page')) || 1;
 
-      const navBackBtn = document.getElementById('navBackBtn');
+      const iconHamburger = document.getElementById('iconHamburger');
+      const iconBack = document.getElementById('iconBack');
       const topTitle = document.getElementById('topHeaderTitle');
 
       document.getElementById('searchResultsDropdown').classList.remove('active');
       document.getElementById('headerSearchBox').classList.remove('active');
 
       if (path === '' || window.location.search.includes('page')) {
+        isDetailPage = false;
         document.getElementById('homeView').style.display = 'block';
         document.getElementById('detailView').style.display = 'none';
         
-        navBackBtn.style.display = 'none';
+        iconHamburger.style.display = 'block';
+        iconBack.style.display = 'none';
         topTitle.innerText = "RZ Donghua";
 
         renderContinueWatching();
         loadData(page);
       } else {
+        isDetailPage = true;
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('detailView').style.display = 'block';
 
-        navBackBtn.style.display = 'flex';
+        iconHamburger.style.display = 'none';
+        iconBack.style.display = 'block';
         topTitle.innerText = "Detail";
 
         loadDetail(path);
