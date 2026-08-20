@@ -14,22 +14,52 @@ export default async function handler(req, res) {
       .replace(/^\/?movie\//, '')
       .replace(/^\/+|\/+$/g, '');
 
-    const targetUrl = `https://v4.pusatfilm21info.net/${cleanSlug}/`;
+    // Ubah slug seperti "shera-2026" atau "yellow-eyes-2026" menjadi kata kunci pencarian "shera 2026"
+    const keyword = cleanSlug.replace(/-/g, ' ');
 
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    let html = null;
+    let movieUrl = `https://v4.pusatfilm21info.net/${cleanSlug}/`;
+
+    // Coba temukan lewat pencarian langsung di situs sumber agar akurat
+    try {
+      const searchResp = await fetch(`https://v4.pusatfilm21info.net/?s=${encodeURIComponent(keyword)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (searchResp.ok) {
+        const searchHtml = await searchResp.text();
+        const $$ = cheerio.load(searchHtml);
+        
+        // Ambil link hasil pencarian pertama yang paling relevan
+        const firstLink = $$('.item a, article a, .ml-item a, .post-item a, .search-page .result-item a').first().attr('href');
+        if (firstLink) {
+          movieUrl = firstLink;
+        }
       }
-    });
+    } catch (e) {}
 
-    if (!response.ok) {
+    // Ambil halaman detail film
+    try {
+      const resp = await fetch(movieUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (resp.ok) {
+        html = await resp.text();
+      }
+    } catch (e) {}
+
+    if (!html) {
       return res.status(404).json({ success: false, message: 'Film tidak ditemukan' });
     }
 
-    const html = await response.text();
     const $ = cheerio.load(html);
 
-    const title = $('.entry-title').first().text().trim() || $('h1.title').text().trim() || $('h1').first().text().trim() || 'Judul Film';
+    const title = $('.entry-title').first().text().trim() || $('h1.title').text().trim() || $('h1').first().text().trim() || keyword.toUpperCase();
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || $('.mvic-thumb img').attr('src') || '';
     const synopsis = $('.desc p, .entry-content p, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.';
 
@@ -42,7 +72,6 @@ export default async function handler(req, res) {
       }
     });
 
-    // Ambil opsi dari dropdown mirror/server jika ada
     $('.player-option select option, .dropdown-menu a, .server_select option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value') || $(el).attr('data-url') || $(el).attr('href');
@@ -50,6 +79,10 @@ export default async function handler(req, res) {
         servers.push({ name: name || 'Server Alternatif', url: value });
       }
     });
+
+    if (servers.length === 0) {
+      servers.push({ name: 'Server Streaming', url: `https://v4.pusatfilm21info.net/embed/${cleanSlug}` });
+    }
 
     return res.status(200).json({
       success: true,
