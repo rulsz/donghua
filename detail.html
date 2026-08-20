@@ -167,11 +167,9 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    function getEpDisplayLabel(ep, index, totalLength) {
-      // Ambil angka dari judul episode (misal: "Episode 54" -> 54)
+    function extractEpNumber(ep, index, totalLength) {
       const match = ep.title ? ep.title.match(/\d+/) : null;
-      if (match) return match[0];
-      // Fallback jika tidak ada angka di judul: hitung dari total (misal: index 0 dari 54 ep -> 54)
+      if (match) return parseInt(match[0]);
       return totalLength - index;
     }
 
@@ -210,27 +208,37 @@
           saveHistory(targetSlug, targetSlug, data.title, data.poster, 'Movie');
         } else {
           document.getElementById('epContainer').style.display = 'block';
-          globalEpisodes = data.episodes || [];
+          
+          let rawList = data.episodes || [];
+          
+          // Pastikan array episode benar-benar terurut DESCENDING (nomor episode terbesar di index 0)
+          rawList.sort((a, b) => {
+            const numA = extractEpNumber(a, 0, rawList.length);
+            const numB = extractEpNumber(b, 0, rawList.length);
+            return numB - numA;
+          });
+
+          globalEpisodes = rawList;
           document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
 
           const epGrid = document.getElementById('epGrid');
           epGrid.innerHTML = '';
 
           globalEpisodes.forEach((ep, i) => {
-            const epNumText = getEpDisplayLabel(ep, i, globalEpisodes.length);
+            const epNum = extractEpNumber(ep, i, globalEpisodes.length);
             const box = document.createElement('div');
             box.className = 'ep-box';
-            box.innerText = epNumText;
+            box.innerText = epNum;
             box.id = `ep-box-${cleanSlug(ep.slug)}`;
             box.onclick = () => {
-              selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNumText}`);
+              selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNum}`);
             };
             epGrid.appendChild(box);
           });
 
           if (globalEpisodes.length > 0) {
-            const firstNumText = getEpDisplayLabel(globalEpisodes[0], 0, globalEpisodes.length);
-            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstNumText}`);
+            const firstEpNum = extractEpNumber(globalEpisodes[0], 0, globalEpisodes.length);
+            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstEpNum}`);
           }
         }
       } else {
@@ -321,12 +329,12 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, i) => {
-        const epNumText = getEpDisplayLabel(ep, i, globalEpisodes.length);
+        const epNum = extractEpNumber(ep, i, globalEpisodes.length);
         const box = document.createElement('div');
         box.className = 'ep-box';
-        box.innerText = epNumText;
+        box.innerText = epNum;
         box.onclick = () => {
-          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${epNumText}`);
+          selectEpisode(ep.slug, currentMainTitle, '', `Ep ${epNum}`);
         };
         sheetGrid.appendChild(box);
       });
