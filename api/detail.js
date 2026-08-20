@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Slug diperlukan' });
   }
 
-  // Bersihkan slug dari prefix/suffix URL
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/?detail\//, '')
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
     .replace(/^\/?episode\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  // Daftar variasi pola URL untuk Animexin
   const urlsToTry = [
     `https://animexin.dev/${cleanSlug}/`,
     `https://animexin.dev/anime/${cleanSlug}/`,
@@ -55,17 +53,20 @@ export default async function handler(req, res) {
     const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
     const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
     
-    // Extrak dan bersihkan sinopsis agar hanya mengambil bagian Bahasa Indonesia
+    // === FIX 1: FILTER SINOPSIS INDONESIA KETAT ===
     let rawSynopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
     let synopsis = rawSynopsis;
 
-    if (rawSynopsis.includes('Indonesia')) {
-      synopsis = rawSynopsis.split('Indonesia').pop().trim();
-    } else if (rawSynopsis.includes('Indonesian')) {
-      synopsis = rawSynopsis.split('Indonesian').pop().trim();
+    // Cari kata kunci Indonesia / Indonesian tanpa memedulikan huruf besar/kecil
+    const matchIndo = rawSynopsis.match(/(indonesia|indonesian)([\s\S]*)/i);
+    if (matchIndo && matchIndo[2]) {
+      synopsis = matchIndo[2].trim();
+    } else if (rawSynopsis.includes('English')) {
+      // Jika hanya ada teks English tanpa penanda Indonesia jelas, hapus header "English"
+      synopsis = rawSynopsis.replace(/^English/i, '').trim();
     }
 
-    // Ambil daftar episode
+    // === FIX 2: AMBIL & BALIK EPISODE LIST (DARI TERBESAR KE TERKECIL) ===
     const episodes = [];
     $('.eplister ul li a, .eplist ul li a').each((_, el) => {
       const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
@@ -77,21 +78,16 @@ export default async function handler(req, res) {
       }
     });
 
-    // Pastikan urutan episode berurutan dari episode terbesar ke terkecil (145 ke 1)
-    if (episodes.length > 1) {
-      const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
-      const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
-      
-      // Jika episode pertama lebih kecil dari episode terakhir, balikkan urutannya
-      if (firstEpNum < lastEpNum) {
-        episodes.reverse();
-      }
-    }
+    // Pastikan susunan selalu dari Episode Terbesar (paling baru) ke Terkecil (misal 54 -> 1)
+    episodes.sort((a, b) => {
+      const numA = parseInt((a.title.match(/\d+/) || [0])[0]);
+      const numB = parseInt((b.title.match(/\d+/) || [0])[0]);
+      return numB - numA; // Urutkan descending (besar ke kecil)
+    });
 
-    // Ekstrak Server Video / Player Iframe
+    // Ekstrak Server Video
     const servers = [];
 
-    // Iframe bawaan di halaman
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
       if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
@@ -100,13 +96,11 @@ export default async function handler(req, res) {
       }
     });
 
-    // Opsi pilihan Server Mirror
     $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value');
       
       if (value && value !== '') {
-        // Dekode jika nilai di-encode Base64
         if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
           try {
             const decoded = Buffer.from(value, 'base64').toString('utf-8');
