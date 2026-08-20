@@ -14,13 +14,11 @@ export default async function handler(req, res) {
       .replace(/^\/?movie\//, '')
       .replace(/^\/+|\/+$/g, '');
 
-    // Ubah slug seperti "shera-2026" atau "yellow-eyes-2026" menjadi kata kunci pencarian "shera 2026"
     const keyword = cleanSlug.replace(/-/g, ' ');
 
     let html = null;
     let movieUrl = `https://v4.pusatfilm21info.net/${cleanSlug}/`;
 
-    // Coba temukan lewat pencarian langsung di situs sumber agar akurat
     try {
       const searchResp = await fetch(`https://v4.pusatfilm21info.net/?s=${encodeURIComponent(keyword)}`, {
         headers: {
@@ -31,8 +29,6 @@ export default async function handler(req, res) {
       if (searchResp.ok) {
         const searchHtml = await searchResp.text();
         const $$ = cheerio.load(searchHtml);
-        
-        // Ambil link hasil pencarian pertama yang paling relevan
         const firstLink = $$('.item a, article a, .ml-item a, .post-item a, .search-page .result-item a').first().attr('href');
         if (firstLink) {
           movieUrl = firstLink;
@@ -40,7 +36,6 @@ export default async function handler(req, res) {
       }
     } catch (e) {}
 
-    // Ambil halaman detail film
     try {
       const resp = await fetch(movieUrl, {
         headers: {
@@ -64,25 +59,29 @@ export default async function handler(req, res) {
     const synopsis = $('.desc p, .entry-content p, .konten-sinopsis').text().trim() || 'Tidak ada deskripsi.';
 
     const servers = [];
+    
+    // Ambil iframe dan saring agar mengabaikan iklan atau landing page resmi
     $('iframe, embed').each((_, el) => {
       let src = $(el).attr('src') || $(el).attr('data-src');
-      if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
+      if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads') && !src.includes('official') && !src.includes('pf21')) {
         if (src.startsWith('//')) src = 'https:' + src;
-        servers.push({ name: 'Server Utama', url: src });
+        servers.push({ name: 'Server Streaming', url: src });
       }
     });
 
     $('.player-option select option, .dropdown-menu a, .server_select option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value') || $(el).attr('data-url') || $(el).attr('href');
-      if (value && value.includes('http') && !servers.some(s => s.url === value)) {
+      if (value && value.includes('http') && !value.includes('official') && !servers.some(s => s.url === value)) {
         servers.push({ name: name || 'Server Alternatif', url: value });
       }
     });
 
-    if (servers.length === 0) {
-      servers.push({ name: 'Server Streaming', url: `https://v4.pusatfilm21info.net/embed/${cleanSlug}` });
-    }
+    // Tambahkan server embed utama sebagai cadangan teratas jika iframe kosong
+    servers.unshift({ 
+      name: 'Server Utama HD', 
+      url: `https://v4.pusatfilm21info.net/embed/${cleanSlug}` 
+    });
 
     return res.status(200).json({
       success: true,
