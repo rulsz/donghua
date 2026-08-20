@@ -167,10 +167,10 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    function extractEpNumber(ep, index, totalLength) {
+    function extractEpNumber(ep, defaultNum) {
       const match = ep.title ? ep.title.match(/\d+/) : null;
       if (match) return parseInt(match[0]);
-      return totalLength - index;
+      return defaultNum;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -211,11 +211,11 @@
           
           let rawList = data.episodes || [];
           
-          // Pastikan array episode benar-benar terurut DESCENDING (nomor episode terbesar di index 0)
+          // Urutkan episode ASCENDING (Episode 1 ke episode terbesar)
           rawList.sort((a, b) => {
-            const numA = extractEpNumber(a, 0, rawList.length);
-            const numB = extractEpNumber(b, 0, rawList.length);
-            return numB - numA;
+            const numA = extractEpNumber(a, 0);
+            const numB = extractEpNumber(b, 0);
+            return numA - numB;
           });
 
           globalEpisodes = rawList;
@@ -225,7 +225,7 @@
           epGrid.innerHTML = '';
 
           globalEpisodes.forEach((ep, i) => {
-            const epNum = extractEpNumber(ep, i, globalEpisodes.length);
+            const epNum = extractEpNumber(ep, i + 1);
             const box = document.createElement('div');
             box.className = 'ep-box';
             box.innerText = epNum;
@@ -237,7 +237,7 @@
           });
 
           if (globalEpisodes.length > 0) {
-            const firstEpNum = extractEpNumber(globalEpisodes[0], 0, globalEpisodes.length);
+            const firstEpNum = extractEpNumber(globalEpisodes[0], 1);
             selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstEpNum}`);
           }
         }
@@ -329,7 +329,7 @@
       if (globalEpisodes.length === 0) return;
 
       globalEpisodes.forEach((ep, i) => {
-        const epNum = extractEpNumber(ep, i, globalEpisodes.length);
+        const epNum = extractEpNumber(ep, i + 1);
         const box = document.createElement('div');
         box.className = 'ep-box';
         box.innerText = epNum;
