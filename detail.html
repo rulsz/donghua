@@ -109,16 +109,21 @@
   </div>
 
   <script>
+    // Ambil slug dari query parameter Vercel Rewrite atau URL Path
     const urlParams = new URLSearchParams(window.location.search);
-    const targetSlug = urlParams.get('slug');
+    let targetSlug = urlParams.get('slug');
+
+    if (!targetSlug) {
+      targetSlug = window.location.pathname.replace(/^\/detail\//, '').replace(/\/$/, '');
+    }
 
     function goBack() {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }
 
     async function loadDetail() {
       if (!targetSlug) {
-        document.getElementById('dTitle').innerText = 'Slug tidak ditemukan';
+        document.getElementById('dTitle').innerText = 'Judul tidak ditemukan';
         return;
       }
 
