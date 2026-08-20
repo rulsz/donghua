@@ -460,7 +460,6 @@
     let isDetailPage = false;
     let currentMainPath = '';
 
-    // ESTRAKSI DAN CLEANING PATH NAMA JUDUL
     function cleanPath(input) {
       if (!input) return '';
       return String(input)
@@ -470,7 +469,6 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    // PARSER BADGE TEXT
     function formatBadgeText(item) {
       if (!item) return 'Ongoing';
 
@@ -591,7 +589,6 @@
       }, 400);
     }
 
-    // NAVIGASI URL MURNI DIRECT /JUDUL
     function openPage(target) {
       const route = cleanPath(target);
       
