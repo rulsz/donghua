@@ -266,7 +266,7 @@
       if (servers && servers.length > 0) {
         let defaultIndex = 0;
 
-        // Cari server yang memiliki kata 'indo' atau 'indonesia'
+        // Cari server yang memiliki nama Sub Indo / Indonesia
         const indoIndex = servers.findIndex(srv => 
           /indo|indonesia|sub indo/i.test(srv.name)
         );
@@ -304,7 +304,35 @@
       const mediaBox = document.getElementById('playerMediaContainer');
       if (!url) return;
 
-      mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen></iframe>`;
+      mediaBox.innerHTML = '';
+
+      // Deteksi stream langsung (.mp4 atau .m3u8)
+      const isDirectMp4 = /\.mp4(\?.*)?$/i.test(url);
+      const isHls = /\.m3u8(\?.*)?$/i.test(url);
+
+      if (isDirectMp4 || isHls) {
+        // Pemutar Video HTML5 / Custom Player
+        const videoElement = document.createElement('video');
+        videoElement.id = 'customVideoPlayer';
+        videoElement.controls = true;
+        videoElement.autoplay = true;
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.objectFit = 'contain';
+
+        mediaBox.appendChild(videoElement);
+
+        if (isHls && typeof Hls !== 'undefined' && Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(url);
+          hls.attachMedia(videoElement);
+        } else {
+          videoElement.src = url;
+        }
+      } else {
+        // Fallback Iframe untuk server terlindung (seperti OK.ru / Blogger)
+        mediaBox.innerHTML = `<iframe class="player-iframe" src="${url}" allowfullscreen></iframe>`;
+      }
     }
 
     function openEpisodeSheet() {
