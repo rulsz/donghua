@@ -1,129 +1,103 @@
 import * as cheerio from 'cheerio';
 
+// Helper untuk mengekstrak direct MP4 dari OK.ru
+async function resolveOkRu(okUrl) {
+  try {
+    const res = await fetch(okUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+    });
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    
+    // Cari JSON metadata video di attribute data-options
+    const optionsAttr = $('[data-options]').attr('data-options');
+    if (optionsAttr) {
+      const json = JSON.parse(optionsAttr);
+      const metadata = JSON.parse(json.flashvars.metadata);
+      if (metadata && metadata.videos) {
+        // Ambil kualitas tertinggi (misal: hd, full, mobile, sd)
+        const highestVid = metadata.videos.reverse()[0];
+        return highestVid.url;
+      }
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   let { slug } = req.query;
-
-  if (!slug) {
-    return res.status(400).json({ success: false, message: 'Slug diperlukan' });
-  }
+  if (!slug) return res.status(400).json({ success: false, message: 'Slug diperlukan' });
 
   const cleanSlug = String(slug)
     .replace(/^https?:\/\/[^\/]+/, '')
     .replace(/^\/?detail\//, '')
     .replace(/^\/?anime\//, '')
-    .replace(/^\/?episode\//, '')
+    .replace(/^\/?movie\//, '')
     .replace(/^\/+|\/+$/g, '');
 
-  const urlsToTry = [
-    `https://animexin.dev/${cleanSlug}/`,
-    `https://animexin.dev/anime/${cleanSlug}/`,
-    `https://animexin.dev/${cleanSlug}-sub-indo/`,
-    `https://animexin.dev/anime/${cleanSlug}-sub-indo/`
-  ];
-
-  let html = null;
-
-  for (const targetUrl of urlsToTry) {
-    try {
-      const response = await fetch(targetUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      });
-
-      if (response.ok) {
-        const text = await response.text();
-        if (text && (text.includes('eplister') || text.includes('entry-title') || text.includes('infox') || text.includes('embed') || text.includes('iframe'))) {
-          html = text;
-          break;
-        }
-      }
-    } catch (e) {
-      continue;
-    }
-  }
-
-  if (!html) {
-    return res.status(404).json({ success: false, message: 'Donghua/Episode tidak ditemukan di Animexin' });
-  }
+  const targetUrl = `https://animexin.dev/${cleanSlug}/`;
 
   try {
+    const response = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+    });
+
+    if (!response.ok) return res.status(404).json({ success: false, message: 'Tidak ditemukan' });
+
+    const html = await response.text();
     const $ = cheerio.load(html);
 
-    const title = $('.entry-title').first().text().trim() || $('h1.entry-title').text().trim() || 'Judul Donghua';
-    const poster = $('.thumb img').attr('src') || $('.poster img').attr('src') || '';
-    const synopsis = $('.entry-content p').text().trim() || $('.desc p').text().trim() || 'Tidak ada deskripsi.';
+    const title = $('.entry-title').first().text().trim() || 'Judul Donghua';
+    const poster = $('.thumb img').attr('src') || '';
+    const synopsis = $('.entry-content p').text().trim() || '';
 
     const episodes = [];
-    $('.eplister ul li a, .eplist ul li a').each((_, el) => {
-      const epTitle = $(el).find('.epl-title').text().trim() || $(el).find('.epl-num').text().trim() || $(el).text().trim();
+    $('.eplister ul li a').each((_, el) => {
+      const epTitle = $(el).find('.epl-title').text().trim() || $(el).text().trim();
       const epHref = $(el).attr('href') || '';
-      
       const epSlug = epHref.replace(/^https?:\/\/[^\/]+\//, '').replace(/\/$/, '');
-      if (epSlug && !episodes.some(e => e.slug === epSlug)) {
-        episodes.push({ title: epTitle, slug: epSlug });
-      }
+      if (epSlug) episodes.push({ title: epTitle, slug: epSlug });
     });
+    episodes.reverse();
 
-    if (episodes.length > 1) {
-      const firstEpNum = parseInt((episodes[0].title.match(/\d+/) || [0])[0]);
-      const lastEpNum = parseInt((episodes[episodes.length - 1].title.match(/\d+/) || [0])[0]);
-      if (firstEpNum > lastEpNum) {
-        episodes.reverse();
-      }
-    }
-
-    const servers = [];
-
-    // Iframe bawaan
-    $('iframe, embed').each((_, el) => {
-      let src = $(el).attr('src') || $(el).attr('data-src');
-      if (src && !src.includes('facebook') && !src.includes('disqus') && !src.includes('ads')) {
-        if (src.startsWith('//')) src = 'https:' + src;
-        servers.push({ name: 'Server Utama', url: src });
-      }
-    });
-
-    // Pilihan Server Mirror
-    $('.mirror option, select.mirror option, .select-service option').each((_, el) => {
+    const rawServers = [];
+    $('.mirror option, select.mirror option').each((_, el) => {
       const name = $(el).text().trim();
       let value = $(el).attr('value');
-      
-      if (value && value !== '') {
+      if (value) {
         if (/^[A-Za-z0-9+/=]+$/.test(value) && value.length > 20) {
           try {
             const decoded = Buffer.from(value, 'base64').toString('utf-8');
-            if (decoded.includes('http') || decoded.includes('iframe')) {
-              const match = decoded.match(/src=["']([^"']+)["']/);
-              value = match ? match[1] : decoded;
-            }
+            const match = decoded.match(/src=["']([^"']+)["']/);
+            value = match ? match[1] : decoded;
           } catch (e) {}
         }
-
         if (value.startsWith('//')) value = 'https:' + value;
-        
-        if (value.includes('http') && !servers.some(s => s.url === value)) {
-          // Jika URL berasal dari OK.ru, konversi ke player URL jika memungkinkan
-          if (value.includes('ok.ru/videoembed/')) {
-            value = value.replace('ok.ru/videoembed/', 'ok.ru/video/');
-          }
-          servers.push({ name: name || 'Server Mirror', url: value });
-        }
+        rawServers.push({ name: name || 'Server', url: value });
       }
     });
+
+    // Proses konversi server ke Direct File URL jika memungkinkan
+    const processedServers = await Promise.all(
+      rawServers.map(async (srv) => {
+        if (srv.url.includes('ok.ru')) {
+          const directMp4 = await resolveOkRu(srv.url);
+          if (directMp4) {
+            return { name: `${srv.name} (Direct MP4)`, url: directMp4, isDirect: true };
+          }
+        }
+        return srv;
+      })
+    );
 
     return res.status(200).json({
       success: true,
-      data: {
-        title,
-        poster,
-        synopsis,
-        episodes,
-        servers
-      }
+      data: { title, poster, synopsis, episodes, servers: processedServers }
     });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Gagal parsing data Animexin' });
+    return res.status(500).json({ success: false, message: 'Error Server' });
   }
 }
