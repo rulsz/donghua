@@ -177,19 +177,19 @@
   </div>
 
   <div class="container">
-    <!-- 1. Barisan Lanjutkan Menonton -->
+    <!-- 1. Lanjutkan Menonton -->
     <section class="section-block" id="continueSection" style="display: none;">
       <h2 class="section-title">Lanjutkan Menonton</h2>
       <div class="scroll-row" id="continueRow"></div>
     </section>
 
-    <!-- 2. Barisan Populer Hari Ini -->
+    <!-- 2. Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">Populer Hari Ini</h2>
       <div class="scroll-row" id="popularTodayRow">Memuat...</div>
     </section>
 
-    <!-- 3. Barisan Donghua Terbaru -->
+    <!-- 3. Donghua Terbaru -->
     <section class="section-block">
       <div class="section-header-flex">
         <h2 class="section-title">Donghua Terbaru</h2>
@@ -198,7 +198,7 @@
       <div class="grid-3" id="latestGrid">Memuat...</div>
     </section>
 
-    <!-- 4. Barisan Donghua Populer -->
+    <!-- 4. Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">Donghua Populer</h2>
       <div class="grid-3" id="popularAllGrid">Memuat...</div>
@@ -291,14 +291,18 @@
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
-      card.onclick = () => goToDetail(item.slug);
+      card.onclick = () => goToDetail(item.slug || '');
+
+      const title = item.title || 'Donghua';
+      const poster = item.poster || '';
+      const episode = item.episode ? '• ' + item.episode : '';
 
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
-          <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-          <span class="badge-bottom">Donghua ${item.episode ? '• ' + item.episode : ''}</span>
+          <img src="${poster}" alt="${title}" loading="lazy" />
+          <span class="badge-bottom">Donghua ${episode}</span>
         </div>
-        <div class="card-title">${item.title}</div>
+        <div class="card-title">${title}</div>
       `;
       return card;
     }
@@ -306,22 +310,30 @@
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
-      card.onclick = () => goToDetail(item.slug);
+      card.onclick = () => goToDetail(item.slug || '');
+
+      const title = item.title || 'Donghua';
+      const poster = item.poster || '';
+      const episode = item.episode || 'Populer';
 
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
-          <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-          <span class="badge-ep">${item.episode || 'Populer'}</span>
+          <img src="${poster}" alt="${title}" loading="lazy" />
+          <span class="badge-ep">${episode}</span>
         </div>
-        <div class="card-title">${item.title}</div>
+        <div class="card-title">${title}</div>
       `;
       return card;
     }
 
     function renderGridItems(list, targetElement) {
       targetElement.innerHTML = '';
-      if (list && list.length > 0) {
-        list.forEach(item => targetElement.appendChild(createGridCard(item)));
+      if (Array.isArray(list) && list.length > 0) {
+        list.forEach(item => {
+          if (item && item.title) {
+            targetElement.appendChild(createGridCard(item));
+          }
+        });
       } else {
         targetElement.innerHTML = '<p style="color: #64748b; font-size: 12px; grid-column: span 3;">Data tidak tersedia.</p>';
       }
@@ -335,16 +347,24 @@
       try {
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
 
-        if (res.success && res.data) {
+        if (res && res.success && res.data) {
+          // Render Populer Hari Ini
           if (popRow) {
             popRow.innerHTML = '';
-            (res.data.popularToday || []).forEach(item => popRow.appendChild(createScrollCard(item)));
+            const popToday = res.data.popularToday || [];
+            if (popToday.length > 0) {
+              popToday.forEach(item => popRow.appendChild(createScrollCard(item)));
+            } else {
+              popRow.innerText = 'Data tidak tersedia.';
+            }
           }
 
+          // Render Donghua Terbaru (15 Item)
           if (latestGrid) {
             renderGridItems(res.data.latest || [], latestGrid);
           }
 
+          // Render Donghua Populer
           if (popAllGrid) {
             renderGridItems(res.data.popularAll || [], popAllGrid);
           }
@@ -359,7 +379,7 @@
       const container = document.getElementById('continueSection');
       const row = document.getElementById('continueRow');
 
-      if (history.length === 0) { container.style.display = 'none'; return; }
+      if (!history || history.length === 0) { container.style.display = 'none'; return; }
       container.style.display = 'block';
       row.innerHTML = '';
 
