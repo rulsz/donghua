@@ -35,11 +35,9 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* SVG Icon Helpers */
     .icon-svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; }
     .icon-inline { width: 14px; height: 14px; stroke-width: 2.2; margin-right: 4px; }
 
-    /* Skeleton Loading */
     @keyframes skeletonPulse {
       0% { opacity: 0.4; }
       50% { opacity: 0.8; }
@@ -57,7 +55,6 @@
     .card-skeleton-title { height: 13px; width: 85%; margin-bottom: 4px; }
     .card-skeleton-sub { height: 11px; width: 50%; }
 
-    /* Header */
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 10px 12px; pointer-events: none; transition: padding 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
     .header-content { max-width: 100%; width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative; height: 52px; padding: 0 8px; border-radius: 26px; pointer-events: auto; background: transparent; border: 1px solid transparent; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
     header.scrolled { padding: 10px 20px; }
@@ -76,7 +73,6 @@
     .menu-dropdown a svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
 
-    /* Modals */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-main); z-index: 999; padding: 16px; overflow-y: auto; }
     .modal-overlay.active { display: block; }
     .search-modal-header { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 16px auto; }
@@ -86,7 +82,6 @@
     .modal-close-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
     .modal-close-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2.2; fill: none; }
 
-    /* Form Auth Modal Box */
     .auth-modal-box { max-width: 380px; margin: 80px auto 0 auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
     .auth-title { font-size: 20px; font-weight: 800; color: var(--color-accent); margin-bottom: 20px; text-align: center; }
     .auth-field { margin-bottom: 14px; }
@@ -110,7 +105,6 @@
     .dialog-title { font-size: 20px; font-weight: 800; color: var(--color-accent); display: flex; align-items: center; gap: 8px; }
     .load-more-btn { display: block; width: 100%; max-width: 800px; margin: 24px auto 0 auto; padding: 14px; background: var(--bg-card); color: var(--color-accent); border: 1px solid var(--border-color); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; }
 
-    /* Hero Slider */
     .hero-slider-wrapper { position: relative; width: 100%; height: 500px; overflow: hidden; background: #000; }
     .hero-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; display: flex; align-items: flex-end; }
     .hero-slide.active { opacity: 1; z-index: 1; }
@@ -129,7 +123,6 @@
     .dot { width: 8px; height: 8px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
     .dot.active { width: 28px; background: var(--color-accent); border-radius: 10px; }
 
-    /* Content Grid */
     .section-block { margin-top: 24px; }
     .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
@@ -163,7 +156,6 @@
 </head>
 <body>
 
-  <!-- Header Global -->
   <header id="mainHeader">
     <div class="header-content">
       <div class="header-normal-group">
@@ -180,7 +172,6 @@
         </div>
       </div>
 
-      <!-- Menu Dropdown dengan SVG -->
       <div class="menu-dropdown" id="menuDropdown">
         <a href="/">
           <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Beranda
@@ -188,8 +179,9 @@
         <a href="javascript:void(0)" onclick="openLatestDialog()">
           <svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg> Donghua Terbaru
         </a>
+        <!-- MENU PROFIL SAYA (DASHBOARD) -->
         <a href="/dashboard" id="menuDashboardBtn" style="display: none;">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Admin Dashboard
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profil Saya
         </a>
         <a href="javascript:void(0)" id="menuLoginBtn" onclick="handleAuthAction()">
           <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk / Daftar
@@ -198,7 +190,7 @@
     </div>
   </header>
 
-  <!-- Modal Login / Register Email & Password -->
+  <!-- Modal Auth -->
   <div class="modal-overlay" id="authModalOverlay">
     <div class="auth-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -248,7 +240,7 @@
     </div>
   </div>
 
-  <!-- POP-UP DIALOG MODAL DONGHUA TERBARU -->
+  <!-- Modal Dialog Donghua Terbaru -->
   <div class="modal-overlay" id="latestModalOverlay">
     <div class="dialog-header">
       <h2 class="dialog-title">
@@ -278,7 +270,6 @@
   </div>
 
   <div class="container">
-    <!-- 1. Lanjutkan Menonton -->
     <section class="section-block" id="continueSection" style="display: none;">
       <h2 class="section-title">
         <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -287,7 +278,6 @@
       <div class="scroll-row" id="continueRow"></div>
     </section>
 
-    <!-- 2. Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">
         <svg class="icon-svg" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -300,7 +290,6 @@
       </div>
     </section>
 
-    <!-- 3. Donghua Terbaru -->
     <section class="section-block">
       <div class="section-header-flex">
         <h2 class="section-title" style="margin-bottom: 0;">
@@ -316,7 +305,6 @@
       </div>
     </section>
 
-    <!-- 4. Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">
         <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -342,9 +330,8 @@
     let slideInterval = null;
     let dialogPage = 1;
     let allMasterDonghuaList = [];
-    let authMode = 'login'; // 'login' atau 'register'
+    let authMode = 'login';
 
-    // Icon SVG Eye
     const eyeSvgIcon = `<svg class="icon-svg icon-inline" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
     function getTodayString() {
@@ -383,7 +370,6 @@
       window.location.href = `/detail/${slug}`;
     }
 
-    /* Handler Modal Auth Email/Password */
     function handleAuthAction() {
       toggleMenu();
       if (window.currentUser) {
