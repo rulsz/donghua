@@ -2,14 +2,14 @@ import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
   try {
-    const { type, page = 1 } = req.query;
+    const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
     };
 
-    // Fungsi pembantu parser sesuai struktur elemen Animexin
     const parseList = ($, selector) => {
       const result = [];
       $(selector).each((_, el) => {
@@ -26,10 +26,10 @@ export default async function handler(req, res) {
       return result;
     };
 
-    // 1. Ambil Data Gabungan Beranda (Populer Hari Ini, 15 Terbaru, & Populer)
+    // 1. Ambil Data Gabungan Beranda
     if (type === 'all') {
-      const response = await fetch('https://animexin.vip/', { headers });
-      if (!response.ok) return res.status(404).json({ success: false });
+      const response = await fetch('https://animexin.dev/', { headers });
+      if (!response.ok) return res.status(404).json({ success: false, message: 'Gagal akses domain Animexin' });
 
       const html = await response.text();
       const $ = cheerio.load(html);
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
     // 2. Ambil 30 Data untuk Modal Dialog "Lihat Semua" + Load More
     if (type === 'latest') {
-      const targetUrl = pageNum > 1 ? `https://animexin.vip/page/${pageNum}/` : 'https://animexin.vip/';
+      const targetUrl = pageNum > 1 ? `https://animexin.dev/page/${pageNum}/` : 'https://animexin.dev/';
       const response = await fetch(targetUrl, { headers });
       if (!response.ok) return res.status(404).json({ success: false });
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     }
 
     // 3. Fallback Standard Fetch
-    const targetUrl = pageNum > 1 ? `https://animexin.vip/page/${pageNum}/` : 'https://animexin.vip/';
+    const targetUrl = pageNum > 1 ? `https://animexin.dev/page/${pageNum}/` : 'https://animexin.dev/';
     const response = await fetch(targetUrl, { headers });
     if (!response.ok) return res.status(404).json({ success: false });
 
