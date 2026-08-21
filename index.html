@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tabTitle">RZSTREAM - Streaming Donghua Sub Indo</title>
 
-  <!-- Panggil Konfigurasi Firebase dari file eksternal -->
+  <!-- Panggil Konfigurasi Firebase Eksternal -->
   <script type="module" src="/assets/firebase-config.js"></script>
 
   <style>
@@ -71,24 +71,15 @@
     }
 
     .icon-circle-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; }
-    
-    .btn-login-header {
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(56, 189, 248, 0.12); color: var(--color-accent);
-      border: 1px solid var(--border-color); padding: 6px 14px;
-      border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
-    }
-    .user-avatar-img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
-
     .brand-title { font-size: 22px; font-weight: 900; color: var(--color-accent); letter-spacing: 0.5px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.4); text-decoration: none; }
 
     .menu-dropdown {
       display: none; position: absolute; top: 60px; right: 16px;
       background: #0d0d0d; backdrop-filter: blur(16px); border: 1px solid var(--border-color);
-      border-radius: 12px; padding: 8px; min-width: 170px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 101;
+      border-radius: 12px; padding: 8px; min-width: 190px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 101;
     }
     .menu-dropdown.active { display: block; }
-    .menu-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 8px; }
+    .menu-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
 
     /* ==================== MODAL OVERLAY GENERAL ==================== */
@@ -187,11 +178,6 @@
           <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
         </div>
         <div class="header-right-group">
-          <button class="btn-login-header" onclick="handleAuthAction()">
-            <img id="userAvatar" class="user-avatar-img" style="display:none;" />
-            <span id="loginBtnText">Login</span>
-          </button>
-
           <button class="icon-circle-btn" onclick="openSearchModal()">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </button>
@@ -201,10 +187,14 @@
         </div>
       </div>
 
+      <!-- Menu Dropdown dengan Fitur Login & Dashboard Terproteksi -->
       <div class="menu-dropdown" id="menuDropdown">
         <a href="/">🏠 Beranda</a>
         <a href="javascript:void(0)" onclick="openLatestDialog()">🔥 Donghua Terbaru</a>
-        <a href="/dashboard">⚙️ Admin Dashboard</a>
+        <!-- HANYA MUNCUL SAAT LOGIN -->
+        <a href="/dashboard" id="menuDashboardBtn" style="display: none;">⚙️ Admin Dashboard</a>
+        <!-- TOMBOL LOGIN/LOGOUT -->
+        <a href="javascript:void(0)" id="menuLoginBtn" onclick="handleAuthAction()">🔑 Login dengan Google</a>
       </div>
     </div>
   </header>
@@ -332,7 +322,9 @@
       window.location.href = `/detail/${slug}`;
     }
 
+    // Aksi Login / Logout saat menu diklik
     async function handleAuthAction() {
+      toggleMenu();
       if (window.currentUser) {
         if (confirm("Apakah Anda ingin keluar dari akun Google?")) {
           await window.fbSignOut(window.auth);
