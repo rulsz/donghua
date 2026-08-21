@@ -5,7 +5,6 @@
     { "source": "/api/search", "destination": "/api/search.js" },
     { "source": "/api/settings", "destination": "/api/settings.js" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/detail/(.*)", "destination": "/detail.html?slug=$1" },
-    { "source": "/((?!api/|assets/|dashboard|detail).*)", "destination": "/index.html" }
+    { "source": "/detail/:slug*", "destination": "/detail.html?slug=:slug*" }
   ]
 }
