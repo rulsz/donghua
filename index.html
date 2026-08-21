@@ -13,6 +13,7 @@
     :root {
       --bg-main: #000000;
       --bg-card: #0a0a0a;
+      --bg-skeleton: #121212;
       --bg-header-scrolled: rgba(10, 10, 10, 0.92);
       --bg-search-input: #121212;
       --color-primary: #0284c7;
@@ -35,6 +36,35 @@
     }
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+
+    /* ==================== ANIMASI SKELETON LOADING ==================== */
+    @keyframes skeletonPulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+      100% { opacity: 0.4; }
+    }
+
+    .skeleton {
+      background-color: var(--bg-skeleton);
+      animation: skeletonPulse 1.5s infinite ease-in-out;
+      border-radius: 8px;
+    }
+
+    .skeleton-hero {
+      width: 100%; height: 500px;
+      position: relative; overflow: hidden;
+      display: flex; align-items: flex-end; padding: 20px 20px 45px 20px;
+    }
+
+    .skeleton-text { height: 14px; margin-bottom: 8px; border-radius: 4px; }
+    .skeleton-text.title { height: 24px; width: 70%; margin-bottom: 12px; }
+    .skeleton-text.sub { height: 12px; width: 40%; margin-bottom: 16px; }
+    .skeleton-btn { height: 38px; width: 110px; border-radius: 10px; }
+
+    .card-skeleton { width: 100%; }
+    .card-skeleton-img { width: 100%; height: 160px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); }
+    .card-skeleton-title { height: 13px; width: 85%; margin-bottom: 4px; }
+    .card-skeleton-sub { height: 11px; width: 50%; }
 
     /* ==================== HEADER ==================== */
     header { 
@@ -191,9 +221,7 @@
       <div class="menu-dropdown" id="menuDropdown">
         <a href="/">🏠 Beranda</a>
         <a href="javascript:void(0)" onclick="openLatestDialog()">🔥 Donghua Terbaru</a>
-        <!-- HANYA MUNCUL SAAT LOGIN -->
         <a href="/dashboard" id="menuDashboardBtn" style="display: none;">⚙️ Admin Dashboard</a>
-        <!-- TOMBOL LOGIN/LOGOUT -->
         <a href="javascript:void(0)" id="menuLoginBtn" onclick="handleAuthAction()">🔑 Login dengan Google</a>
       </div>
     </div>
@@ -236,9 +264,15 @@
     </div>
   </div>
 
-  <!-- Banner Hero Slider -->
+  <!-- Banner Hero Slider (Placeholder Skeleton Awal) -->
   <div class="hero-slider-wrapper" id="heroSlider">
-    <div class="slider-dots" id="sliderDots"></div>
+    <div class="skeleton skeleton-hero">
+      <div style="width: 100%;">
+        <div class="skeleton skeleton-text title"></div>
+        <div class="skeleton skeleton-text sub"></div>
+        <div class="skeleton skeleton-btn"></div>
+      </div>
+    </div>
   </div>
 
   <div class="container">
@@ -251,7 +285,21 @@
     <!-- 2. Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">Populer Hari Ini</h2>
-      <div class="scroll-row" id="popularTodayRow">Memuat data real-time...</div>
+      <div class="scroll-row" id="popularTodayRow">
+        <!-- Scroll Row Skeleton Placeholder -->
+        <div class="card-continue card-skeleton">
+          <div class="skeleton card-skeleton-img"></div>
+          <div class="skeleton card-skeleton-title"></div>
+        </div>
+        <div class="card-continue card-skeleton">
+          <div class="skeleton card-skeleton-img"></div>
+          <div class="skeleton card-skeleton-title"></div>
+        </div>
+        <div class="card-continue card-skeleton">
+          <div class="skeleton card-skeleton-img"></div>
+          <div class="skeleton card-skeleton-title"></div>
+        </div>
+      </div>
     </section>
 
     <!-- 3. Donghua Terbaru -->
@@ -260,13 +308,29 @@
         <h2 class="section-title" style="margin-bottom: 0;">Donghua Terbaru</h2>
         <button class="see-all-btn" onclick="openLatestDialog()">Lihat Semua</button>
       </div>
-      <div class="grid-3" id="latestGrid" style="margin-top: 14px;">Memuat...</div>
+      <div class="grid-3" id="latestGrid" style="margin-top: 14px;">
+        <!-- Grid 3 Skeleton Placeholder -->
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+      </div>
     </section>
 
     <!-- 4. Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">Donghua Populer</h2>
-      <div class="grid-3" id="popularAllGrid">Memuat data real-time...</div>
+      <div class="grid-3" id="popularAllGrid">
+        <!-- Grid 3 Skeleton Placeholder -->
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+        <div class="card-skeleton"><div class="skeleton card-skeleton-img"></div><div class="skeleton card-skeleton-title"></div><div class="skeleton card-skeleton-sub"></div></div>
+      </div>
     </section>
   </div>
 
@@ -322,7 +386,6 @@
       window.location.href = `/detail/${slug}`;
     }
 
-    // Aksi Login / Logout saat menu diklik
     async function handleAuthAction() {
       toggleMenu();
       if (window.currentUser) {
