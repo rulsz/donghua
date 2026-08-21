@@ -17,7 +17,7 @@
     }
     
     body.light-mode { background-color: #f8fafc; color: #0b0f19; }
-    body.light-mode header .header-content { 
+    body.light-mode header.scrolled .header-content { 
       background: rgba(248, 250, 252, 0.85); 
       border-color: rgba(0, 0, 0, 0.1); 
     }
@@ -31,28 +31,37 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Header Melayang & Efek Dynamic Pill saat Scroll */
+    /* Container Header Melayang */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       padding: 12px 16px; 
       pointer-events: none;
-      transition: all 0.3s ease;
+      transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
+    /* Header Content (Pill Bar dengan Animasi Transisi Ukuran & Background) */
     .header-content { 
       max-width: 1000px; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
-      position: relative; height: 50px; 
-      padding: 0 16px;
-      border-radius: 25px;
+      position: relative; 
+      height: 60px; /* Ukuran Awal Besar */
+      padding: 0 20px;
+      border-radius: 30px;
       pointer-events: auto;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       background: transparent;
       border: 1px solid transparent;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Kelas Aktif saat Didekati / Di-scroll ke Bawah */
+    /* KONDISI SAAT DI-SCROLL KE BAWAH: Header Mengecil + Muncul Background Floating */
+    header.scrolled {
+      padding: 8px 16px;
+    }
+
     header.scrolled .header-content {
+      height: 46px; /* Ukuran Mengecil */
+      max-width: 920px;
+      padding: 0 14px;
       background: rgba(18, 24, 38, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -64,27 +73,41 @@
     .header-left-group { display: flex; align-items: center; gap: 12px; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
+    /* Tombol Icon Ikut Menyesuaikan Ukuran */
     .icon-circle-btn { 
       background: rgba(255, 255, 255, 0.12); 
       backdrop-filter: blur(12px);
       color: #ffffff; 
       border-radius: 50%; 
-      width: 36px; height: 36px; 
+      width: 40px; height: 40px; 
       cursor: pointer; 
       display: flex; align-items: center; justify-content: center; 
       border: 1px solid rgba(255, 255, 255, 0.2);
       -webkit-tap-highlight-color: transparent;
+      transition: all 0.35s ease;
     }
 
-    .icon-circle-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; }
-    .brand-title { font-size: 20px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; }
+    header.scrolled .icon-circle-btn {
+      width: 34px; height: 34px;
+    }
+
+    .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; transition: all 0.35s ease; }
+    header.scrolled .icon-circle-btn svg { width: 15px; height: 15px; }
+
+    .brand-title { 
+      font-size: 22px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; 
+      transition: all 0.35s ease;
+    }
+    header.scrolled .brand-title {
+      font-size: 18px;
+    }
 
     .header-search-box { 
-      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 50px; align-items: center; gap: 10px; z-index: 10; 
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; gap: 10px; z-index: 10; 
     }
     .header-search-box.active { display: flex; }
     .search-input-header { 
-      flex: 1; height: 40px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);
+      flex: 1; height: 40px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 18px; border-radius: 20px; color: #ffffff; font-size: 14px; outline: none; 
     }
 
@@ -218,10 +241,10 @@
     let currentSlide = 0;
     let slideInterval = null;
 
-    // Event Listener untuk Scroll Header
+    // Listener Scroll untuk Menyalakan/Mematikan Animasi Ukuran Header
     window.addEventListener('scroll', () => {
       const header = document.getElementById('mainHeader');
-      if (window.scrollY > 40) {
+      if (window.scrollY > 30) {
         header.classList.add('scrolled');
       } else {
         header.classList.remove('scrolled');
