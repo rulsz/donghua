@@ -1,11 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, get, set, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  updateProfile,
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -26,11 +28,14 @@ window.auth = getAuth(app);
 window.fbRef = ref;
 window.fbGet = get;
 window.fbSet = set;
+window.fbRemove = remove;
 window.fbTransaction = runTransaction;
 window.fbSignIn = signInWithEmailAndPassword;
 window.fbSignUp = createUserWithEmailAndPassword;
 window.fbSignOut = signOut;
 window.fbOnAuth = onAuthStateChanged;
+window.fbUpdateProfile = updateProfile;
+window.fbUpdatePassword = updatePassword;
 
 window.currentUser = null;
 
@@ -43,8 +48,8 @@ window.fbOnAuth(window.auth, (user) => {
 
   if (user) {
     if (loginMenuItem) {
-      const emailShort = user.email ? user.email.split('@')[0] : 'User';
-      loginMenuItem.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Keluar (${emailShort})`;
+      const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+      loginMenuItem.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Keluar (${displayName})`;
     }
     if (dashboardMenuItem) dashboardMenuItem.style.display = 'flex';
   } else {
@@ -56,5 +61,8 @@ window.fbOnAuth(window.auth, (user) => {
 
   if (typeof window.renderContinueWatching === 'function') {
     window.renderContinueWatching();
+  }
+  if (typeof window.updateCommentAuthUI === 'function') {
+    window.updateCommentAuthUI();
   }
 });
