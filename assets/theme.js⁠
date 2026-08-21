@@ -1,0 +1,175 @@
+/**
+ * RZSTREAM - Global Theme Component Engine
+ */
+
+const RZTheme = {
+  headerHTML: `
+    <header id="mainHeader">
+      <div class="header-content">
+        <div class="header-normal-group">
+          <div class="header-left-group">
+            <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
+          </div>
+          <div class="header-right-group">
+            <button class="icon-circle-btn" onclick="RZTheme.openSearchModal()">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button class="icon-circle-btn" onclick="RZTheme.toggleMenu()">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="menu-dropdown" id="menuDropdown">
+          <a href="/">🏠 Beranda</a>
+          <a href="/latest">🔥 Donghua Terbaru</a>
+          <a href="/dashboard">⚙️ Admin Dashboard</a>
+        </div>
+      </div>
+    </header>
+  `,
+
+  searchModalHTML: `
+    <div class="search-modal-overlay" id="searchModalOverlay">
+      <div class="search-modal-header">
+        <div class="search-input-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" class="search-input-field" id="searchInputModal" placeholder="Cari donghua..." onkeyup="RZTheme.handleSearch(event)">
+        </div>
+        <button class="search-close-btn" onclick="RZTheme.closeSearchModal()">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="search-info-bar">
+        <span>Mencari di:</span>
+        <span class="search-badge-source" id="searchBrandBadge">RZSTREAM</span>
+      </div>
+
+      <div class="search-results-list" id="searchResultsList">
+        <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>
+      </div>
+    </div>
+  `,
+
+  footerHTML: `
+    <footer>
+      <div class="container">
+        <p>&copy; <span id="footerYear"></span> <a href="/" id="footerBrand">RZSTREAM</a>. All rights reserved.</p>
+      </div>
+    </footer>
+  `,
+
+  searchTimer: null,
+
+  init() {
+    const appHeader = document.getElementById('app-header');
+    if (appHeader) appHeader.innerHTML = this.headerHTML;
+
+    const appSearch = document.getElementById('app-search');
+    if (appSearch) appSearch.innerHTML = this.searchModalHTML;
+
+    const appFooter = document.getElementById('app-footer');
+    if (appFooter) {
+      appFooter.innerHTML = this.footerHTML;
+      const yr = document.getElementById('footerYear');
+      if (yr) yr.innerText = new Date().getFullYear();
+    }
+
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('mainHeader');
+      if (header) {
+        if (window.scrollY > 15) header.classList.add('scrolled');
+        else header.classList.remove('scrolled');
+      }
+    });
+
+    this.applySettings();
+  },
+
+  async applySettings() {
+    try {
+      const res = await fetch('/api/settings').then(r => r.json());
+      if (res.success && res.settings) {
+        const brand = res.settings.brandTitle || 'RZSTREAM';
+        const pageTitle = res.settings.pageTitle || 'RZSTREAM - Streaming Donghua Sub Indo';
+
+        const displayBrand = document.getElementById('displayBrandTitle');
+        const searchBadge = document.getElementById('searchBrandBadge');
+        const footerBrand = document.getElementById('footerBrand');
+
+        if (displayBrand) displayBrand.innerText = brand;
+        if (searchBadge) searchBadge.innerText = brand;
+        if (footerBrand) footerBrand.innerText = brand;
+        
+        if (!document.title.includes('-')) document.title = pageTitle;
+      }
+    } catch (e) {}
+  },
+
+  toggleMenu() {
+    const el = document.getElementById('menuDropdown');
+    if (el) el.classList.toggle('active');
+  },
+
+  openSearchModal() {
+    const overlay = document.getElementById('searchModalOverlay');
+    const input = document.getElementById('searchInputModal');
+    if (overlay) overlay.classList.add('active');
+    if (input) input.focus();
+  },
+
+  closeSearchModal() {
+    const overlay = document.getElementById('searchModalOverlay');
+    if (overlay) overlay.classList.remove('active');
+  },
+
+  cleanPath(input) {
+    if (!input) return '';
+    return String(input).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/detail\//, '').replace(/^\/anime\//, '').replace(/^\/+|\/+$/g, '');
+  },
+
+  handleSearch(event) {
+    const query = event.target.value.trim();
+    const resultsList = document.getElementById('searchResultsList');
+
+    clearTimeout(this.searchTimer);
+    if (query === '') {
+      resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>';
+      return;
+    }
+
+    resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Mencari donghua...</p>';
+
+    this.searchTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json());
+        resultsList.innerHTML = '';
+        if (res.success && res.data && res.data.length > 0) {
+          res.data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'search-item-card';
+            card.onclick = () => window.location.href = `/detail/${RZTheme.cleanPath(item.slug)}`;
+            card.innerHTML = `
+              <img class="search-item-thumb" src="${item.poster}" alt="${item.title}" loading="lazy" />
+              <div class="search-item-info">
+                <div>
+                  <div class="search-item-title">${item.title}</div>
+                  <div class="search-item-desc">${item.synopsis || 'Saksikan keseruan petualangan donghua sub indo berkualitas HD secara gratis.'}</div>
+                </div>
+                <div class="search-item-ep">${item.episode || 'Episode Terbaru'}</div>
+              </div>
+            `;
+            resultsList.appendChild(card);
+          });
+        } else {
+          resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Donghua tidak ditemukan.</p>';
+        }
+      } catch (e) {
+        resultsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center; margin-top: 40px;">Gagal memuat hasil pencarian.</p>';
+      }
+    }, 400);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => RZTheme.init());
