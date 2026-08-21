@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
   try {
-    const { type = 'all', page = 1 } = req.query;
+    const { type, page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
     const headers = {
@@ -11,7 +11,6 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/'
     };
 
-    // Helper parser universal
     const parseList = ($, selector) => {
       const result = [];
       $(selector).each((_, el) => {
@@ -21,35 +20,25 @@ export default async function handler(req, res) {
         const episode = $(el).find('.bt .ep, .epx, .episode, .sb, .ep, .egp').first().text().trim() || 'Ongoing';
 
         if (title && href) {
-          // Normalisasi slug
-          let rawSlug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          
-          result.push({
-            title,
-            poster,
-            slug: rawSlug,
-            episode,
-            type: 'Donghua'
-          });
+          const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
+          result.push({ title, poster, slug, episode, type: 'Donghua' });
         }
       });
       return result;
     };
 
-    // 1. Ambil Gabungan Data Beranda
-    if (type === 'all') {
+    // Jika dipanggil tanpa type, atau dipanggil dengan ?type=all
+    if (!type || type === 'all') {
       const response = await fetch('https://animexin.dev/', { headers });
       if (!response.ok) return res.status(404).json({ success: false, message: 'Gagal akses Animexin' });
 
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      // Scraping dengan selektor Animexin beranda
       const latest = parseList($, '.utao .uta, .post-show .bs, .listupd .bs, .article .bs').slice(0, 15);
       let popularToday = parseList($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li, .popseries-content .item').slice(0, 10);
       let popularAll = parseList($, '.serieslist .bs, .poppost .bs, .sidebar .bs, .serieslist ul li').slice(0, 10);
 
-      // Fallback cadangan jika widget populer Animexin kosong
       if (popularToday.length === 0) popularToday = latest.slice(0, 8);
       if (popularAll.length === 0) popularAll = latest.slice(5, 15);
 
@@ -59,7 +48,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Mode Modal Dialog "Lihat Semua"
+    // Untuk Modal Dialog "Lihat Semua" (?type=latest)
     if (type === 'latest') {
       const targetUrl = pageNum > 1 
         ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
