@@ -13,7 +13,7 @@
       color: #f8fafc; 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
       padding-top: 68px; 
-      padding-bottom: 90px; 
+      padding-bottom: 40px; 
       transition: background 0.3s, color 0.3s; 
     }
     
@@ -28,17 +28,6 @@
       border: 1px solid rgba(0, 0, 0, 0.08); 
       color: #0b0f19; 
     }
-    body.light-mode .bottom-nav-container {
-      background: rgba(240, 243, 248, 0.9);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
-    body.light-mode .badge-bottom {
-      background: rgba(255, 255, 255, 0.85);
-      border-color: rgba(0, 0, 0, 0.15);
-      color: #0284c7;
-    }
-    body.light-mode .nav-item { color: #64748b; }
-    body.light-mode .nav-item.active { background: rgba(0, 0, 0, 0.08); color: #2563eb; }
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
@@ -86,60 +75,39 @@
     .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
 
-    .bottom-nav-wrapper {
-      position: fixed; bottom: 16px; left: 0; right: 0; z-index: 100;
-      display: flex; justify-content: center; padding: 0 16px; pointer-events: none;
-    }
-
-    .bottom-nav-container {
-      pointer-events: auto; display: flex; align-items: center; justify-content: space-around;
-      width: 100%; max-width: 320px; height: 62px; padding: 4px 6px;
-      background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(16px);
-      border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-item {
-      flex: 1; height: 100%; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px; color: #94a3b8;
-      text-decoration: none; border-radius: 28px; cursor: pointer;
-    }
-    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-item span { font-size: 11px; font-weight: 600; }
-    .nav-item.active { background: rgba(255, 255, 255, 0.1); color: #38bdf8; }
-
     .section-block { margin-top: 24px; }
     .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
 
     .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .scroll-row::-webkit-scrollbar { display: none; }
+    
     .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
     .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; }
     .card-continue img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: rgba(56, 189, 248, 0.95); color: #0f172a; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+    
+    /* Badge Status (Atas) */
+    .badge-ep { 
+      position: absolute; top: 8px; left: 8px; 
+      background: rgba(56, 189, 248, 0.95); color: #0f172a; 
+      font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; 
+    }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .card-grid { cursor: pointer; }
     .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: #111827; }
     .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     
+    /* Badge Episode (Bawah) tanpa tulisan Donghua */
     .badge-bottom { 
       position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px);
       background: rgba(18, 24, 38, 0.85); color: #38bdf8; border: 1px solid rgba(255, 255, 255, 0.18); 
       font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; 
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    
     .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
     .see-all-btn { color: #38bdf8; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
-
-    /* Modal Dialog */
-    .modal-dialog { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; backdrop-filter: blur(8px); }
-    .modal-dialog.active { display: block; }
-    .modal-container { max-width: 900px; margin: 40px auto 0; height: calc(100vh - 80px); background: #090d16; border-radius: 16px; border: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden; }
-    .modal-header { padding: 16px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
-    .load-more-btn { display: block; width: 100%; margin-top: 20px; padding: 12px; background: #111827; color: #38bdf8; border: 1px solid #1e293b; border-radius: 12px; font-weight: 700; cursor: pointer; text-align: center; }
   </style>
 </head>
 <body>
@@ -190,11 +158,11 @@
       <div class="scroll-row" id="popularTodayRow">Memuat...</div>
     </section>
 
-    <!-- 3. Donghua Terbaru (15 Item) -->
+    <!-- 3. Donghua Terbaru -->
     <section class="section-block">
       <div class="section-header-flex">
         <h2 class="section-title" style="margin-bottom: 0;">Donghua Terbaru</h2>
-        <span class="see-all-btn" onclick="openAllModal()">Lihat Semua</span>
+        <a href="/latest" class="see-all-btn">Lihat Semua</a>
       </div>
       <div class="grid-3" id="latestGrid" style="margin-top: 14px;">Memuat...</div>
     </section>
@@ -206,36 +174,7 @@
     </section>
   </div>
 
-  <!-- Modal Dialog Lihat Semua Donghua Terbaru -->
-  <div class="modal-dialog" id="allModal">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3 class="section-title" style="color: #38bdf8; margin-bottom: 0;">Semua Donghua Terbaru</h3>
-        <button class="icon-circle-btn" onclick="closeAllModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="grid-3" id="modalGrid"></div>
-        <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreDialogData()">Muat Lainnya</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <div class="bottom-nav-wrapper">
-    <div class="bottom-nav-container">
-      <div class="nav-item active" id="tabHome" onclick="switchTab('home')">
-        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-        <span>Home</span>
-      </div>
-      <div class="nav-item" id="tabDonghua" onclick="switchTab('donghua')">
-        <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 9H3V5h9v7z"/></svg>
-        <span>Donghua</span>
-      </div>
-    </div>
-  </div>
-
   <script>
-    let modalPage = 1;
     let searchTimer = null;
 
     function cleanPath(input) {
@@ -289,6 +228,7 @@
       window.location.href = `/detail/${cleanPath(slug)}`;
     }
 
+    // Generator Kartu Grid (Status di Atas, Nomor Ep di Bawah)
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
@@ -296,18 +236,21 @@
 
       const title = item.title || 'Donghua';
       const poster = item.poster || '';
-      const episode = item.episode ? '• ' + item.episode : '';
+      const statusText = item.status || 'Ongoing';
+      const epText = item.episode || 'Ep 1';
 
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
           <img src="${poster}" alt="${title}" loading="lazy" />
-          <span class="badge-bottom">Donghua ${episode}</span>
+          <span class="badge-ep">${statusText}</span>
+          <span class="badge-bottom">${epText}</span>
         </div>
         <div class="card-title">${title}</div>
       `;
       return card;
     }
 
+    // Generator Kartu Scroll Row
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
@@ -315,12 +258,14 @@
 
       const title = item.title || 'Donghua';
       const poster = item.poster || '';
-      const episode = item.episode || 'Populer';
+      const statusText = item.status || 'Ongoing';
+      const epText = item.episode || 'Ep 1';
 
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
           <img src="${poster}" alt="${title}" loading="lazy" />
-          <span class="badge-ep">${episode}</span>
+          <span class="badge-ep">${statusText}</span>
+          <span class="badge-bottom">${epText}</span>
         </div>
         <div class="card-title">${title}</div>
       `;
@@ -350,7 +295,6 @@
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
 
         if (res && res.success && res.data) {
-          // Render Populer Hari Ini
           if (popRow) {
             popRow.innerHTML = '';
             const popToday = res.data.popularToday || [];
@@ -361,12 +305,10 @@
             }
           }
 
-          // Render Donghua Terbaru (15 Item)
           if (latestGrid) {
             renderGridItems(res.data.latest || [], latestGrid);
           }
 
-          // Render Donghua Populer
           if (popAllGrid) {
             renderGridItems(res.data.popularAll || [], popAllGrid);
           }
@@ -399,42 +341,6 @@
         `;
         row.appendChild(card);
       });
-    }
-
-    function openAllModal() {
-      document.getElementById('allModal').classList.add('active');
-      if (modalPage === 1 && document.getElementById('modalGrid').children.length === 0) {
-        loadMoreDialogData();
-      }
-    }
-
-    function closeAllModal() {
-      document.getElementById('allModal').classList.remove('active');
-    }
-
-    async function loadMoreDialogData() {
-      const btn = document.getElementById('loadMoreBtn');
-      btn.innerText = 'Memuat...';
-
-      try {
-        const res = await fetch(`/api/donghua?type=latest&page=${modalPage}`).then(r => r.json());
-        if (res.success && res.data && res.data.length > 0) {
-          const grid = document.getElementById('modalGrid');
-          res.data.forEach(item => grid.appendChild(createGridCard(item)));
-          modalPage++;
-          btn.innerText = 'Muat Lainnya';
-        } else {
-          btn.innerText = 'Tidak ada data lagi';
-        }
-      } catch (e) {
-        btn.innerText = 'Gagal memuat';
-      }
-    }
-
-    function switchTab(tab) {
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      if (tab === 'home') document.getElementById('tabHome').classList.add('active');
-      if (tab === 'donghua') document.getElementById('tabDonghua').classList.add('active');
     }
 
     window.onload = () => {
