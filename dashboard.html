@@ -46,14 +46,14 @@
     .btn-save { width: 100%; height: 42px; background: var(--color-primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 6px; }
     .btn-logout { width: 100%; height: 42px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 20px; }
 
-    .history-list { display: flex; flex-direction: column; gap: 10px; }
-    .history-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; cursor: pointer; }
-    .history-left { display: flex; align-items: center; gap: 12px; }
-    .history-thumb { width: 50px; height: 65px; border-radius: 8px; object-fit: cover; background: #222; }
-    .history-title { font-size: 13px; font-weight: 700; color: #fff; }
-    .history-ep { font-size: 11px; color: var(--color-accent); margin-top: 2px; }
-    .btn-del-hist { background: none; border: none; color: #ef4444; padding: 8px; cursor: pointer; }
-    .btn-del-hist svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .item-list { display: flex; flex-direction: column; gap: 10px; }
+    .item-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; cursor: pointer; }
+    .item-left { display: flex; align-items: center; gap: 12px; }
+    .item-thumb { width: 50px; height: 65px; border-radius: 8px; object-fit: cover; background: #222; }
+    .item-title { font-size: 13px; font-weight: 700; color: #fff; }
+    .item-sub { font-size: 11px; color: var(--color-accent); margin-top: 2px; }
+    .btn-del-item { background: none; border: none; color: #ef4444; padding: 8px; cursor: pointer; }
+    .btn-del-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
   </style>
 </head>
 <body>
@@ -67,14 +67,13 @@
   </header>
 
   <div class="container">
-    <!-- Card Info Pengguna -->
     <div class="profile-card">
       <div class="avatar-large" id="avatarDisplay">U</div>
       <div class="user-name" id="userNameDisplay">Memuat...</div>
       <div class="user-email" id="userEmailDisplay">...</div>
     </div>
 
-    <!-- Form Edit Profil -->
+    <!-- Edit Profil -->
     <div class="section-title">
       <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Edit Informasi Profil
     </div>
@@ -90,7 +89,7 @@
       <button type="submit" class="btn-save">Simpan Perubahan Profil</button>
     </form>
 
-    <!-- Form Ubah Password -->
+    <!-- Ubah Password -->
     <div class="section-title">
       <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Ubah Kata Sandi
     </div>
@@ -102,11 +101,19 @@
       <button type="submit" class="btn-save">Perbarui Kata Sandi</button>
     </form>
 
-    <!-- Kelola Riwayat Menonton -->
+    <!-- Daftar Favorit -->
+    <div class="section-title" id="favoritesSection">
+      <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Donghua Favorit Saya
+    </div>
+    <div class="item-list" id="userFavoritesContainer">
+      <p style="font-size: 12px; color: var(--text-muted);">Memuat favorit...</p>
+    </div>
+
+    <!-- Riwayat Menonton -->
     <div class="section-title">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Riwayat Menonton Saya
     </div>
-    <div class="history-list" id="userHistoryContainer">
+    <div class="item-list" id="userHistoryContainer">
       <p style="font-size: 12px; color: var(--text-muted);">Memuat riwayat...</p>
     </div>
 
@@ -116,7 +123,6 @@
   <script>
     function checkAuthAndLoadData() {
       if (!window.currentUser) {
-        // Jika belum login, kembalikan ke beranda
         setTimeout(() => {
           if (!window.currentUser) window.location.href = '/';
           else fillUserData();
@@ -143,6 +149,7 @@
         avatarBox.innerText = name.charAt(0).toUpperCase();
       }
 
+      loadUserFavorites();
       loadUserHistory();
     }
 
@@ -176,50 +183,102 @@
       }
     }
 
+    async function loadUserFavorites() {
+      const container = document.getElementById('userFavoritesContainer');
+      let favList = [];
+
+      if (window.currentUser && window.db) {
+        try {
+          const snap = await window.fbGet(window.fbRef(window.db, `users/${window.currentUser.uid}/favorites`));
+          if (snap.exists()) favList = Object.values(snap.val());
+        } catch (e) {}
+      } else {
+        favList = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
+      }
+
+      if (favList.length > 0) {
+        container.innerHTML = '';
+        favList.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'item-card';
+          card.innerHTML = `
+            <div class="item-left" onclick="window.location.href='/detail/${item.slug}'">
+              <img class="item-thumb" src="${item.poster || 'https://via.placeholder.com/50x65'}" />
+              <div>
+                <div class="item-title">${item.title}</div>
+                <div class="item-sub">Tonton Sekarang</div>
+              </div>
+            </div>
+            <button class="btn-del-item" onclick="deleteFavoriteItem('${item.slug}')">
+              <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        container.innerHTML = '<p style="font-size: 12px; color: var(--text-muted);">Belum ada donghua favorit.</p>';
+      }
+    }
+
+    async function deleteFavoriteItem(slug) {
+      if (window.currentUser && window.db) {
+        const favRef = window.fbRef(window.db, `users/${window.currentUser.uid}/favorites/${slug}`);
+        await window.fbRemove(favRef);
+      } else {
+        let favs = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
+        favs = favs.filter(f => f.slug !== slug);
+        localStorage.setItem('rz_favorites', JSON.stringify(favs));
+      }
+      loadUserFavorites();
+    }
+
     async function loadUserHistory() {
       const container = document.getElementById('userHistoryContainer');
-      if (!window.db || !window.currentUser) return;
+      let historyList = [];
 
-      try {
-        const snap = await window.fbGet(window.fbRef(window.db, `users/${window.currentUser.uid}/history`));
-        if (snap.exists()) {
-          const list = Object.values(snap.val());
-          container.innerHTML = '';
+      if (window.currentUser && window.db) {
+        try {
+          const snap = await window.fbGet(window.fbRef(window.db, `users/${window.currentUser.uid}/history`));
+          if (snap.exists()) historyList = Object.values(snap.val());
+        } catch (e) {}
+      } else {
+        historyList = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      }
 
-          list.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'history-card';
-            card.innerHTML = `
-              <div class="history-left" onclick="window.location.href='/detail/${item.mainPath}'">
-                <img class="history-thumb" src="${item.poster || 'https://via.placeholder.com/50x65'}" />
-                <div>
-                  <div class="history-title">${item.title}</div>
-                  <div class="history-ep">${item.episode || 'Lanjut'}</div>
-                </div>
+      if (historyList.length > 0) {
+        container.innerHTML = '';
+        historyList.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'item-card';
+          card.innerHTML = `
+            <div class="item-left" onclick="window.location.href='/detail/${item.mainPath}'">
+              <img class="item-thumb" src="${item.poster || 'https://via.placeholder.com/50x65'}" />
+              <div>
+                <div class="item-title">${item.title}</div>
+                <div class="item-sub">${item.episode || 'Lanjut'}</div>
               </div>
-              <button class="btn-del-hist" onclick="deleteHistoryItem('${item.mainPath}')">
-                <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
-            `;
-            container.appendChild(card);
-          });
-        } else {
-          container.innerHTML = '<p style="font-size: 12px; color: var(--text-muted);">Belum ada riwayat menonton.</p>';
-        }
-      } catch (e) {
-        container.innerHTML = '<p style="font-size: 12px; color: #ef4444;">Gagal memuat riwayat.</p>';
+            </div>
+            <button class="btn-del-item" onclick="deleteHistoryItem('${item.mainPath}')">
+              <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        container.innerHTML = '<p style="font-size: 12px; color: var(--text-muted);">Belum ada riwayat menonton.</p>';
       }
     }
 
     async function deleteHistoryItem(slug) {
-      if (!window.db || !window.currentUser) return;
-      try {
+      if (window.currentUser && window.db) {
         const histRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${slug}`);
         await window.fbRemove(histRef);
-        loadUserHistory();
-      } catch (e) {
-        alert("Gagal menghapus riwayat: " + e.message);
+      } else {
+        let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+        history = history.filter(i => i.mainPath !== slug);
+        localStorage.setItem('rz_continue_history', JSON.stringify(history));
       }
+      loadUserHistory();
     }
 
     async function handleLogout() {
