@@ -2,14 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Web Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Dashboard - RZSTREAM</title>
   <style>
     :root {
-      --bg-dark: #070b14;
-      --card-bg: rgba(15, 23, 42, 0.75);
-      --border-color: rgba(56, 189, 248, 0.18);
-      --accent-blue: #0ea5e9;
+      --bg-dark: #030712;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --border-color: rgba(56, 189, 248, 0.2);
+      --accent-blue: #0284c7;
       --accent-cyan: #38bdf8;
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
@@ -21,183 +21,143 @@
       background: var(--bg-dark);
       color: var(--text-main);
       min-height: 100vh;
-      display: flex;
+      padding-bottom: 40px;
     }
 
-    /* Sidebar Dashboard */
-    .sidebar {
-      width: 250px;
-      background: rgba(11, 17, 32, 0.95);
-      border-right: 1px solid var(--border-color);
-      padding: 24px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .sidebar-brand {
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .menu-item {
-      padding: 12px 16px;
-      border-radius: 10px;
-      color: var(--text-sub);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.3s;
-    }
-    .menu-item.active, .menu-item:hover {
-      background: rgba(14, 165, 233, 0.15);
-      color: var(--accent-cyan);
-      border: 1px solid var(--border-color);
-    }
-
-    /* Main Area */
-    .main-content {
-      flex: 1;
-      padding: 32px;
-      overflow-y: auto;
-    }
-
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 16px;
+    /* Header Navigation Mobile */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(3, 7, 18, 0.9);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-color);
+      padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
     }
 
-    .header-title { font-size: 24px; font-weight: 800; color: #fff; }
+    .brand { font-size: 18px; font-weight: 900; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; }
+    .btn-back { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7 0%, #0284c7 100%);
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+    .page-header { margin-bottom: 20px; }
+    .page-title { font-size: 22px; font-weight: 800; color: #fff; }
+    .page-desc { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
 
-    /* Forms */
+    /* Card Form Responsive */
     .form-card {
       background: var(--card-bg);
-      backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
-    .form-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--accent-cyan); }
-    .form-group { margin-bottom: 18px; }
-    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 8px; }
+    .form-card-title { font-size: 15px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 14px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; }
     
-    .form-input, .form-textarea {
-      width: 100%;
-      padding: 12px 16px;
-      background: rgba(7, 11, 20, 0.8);
+    .form-input {
+      width: 100%; padding: 12px 14px;
+      background: rgba(3, 7, 18, 0.8);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.3s;
+      border-radius: 10px; color: #fff; font-size: 14px; outline: none;
     }
-    .form-input:focus, .form-textarea:focus { border-color: var(--accent-cyan); }
+    .form-input:focus { border-color: var(--accent-cyan); }
+
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #fff; border: none; border-radius: 12px;
+      font-weight: 800; font-size: 14px; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+    }
 
     .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #0284c7;
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-weight: 700;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      display: none;
-      z-index: 999;
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--accent-blue); color: #fff; padding: 12px 24px;
+      border-radius: 25px; font-weight: 700; font-size: 13px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6); display: none; z-index: 999;
     }
   </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      ADMIN PANEL
-    </div>
-    <ul class="sidebar-menu">
-      <li class="menu-item active">⚙️ Pengaturan Umum</li>
-      <li class="menu-item" onclick="window.location.href='/'">🌐 Lihat Situs Utama</li>
-    </ul>
-  </aside>
+  <header class="top-bar">
+    <div class="brand">⚡ DASHBOARD</div>
+    <a href="/" class="btn-back">🌐 Ke Beranda</a>
+  </header>
 
-  <main class="main-content">
-    <div class="header-bar">
-      <h1 class="header-title">Pengaturan Beranda & Brand</h1>
-      <button class="btn-primary" onclick="saveSettings()">Simpan Perubahan</button>
+  <main class="container">
+    <div class="page-header">
+      <h1 class="page-title">Pengaturan Situs Global</h1>
+      <p class="page-desc">Perubahan di sini akan langsung berdampak pada semua pengunjung di semua HP/Perangkat.</p>
     </div>
 
-    <div class="form-card">
-      <h2 class="form-title">Identitas Website</h2>
-      <div class="form-group">
-        <label class="form-label">Nama Brand Logo (Header)</label>
-        <input type="text" id="brandTitleInput" class="form-input" placeholder="Contoh: RZSTREAM">
+    <form id="settingsForm" onsubmit="saveSettings(event)">
+      <div class="form-card">
+        <h2 class="form-card-title">Identitas Visual Website</h2>
+        <div class="form-group">
+          <label class="form-label">Nama Brand Logo (Header)</label>
+          <input type="text" id="brandTitleInput" class="form-input" required placeholder="Contoh: RZSTREAM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Judul Tab Browser (HTML Title)</label>
+          <input type="text" id="pageTitleInput" class="form-input" required placeholder="Contoh: RZSTREAM - Streaming Donghua Sub Indo">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Judul Tab Browser (HTML Title)</label>
-        <input type="text" id="pageTitleInput" class="form-input" placeholder="Contoh: RZSTREAM - Nonton Donghua Sub Indo">
-      </div>
-    </div>
 
-    <div class="form-card">
-      <h2 class="form-title">Teks Pengumuman Beranda (Optional)</h2>
-      <div class="form-group">
-        <label class="form-label">Pesan / Pengumuman Atas</label>
-
-      </div>
-    </div>
+      <button type="submit" class="btn-submit" id="btnSubmit">Simpan Secara Global</button>
+    </form>
   </main>
 
-  <div class="toast" id="toast">Pengaturan Berhasil Disimpan!</div>
+  <div class="toast" id="toast">✅ Perubahan Disimpan Secara Global!</div>
 
   <script>
-    // Load data lama dari localStorage
-    window.onload = () => {
-      document.getElementById('brandTitleInput').value = localStorage.getItem('rz_brand_title') || 'RZSTREAM';
-      document.getElementById('pageTitleInput').value = localStorage.getItem('rz_page_title') || 'RZSTREAM - Streaming Donghua Sub Indo';
-    };
-
-    function saveSettings() {
-      const brandTitle = document.getElementById('brandTitleInput').value.trim();
-      const pageTitle = document.getElementById('pageTitleInput').value.trim();
-
-      if (brandTitle) localStorage.setItem('rz_brand_title', brandTitle);
-      if (pageTitle) localStorage.setItem('rz_page_title', pageTitle);
-
-      const toast = document.getElementById('toast');
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    async function fetchSettings() {
+      try {
+        const res = await fetch('/api/settings').then(r => r.json());
+        if (res.success && res.settings) {
+          document.getElementById('brandTitleInput').value = res.settings.brandTitle || 'RZSTREAM';
+          document.getElementById('pageTitleInput').value = res.settings.pageTitle || 'RZSTREAM - Streaming Donghua Sub Indo';
+        }
+      } catch (e) {
+        console.error('Gagal mengambil settings:', e);
+      }
     }
+
+    async function saveSettings(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmit');
+      btn.innerText = 'Saving...';
+
+      const payload = {
+        brandTitle: document.getElementById('brandTitleInput').value.trim(),
+        pageTitle: document.getElementById('pageTitleInput').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.success) {
+          localStorage.setItem('rz_brand_title', payload.brandTitle);
+          localStorage.setItem('rz_page_title', payload.pageTitle);
+          
+          const toast = document.getElementById('toast');
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+      } catch (err) {
+        alert('Gagal menyimpan perubahan ke server.');
+      } finally {
+        btn.innerText = 'Simpan Secara Global';
+      }
+    }
+
+    window.onload = fetchSettings;
   </script>
 </body>
 </html>
