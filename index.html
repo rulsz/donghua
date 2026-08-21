@@ -3,14 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RZSTREAM - Beranda</title>
-  
-  <!-- Path Relatif ke Folder Assets -->
-<link rel="stylesheet" href="/assets/style.css">
-<script src="/assets/theme.js" defer></script>
+  <title id="tabTitle">RZSTREAM - Streaming Donghua Sub Indo</title>
 
   <style>
-    /* Style Khusus Banner Hero Slider */
+    /* ==================== VARIABEL WARNA & GLOBAL ==================== */
+    :root {
+      --bg-main: #030712;
+      --bg-card: #0f172a;
+      --bg-search-input: #131d31;
+      --color-primary: #0284c7;
+      --color-primary-hover: #0369a1;
+      --color-accent: #38bdf8;
+      --color-star: #f59e0b;
+      --text-main: #f8fafc;
+      --text-sub: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: rgba(56, 189, 248, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+    
+    body { 
+      background-color: var(--bg-main); 
+      color: var(--text-main); 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      padding-bottom: 40px; 
+    }
+
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+
+    /* ==================== HEADER ==================== */
+    header { 
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
+      padding: 10px 12px; 
+      pointer-events: none;
+      transition: padding 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .header-content { 
+      max-width: 100%; width: 100%; margin: 0 auto; 
+      display: flex; justify-content: space-between; align-items: center; 
+      position: relative; 
+      height: 52px; 
+      padding: 0 8px; 
+      border-radius: 26px;
+      pointer-events: auto;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    header.scrolled { padding: 10px 20px; }
+    header.scrolled .header-content {
+      max-width: 880px; 
+      padding: 0 16px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+    
+    .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .header-left-group { display: flex; align-items: center; gap: 12px; }
+    .header-right-group { display: flex; align-items: center; gap: 8px; }
+
+    .icon-circle-btn { 
+      background: rgba(15, 23, 42, 0.6); 
+      backdrop-filter: blur(12px);
+      color: var(--text-main); 
+      border-radius: 50%; 
+      width: 38px; height: 38px; 
+      cursor: pointer; 
+      display: flex; align-items: center; justify-content: center; 
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-circle-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; }
+    .brand-title { font-size: 22px; font-weight: 900; color: var(--color-accent); letter-spacing: 0.5px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.4); text-decoration: none; }
+
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 16px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px;
+      min-width: 170px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      z-index: 101;
+    }
+    .menu-dropdown.active { display: block; }
+    .menu-dropdown a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 13px; font-weight: 600;
+      border-radius: 8px;
+    }
+    .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
+
+    /* ==================== MODAL PENCARIAN ==================== */
+    .search-modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-main); z-index: 999; padding: 16px; overflow-y: auto;
+    }
+    .search-modal-overlay.active { display: block; }
+
+    .search-modal-header { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 16px auto; }
+    .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
+    .search-input-box svg { position: absolute; left: 14px; width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 2; }
+    .search-input-field { width: 100%; height: 46px; background: var(--bg-search-input); border: 1px solid var(--border-color); border-radius: 12px; padding: 0 16px 0 42px; color: var(--text-main); font-size: 15px; outline: none; }
+    
+    .search-close-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
+    .search-close-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2.2; }
+
+    .search-info-bar { max-width: 800px; margin: 0 auto 16px auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+    .search-badge-source { background: rgba(14, 165, 233, 0.2); color: var(--color-accent); border: 1px solid var(--border-color); padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 12px; }
+
+    .search-results-list { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .search-item-card { display: flex; gap: 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+    .search-item-card:hover { transform: translateY(-2px); border-color: var(--color-accent); }
+    .search-item-thumb { width: 75px; height: 100px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg-card); }
+    .search-item-info { display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
+    .search-item-title { font-size: 15px; font-weight: 700; color: var(--text-main); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .search-item-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+    .search-item-ep { font-size: 12px; font-weight: 700; color: var(--color-accent); margin-top: 6px; }
+
+    /* ==================== HERO SLIDER ==================== */
     .hero-slider-wrapper { position: relative; width: 100%; height: 500px; overflow: hidden; background: #000; }
     .hero-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; display: flex; align-items: flex-end; }
     .hero-slide.active { opacity: 1; z-index: 1; }
@@ -22,23 +148,93 @@
     .hero-title { font-size: 24px; font-weight: 900; line-height: 1.2; color: var(--text-main); margin-bottom: 8px; text-transform: uppercase; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .hero-meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 12px; }
     .rating-star { color: var(--color-star); font-weight: 800; display: flex; align-items: center; gap: 4px; }
-    .badge-status-green { background: var(--bg-badge-green); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+    .badge-status-green { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
     
-    .btn-watch { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); color: var(--text-main); border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: var(--shadow-primary); }
+    .btn-watch { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); color: var(--text-main); border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4); }
     .btn-watch svg { width: 16px; height: 16px; fill: currentColor; }
 
     .slider-dots { position: absolute; bottom: 16px; left: 0; right: 0; z-index: 10; display: flex; justify-content: center; align-items: center; gap: 6px; }
     .dot { width: 8px; height: 8px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
     .dot.active { width: 28px; background: var(--color-accent); border-radius: 10px; }
+
+    /* ==================== KONTEN GRID ==================== */
+    .section-block { margin-top: 24px; }
+    .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text-main); }
+
+    .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+    .scroll-row::-webkit-scrollbar { display: none; }
+    
+    .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
+    .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
+    .card-continue img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .card-grid { cursor: pointer; }
+    .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
+    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .badge-bottom { position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); background: rgba(15, 23, 42, 0.85); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .see-all-btn { color: var(--color-accent); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+
+    footer { margin-top: 50px; padding: 24px 16px; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted); font-size: 13px; }
+    footer a { color: var(--color-accent); text-decoration: none; }
   </style>
 </head>
 <body>
 
-  <!-- Komponen Header & Search dirender otomatis oleh ./assets/theme.js -->
-  <div id="app-header"></div>
-  <div id="app-search"></div>
+  <!-- Header Global -->
+  <header id="mainHeader">
+    <div class="header-content">
+      <div class="header-normal-group">
+        <div class="header-left-group">
+          <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
+        </div>
+        <div class="header-right-group">
+          <button class="icon-circle-btn" onclick="openSearchModal()">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="icon-circle-btn" onclick="toggleMenu()">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
 
-  <!-- Hero Slider Banner -->
+      <div class="menu-dropdown" id="menuDropdown">
+        <a href="/">🏠 Beranda</a>
+        <a href="/latest">🔥 Donghua Terbaru</a>
+        <a href="/dashboard">⚙️ Admin Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Modal Pencarian Overlay -->
+  <div class="search-modal-overlay" id="searchModalOverlay">
+    <div class="search-modal-header">
+      <div class="search-input-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" class="search-input-field" id="searchInputModal" placeholder="Cari donghua..." onkeyup="handleSearchInput(event)">
+      </div>
+      <button class="search-close-btn" onclick="closeSearchModal()">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="search-info-bar">
+      <span>Mencari di:</span>
+      <span class="search-badge-source" id="searchBrandBadge">RZSTREAM</span>
+    </div>
+
+    <div class="search-results-list" id="searchResultsList">
+      <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>
+    </div>
+  </div>
+
+  <!-- Banner Hero Slider -->
   <div class="hero-slider-wrapper" id="heroSlider">
     <div class="slider-dots" id="sliderDots"></div>
   </div>
@@ -72,12 +268,87 @@
     </section>
   </div>
 
-  <!-- Komponen Footer dirender otomatis oleh ./assets/theme.js -->
-  <div id="app-footer"></div>
+  <footer>
+    <div class="container">
+      <p>&copy; <span id="footerYear">2026</span> <a href="/" id="footerBrand">RZSTREAM</a>. All rights reserved.</p>
+    </div>
+  </footer>
 
   <script>
+    let searchTimer = null;
     let currentSlide = 0;
     let slideInterval = null;
+
+    async function applyDashboardSettings() {
+      try {
+        const res = await fetch('/api/settings').then(r => r.json());
+        if (res.success && res.settings) {
+          const brand = res.settings.brandTitle || 'RZSTREAM';
+          const pageTitle = res.settings.pageTitle || 'RZSTREAM - Streaming Donghua Sub Indo';
+          document.getElementById('displayBrandTitle').innerText = brand;
+          document.getElementById('searchBrandBadge').innerText = brand;
+          document.getElementById('footerBrand').innerText = brand;
+          document.title = pageTitle;
+        }
+      } catch (e) {}
+    }
+
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('mainHeader');
+      if (window.scrollY > 15) header.classList.add('scrolled');
+      else header.classList.remove('scrolled');
+    });
+
+    function cleanPath(input) {
+      if (!input) return '';
+      return String(input).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/detail\//, '').replace(/^\/anime\//, '').replace(/^\/+|\/+$/g, '');
+    }
+
+    function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('active'); }
+    function openSearchModal() { document.getElementById('searchModalOverlay').classList.add('active'); document.getElementById('searchInputModal').focus(); }
+    function closeSearchModal() { document.getElementById('searchModalOverlay').classList.remove('active'); }
+
+    function handleSearchInput(event) {
+      const query = event.target.value.trim();
+      const resultsList = document.getElementById('searchResultsList');
+
+      clearTimeout(searchTimer);
+      if (query === '') {
+        resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>';
+        return;
+      }
+
+      resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Mencari donghua...</p>';
+
+      searchTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json());
+          resultsList.innerHTML = '';
+          if (res.success && res.data && res.data.length > 0) {
+            res.data.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'search-item-card';
+              card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+              card.innerHTML = `
+                <img class="search-item-thumb" src="${item.poster}" alt="${item.title}" loading="lazy" />
+                <div class="search-item-info">
+                  <div>
+                    <div class="search-item-title">${item.title}</div>
+                    <div class="search-item-desc">${item.synopsis || 'Saksikan keseruan petualangan donghua sub indo berkualitas HD secara gratis.'}</div>
+                  </div>
+                  <div class="search-item-ep">${item.episode || 'Episode Terbaru'}</div>
+                </div>
+              `;
+              resultsList.appendChild(card);
+            });
+          } else {
+            resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Donghua tidak ditemukan.</p>';
+          }
+        } catch (e) {
+          resultsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center; margin-top: 40px;">Gagal memuat hasil pencarian.</p>';
+        }
+      }, 400);
+    }
 
     function renderHeroSlider(items) {
       const slider = document.getElementById('heroSlider');
@@ -89,8 +360,6 @@
         const slide = document.createElement('div');
         slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
         
-        const path = (window.RZTheme && RZTheme.cleanPath) ? RZTheme.cleanPath(item.slug) : item.slug;
-
         slide.innerHTML = `
           <img class="hero-bg-img" src="${item.poster}" alt="${item.title}" />
           <div class="hero-overlay"></div>
@@ -104,7 +373,7 @@
               <span>•</span>
               <span>${item.episode || 'Ep 1'}</span>
             </div>
-            <button class="btn-watch" onclick="window.location.href='/detail/${path}'">
+            <button class="btn-watch" onclick="window.location.href='/detail/${cleanPath(item.slug)}'">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               Tonton
             </button>
@@ -150,14 +419,10 @@
       }, 4000);
     }
 
-    function getSlugPath(slug) {
-      return (window.RZTheme && RZTheme.cleanPath) ? RZTheme.cleanPath(slug) : slug;
-    }
-
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
-      card.onclick = () => window.location.href = `/detail/${getSlugPath(item.slug)}`;
+      card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -172,7 +437,7 @@
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
-      card.onclick = () => window.location.href = `/detail/${getSlugPath(item.slug)}`;
+      card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -233,7 +498,7 @@
       history.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => window.location.href = `/detail/${getSlugPath(item.mainPath)}`;
+        card.onclick = () => window.location.href = `/detail/${cleanPath(item.mainPath)}`;
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
             <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -245,10 +510,11 @@
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    window.onload = () => {
+      applyDashboardSettings();
       renderContinueWatching();
       loadMainContent();
-    });
+    };
   </script>
 </body>
 </html>
