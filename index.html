@@ -17,8 +17,9 @@
     }
     
     body.light-mode { background-color: #f8fafc; color: #0b0f19; }
-    body.light-mode header { 
-      background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95) 0%, rgba(248, 250, 252, 0) 100%); 
+    body.light-mode header .header-content { 
+      background: rgba(248, 250, 252, 0.85); 
+      border-color: rgba(0, 0, 0, 0.1); 
     }
     body.light-mode .brand-title { color: #e11d48 !important; }
     body.light-mode .icon-circle-btn,
@@ -30,18 +31,33 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Header Melayang di atas Slider */
+    /* Header Melayang & Efek Dynamic Pill saat Scroll */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%); 
       padding: 12px 16px; 
       pointer-events: none;
+      transition: all 0.3s ease;
     }
+    
     .header-content { 
       max-width: 1000px; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
-      position: relative; height: 44px; 
+      position: relative; height: 50px; 
+      padding: 0 16px;
+      border-radius: 25px;
       pointer-events: auto;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: transparent;
+      border: 1px solid transparent;
+    }
+
+    /* Kelas Aktif saat Didekati / Di-scroll ke Bawah */
+    header.scrolled .header-content {
+      background: rgba(18, 24, 38, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
     
     .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; }
@@ -53,26 +69,26 @@
       backdrop-filter: blur(12px);
       color: #ffffff; 
       border-radius: 50%; 
-      width: 40px; height: 40px; 
+      width: 36px; height: 36px; 
       cursor: pointer; 
       display: flex; align-items: center; justify-content: center; 
       border: 1px solid rgba(255, 255, 255, 0.2);
       -webkit-tap-highlight-color: transparent;
     }
 
-    .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; }
-    .brand-title { font-size: 22px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; }
+    .icon-circle-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; }
+    .brand-title { font-size: 20px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; }
 
     .header-search-box { 
-      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 44px; align-items: center; gap: 10px; z-index: 10; 
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 50px; align-items: center; gap: 10px; z-index: 10; 
     }
     .header-search-box.active { display: flex; }
     .search-input-header { 
-      flex: 1; height: 44px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 18px; border-radius: 22px; color: #ffffff; font-size: 15px; outline: none; 
+      flex: 1; height: 40px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 18px; border-radius: 20px; color: #ffffff; font-size: 14px; outline: none; 
     }
 
-    .search-results-dropdown { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 64px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
+    .search-results-dropdown { display: none; position: fixed; top: 68px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 68px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
     .search-results-dropdown.active { display: block; }
 
     /* Hero Slider IDLIX Style */
@@ -92,7 +108,7 @@
     .btn-watch { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); color: #fff; border: none; padding: 12px 28px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; margin-top: 12px; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4); }
     .btn-watch svg { width: 16px; height: 16px; fill: currentColor; }
 
-    /* Indikator Slider (Dots) */
+    /* Indikator Slider Dots */
     .slider-dots { position: absolute; bottom: 12px; left: 0; right: 0; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 6px; }
     .dot { width: 8px; height: 8px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
     .dot.active { width: 28px; background: #e11d48; border-radius: 10px; }
@@ -133,8 +149,8 @@
 </head>
 <body>
 
-  <!-- Header Melayang IDLIX Style -->
-  <header>
+  <!-- Header Melayang -->
+  <header id="mainHeader">
     <div class="header-content">
       <div class="header-normal-group">
         <div class="header-left-group">
@@ -164,10 +180,8 @@
     <div class="grid-3" id="searchResultGrid"></div>
   </div>
 
-  <!-- Hero Slider di Paling Atas -->
-  <div class="hero-slider-wrapper" id="heroSlider">
-    <!-- Diisi otomatis oleh JavaScript -->
-  </div>
+  <!-- Hero Slider -->
+  <div class="hero-slider-wrapper" id="heroSlider"></div>
   <div class="slider-dots" id="sliderDots"></div>
 
   <div class="container">
@@ -203,6 +217,16 @@
     let searchTimer = null;
     let currentSlide = 0;
     let slideInterval = null;
+
+    // Event Listener untuk Scroll Header
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('mainHeader');
+      if (window.scrollY > 40) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
 
     function cleanPath(input) {
       if (!input) return '';
@@ -255,14 +279,13 @@
       window.location.href = `/detail/${cleanPath(slug)}`;
     }
 
-    // Render Slider Hero IDLIX Style
     function renderHeroSlider(items) {
       const slider = document.getElementById('heroSlider');
       const dotsContainer = document.getElementById('sliderDots');
       slider.innerHTML = '';
       dotsContainer.innerHTML = '';
 
-      const sliderItems = items.slice(0, 5); // Ambil 5 teratas
+      const sliderItems = items.slice(0, 5);
       sliderItems.forEach((item, index) => {
         const slide = document.createElement('div');
         slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
@@ -384,12 +407,10 @@
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
 
         if (res && res.success && res.data) {
-          // Render Hero Slider
           if (res.data.popularToday && res.data.popularToday.length > 0) {
             renderHeroSlider(res.data.popularToday);
           }
 
-          // Render Populer Hari Ini
           if (popRow) {
             popRow.innerHTML = '';
             const popToday = res.data.popularToday || [];
@@ -400,12 +421,10 @@
             }
           }
 
-          // Render Donghua Terbaru
           if (latestGrid) {
             renderGridItems(res.data.latest || [], latestGrid);
           }
 
-          // Render Donghua Populer
           if (popAllGrid) {
             renderGridItems(res.data.popularAll || [], popAllGrid);
           }
