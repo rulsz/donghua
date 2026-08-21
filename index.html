@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>RZSTREAM - Beranda</title>
   
-  <!-- Panggil Style & Engine dari folder /assets/ -->
-  <link rel="stylesheet" href="/assets/style.css">
-  <script src="/assets/theme.js" defer></script>
+  <!-- Path Relatif ke Folder Assets -->
+  <link rel="stylesheet" href="./assets/style.css">
+  <script src="./assets/theme.js" defer></script>
 
   <style>
     /* Style Khusus Banner Hero Slider */
@@ -34,7 +34,7 @@
 </head>
 <body>
 
-  <!-- Komponen Header & Search dirender otomatis oleh /assets/theme.js -->
+  <!-- Komponen Header & Search dirender otomatis oleh ./assets/theme.js -->
   <div id="app-header"></div>
   <div id="app-search"></div>
 
@@ -72,7 +72,7 @@
     </section>
   </div>
 
-  <!-- Komponen Footer dirender otomatis oleh /assets/theme.js -->
+  <!-- Komponen Footer dirender otomatis oleh ./assets/theme.js -->
   <div id="app-footer"></div>
 
   <script>
@@ -89,6 +89,8 @@
         const slide = document.createElement('div');
         slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
         
+        const path = (window.RZTheme && RZTheme.cleanPath) ? RZTheme.cleanPath(item.slug) : item.slug;
+
         slide.innerHTML = `
           <img class="hero-bg-img" src="${item.poster}" alt="${item.title}" />
           <div class="hero-overlay"></div>
@@ -102,7 +104,7 @@
               <span>•</span>
               <span>${item.episode || 'Ep 1'}</span>
             </div>
-            <button class="btn-watch" onclick="window.location.href='/detail/${RZTheme.cleanPath(item.slug)}'">
+            <button class="btn-watch" onclick="window.location.href='/detail/${path}'">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               Tonton
             </button>
@@ -148,10 +150,14 @@
       }, 4000);
     }
 
+    function getSlugPath(slug) {
+      return (window.RZTheme && RZTheme.cleanPath) ? RZTheme.cleanPath(slug) : slug;
+    }
+
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
-      card.onclick = () => window.location.href = `/detail/${RZTheme.cleanPath(item.slug)}`;
+      card.onclick = () => window.location.href = `/detail/${getSlugPath(item.slug)}`;
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -166,7 +172,7 @@
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
-      card.onclick = () => window.location.href = `/detail/${RZTheme.cleanPath(item.slug)}`;
+      card.onclick = () => window.location.href = `/detail/${getSlugPath(item.slug)}`;
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -227,7 +233,7 @@
       history.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => window.location.href = `/detail/${RZTheme.cleanPath(item.mainPath)}`;
+        card.onclick = () => window.location.href = `/detail/${getSlugPath(item.mainPath)}`;
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
             <img src="${item.poster}" alt="${item.title}" loading="lazy" />
@@ -239,10 +245,10 @@
       });
     }
 
-    window.onload = () => {
+    document.addEventListener('DOMContentLoaded', () => {
       renderContinueWatching();
       loadMainContent();
-    };
+    });
   </script>
 </body>
 </html>
