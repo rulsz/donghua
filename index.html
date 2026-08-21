@@ -31,60 +31,59 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Header Container Melayang */
+    /* Header Outer Wrapper */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      padding: 12px 16px; 
+      padding: 8px 12px; /* Padding Luar Awal Lebih Pas Ke Atas & Samping */
       pointer-events: none;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: padding 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     
-    /* 1. KONDISI AWAL (DI PALING ATAS): Header Berukuran Besar, Lebar Penuh & Transparan */
+    /* 1. KONDISI AWAL (DI PALING ATAS):
+       Lebar Penuh 100%, Melepet ke Ujung Samping & Atas, Tanpa Background Kapsul */
     .header-content { 
       max-width: 100%; width: 100%; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
       position: relative; 
-      height: 60px; /* Tinggi Besar */
-      padding: 0 12px;
-      border-radius: 30px;
+      height: 64px; /* Tinggi Awal Lebih Besar */
+      padding: 0 8px; /* Margin/Padding Dalam Kecil Agar Logo & Tombol Lebih Ke Ujung Samping */
+      border-radius: 0px;
       pointer-events: auto;
       background: transparent;
       border: 1px solid transparent;
       box-shadow: none;
-      transform: scale(1); /* Ukuran Skala Normal/Besar */
-      transform-origin: top center;
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
-    /* 2. KONDISI SAAT DI-SCROLL: Header Mengecil & Membentuk Kapsul Melayang (Pill Bar) */
+    /* 2. KONDISI SAAT DI-SCROLL:
+       Mengecil, Merapat Ke Tengah Membentuk Kapsul Melayang (Pill Bar) */
     header.scrolled {
-      padding: 10px 20px;
+      padding: 10px 18px; /* Menambah Jarak Dari Pinggir Layar */
     }
 
     header.scrolled .header-content {
-      max-width: 90%; /* Menyempit di Kiri-Kanan */
-      height: 44px;  /* Tinggi Mengecil */
+      max-width: 900px; 
+      height: 46px; /* Jauh Lebih Kecil & Rampat */
       padding: 0 16px;
-      border-radius: 22px;
+      border-radius: 23px;
       background: rgba(10, 10, 10, 0.92);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      transform: scale(0.96); /* Efek Mengempis/Mengecil Halus */
     }
     
     .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .header-left-group { display: flex; align-items: center; gap: 12px; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
-    /* Animasi Tombol Lingkaran (Besar -> Mengecil) */
+    /* Tombol Icon Lingkaran (Animasi Ukuran Besar -> Kecil) */
     .icon-circle-btn { 
       background: rgba(255, 255, 255, 0.12); 
       backdrop-filter: blur(12px);
       color: #ffffff; 
       border-radius: 50%; 
-      width: 42px; height: 42px; /* Ukuran Awal */
+      width: 42px; height: 42px; /* Ukuran Awal Besar */
       cursor: pointer; 
       display: flex; align-items: center; justify-content: center; 
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -93,20 +92,20 @@
     }
 
     header.scrolled .icon-circle-btn {
-      width: 32px; height: 32px; /* Ukuran Mengecil */
+      width: 32px; height: 32px; /* Mengecil Saat Scroll */
       background: rgba(255, 255, 255, 0.15);
     }
 
     .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; transition: all 0.4s ease; }
     header.scrolled .icon-circle-btn svg { width: 14px; height: 14px; }
 
-    /* Animasi Ukuran Teks Logo Brand (Besar -> Mengecil) */
+    /* Teks Logo Brand (Animasi Ukuran Besar -> Kecil) */
     .brand-title { 
-      font-size: 24px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; 
+      font-size: 26px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; 
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     header.scrolled .brand-title {
-      font-size: 18px; /* Teks Logo Mengecil */
+      font-size: 18px; /* Logo Mengecil Pas Di Dalam Kapsul */
     }
 
     .header-search-box { 
@@ -179,7 +178,7 @@
 </head>
 <body>
 
-  <!-- Header Animasi Transisi Ukuran IDLIX Style -->
+  <!-- Header Animasi Dynamic Inset & Shrink -->
   <header id="mainHeader">
     <div class="header-content">
       <div class="header-normal-group">
@@ -248,10 +247,10 @@
     let currentSlide = 0;
     let slideInterval = null;
 
-    // Trigger Animasi Transisi Ukuran Header saat Layar Di-scroll
+    // Trigger Animasi Header Shrink & Floating Pill saat Di-scroll
     window.addEventListener('scroll', () => {
       const header = document.getElementById('mainHeader');
-      if (window.scrollY > 20) {
+      if (window.scrollY > 15) {
         header.classList.add('scrolled');
       } else {
         header.classList.remove('scrolled');
