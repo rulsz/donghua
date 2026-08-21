@@ -109,8 +109,7 @@
 
     .section-block { margin-top: 24px; }
     .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .section-title { font-size: 18px; font-weight: 700; }
-    .see-all-link { color: #38bdf8; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
 
     .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .scroll-row::-webkit-scrollbar { display: none; }
@@ -131,6 +130,8 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .see-all-btn { color: #38bdf8; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
 
     /* Modal Dialog */
     .modal-dialog { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; backdrop-filter: blur(8px); }
@@ -189,13 +190,13 @@
       <div class="scroll-row" id="popularTodayRow">Memuat...</div>
     </section>
 
-    <!-- 3. Donghua Terbaru -->
+    <!-- 3. Donghua Terbaru (15 Item) -->
     <section class="section-block">
       <div class="section-header-flex">
-        <h2 class="section-title">Donghua Terbaru</h2>
-        <span class="see-all-link" onclick="openAllModal()">Lihat Semua</span>
+        <h2 class="section-title" style="margin-bottom: 0;">Donghua Terbaru</h2>
+        <span class="see-all-btn" onclick="openAllModal()">Lihat Semua</span>
       </div>
-      <div class="grid-3" id="latestGrid">Memuat...</div>
+      <div class="grid-3" id="latestGrid" style="margin-top: 14px;">Memuat...</div>
     </section>
 
     <!-- 4. Donghua Populer -->
@@ -205,11 +206,11 @@
     </section>
   </div>
 
-  <!-- Modal Dialog -->
+  <!-- Modal Dialog Lihat Semua Donghua Terbaru -->
   <div class="modal-dialog" id="allModal">
     <div class="modal-container">
       <div class="modal-header">
-        <h3 class="section-title" style="color: #38bdf8;">Semua Donghua Terbaru</h3>
+        <h3 class="section-title" style="color: #38bdf8; margin-bottom: 0;">Semua Donghua Terbaru</h3>
         <button class="icon-circle-btn" onclick="closeAllModal()">✕</button>
       </div>
       <div class="modal-body">
@@ -219,7 +220,7 @@
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Nav -->
   <div class="bottom-nav-wrapper">
     <div class="bottom-nav-container">
       <div class="nav-item active" id="tabHome" onclick="switchTab('home')">
@@ -327,6 +328,7 @@
     }
 
     function renderGridItems(list, targetElement) {
+      if (!targetElement) return;
       targetElement.innerHTML = '';
       if (Array.isArray(list) && list.length > 0) {
         list.forEach(item => {
