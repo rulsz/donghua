@@ -177,19 +177,19 @@
   </div>
 
   <div class="container">
-    <!-- 1. Lanjutkan Menonton -->
+    <!-- 1. Barisan Lanjutkan Menonton -->
     <section class="section-block" id="continueSection" style="display: none;">
       <h2 class="section-title">Lanjutkan Menonton</h2>
       <div class="scroll-row" id="continueRow"></div>
     </section>
 
-    <!-- 2. Populer Hari Ini -->
+    <!-- 2. Barisan Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">Populer Hari Ini</h2>
       <div class="scroll-row" id="popularTodayRow">Memuat...</div>
     </section>
 
-    <!-- 3. Donghua Terbaru (15 List + Lihat Semua) -->
+    <!-- 3. Barisan Donghua Terbaru -->
     <section class="section-block">
       <div class="section-header-flex">
         <h2 class="section-title">Donghua Terbaru</h2>
@@ -198,14 +198,14 @@
       <div class="grid-3" id="latestGrid">Memuat...</div>
     </section>
 
-    <!-- 4. Donghua Populer -->
+    <!-- 4. Barisan Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">Donghua Populer</h2>
       <div class="grid-3" id="popularAllGrid">Memuat...</div>
     </section>
   </div>
 
-  <!-- Modal Dialog Lihat Semua Donghua Terbaru -->
+  <!-- Modal Dialog -->
   <div class="modal-dialog" id="allModal">
     <div class="modal-container">
       <div class="modal-header">
@@ -320,29 +320,37 @@
 
     function renderGridItems(list, targetElement) {
       targetElement.innerHTML = '';
-      list.forEach(item => targetElement.appendChild(createGridCard(item)));
+      if (list && list.length > 0) {
+        list.forEach(item => targetElement.appendChild(createGridCard(item)));
+      } else {
+        targetElement.innerHTML = '<p style="color: #64748b; font-size: 12px; grid-column: span 3;">Data tidak tersedia.</p>';
+      }
     }
 
     async function loadMainContent() {
+      const popRow = document.getElementById('popularTodayRow');
+      const latestGrid = document.getElementById('latestGrid');
+      const popAllGrid = document.getElementById('popularAllGrid');
+
       try {
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
+
         if (res.success && res.data) {
-          
-          // 1. Render Populer Hari Ini
-          const popRow = document.getElementById('popularTodayRow');
-          popRow.innerHTML = '';
-          (res.data.popularToday || []).forEach(item => popRow.appendChild(createScrollCard(item)));
+          if (popRow) {
+            popRow.innerHTML = '';
+            (res.data.popularToday || []).forEach(item => popRow.appendChild(createScrollCard(item)));
+          }
 
-          // 2. Render Donghua Terbaru (15 Item)
-          const latestGrid = document.getElementById('latestGrid');
-          renderGridItems(res.data.latest || [], latestGrid);
+          if (latestGrid) {
+            renderGridItems(res.data.latest || [], latestGrid);
+          }
 
-          // 3. Render Donghua Populer
-          const popAllGrid = document.getElementById('popularAllGrid');
-          renderGridItems(res.data.popularAll || [], popAllGrid);
+          if (popAllGrid) {
+            renderGridItems(res.data.popularAll || [], popAllGrid);
+          }
         }
       } catch (e) {
-        console.error('Gagal memuat beranda', e);
+        console.error('Gagal memuat beranda:', e);
       }
     }
 
