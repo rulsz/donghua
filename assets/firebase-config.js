@@ -17,7 +17,7 @@ const firebaseConfig = {
 // Inisialisasi Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Ekspor instance dan metode ke objek global (window) agar bisa dipanggil dari HTML manapun
+// Ekspor instance dan metode ke objek global (window)
 window.db = getDatabase(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
@@ -31,24 +31,35 @@ window.fbOnAuth = onAuthStateChanged;
 
 window.currentUser = null;
 
-// Listener global status autentikasi user
+// Listener status login Firebase
 window.fbOnAuth(window.auth, (user) => {
   window.currentUser = user;
-  const loginBtn = document.getElementById('loginBtnText');
-  const userAvatar = document.getElementById('userAvatar');
   
+  const loginMenuItem = document.getElementById('menuLoginBtn');
+  const dashboardMenuItem = document.getElementById('menuDashboardBtn');
+
   if (user) {
-    if (loginBtn) loginBtn.innerText = user.displayName ? user.displayName.split(' ')[0] : 'User';
-    if (userAvatar) {
-      userAvatar.src = user.photoURL || 'https://via.placeholder.com/32';
-      userAvatar.style.display = 'block';
+    // 1. Jika User Sudah Login
+    if (loginMenuItem) {
+      const name = user.displayName ? user.displayName.split(' ')[0] : 'User';
+      loginMenuItem.innerHTML = `🚪 Logout (${name})`;
+    }
+    // Tampilkan Menu Dashboard
+    if (dashboardMenuItem) {
+      dashboardMenuItem.style.display = 'flex';
     }
   } else {
-    if (loginBtn) loginBtn.innerText = 'Login';
-    if (userAvatar) userAvatar.style.display = 'none';
+    // 2. Jika User Belum Login / Logout
+    if (loginMenuItem) {
+      loginMenuItem.innerHTML = `🔑 Login dengan Google`;
+    }
+    // Sembunyikan Menu Dashboard
+    if (dashboardMenuItem) {
+      dashboardMenuItem.style.display = 'none';
+    }
   }
 
-  // Jika fungsi renderContinueWatching tersedia di halaman saat ini, panggil otomatis
+  // Muat/Render Ulang Riwayat Menonton
   if (typeof window.renderContinueWatching === 'function') {
     window.renderContinueWatching();
   }
