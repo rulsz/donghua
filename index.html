@@ -345,30 +345,13 @@
       if (!num || isNaN(num)) return '0';
       if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
       if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-      return num;
+      return String(num);
     }
 
+    // Klik Item: Hanya Mengalihkan ke Halaman Detail Tanpa Menambah View di Sini
     async function trackDonghuaClick(item) {
-      const slug = cleanPath(item.slug);
-      const today = getTodayString();
-
+      const slug = cleanPath(item.slug || item.link);
       saveToContinueHistory(item);
-
-      if (!window.db) {
-        window.location.href = `/detail/${slug}`;
-        return;
-      }
-
-      try {
-        const totalRef = window.fbRef(window.db, `views_total/${slug}`);
-        window.fbTransaction(totalRef, (current) => (current || 0) + 1);
-
-        const dailyRef = window.fbRef(window.db, `views_daily/${today}/${slug}`);
-        await window.fbTransaction(dailyRef, (current) => (current || 0) + 1);
-      } catch (e) {
-        console.error("Gagal update view:", e);
-      }
-
       window.location.href = `/detail/${slug}`;
     }
 
@@ -499,7 +482,7 @@
               card.className = 'search-item-card';
               card.onclick = () => trackDonghuaClick(item);
               card.innerHTML = `
-                <img class="search-item-thumb" src="${item.poster}" alt="${item.title}" loading="lazy" />
+                <img class="search-item-thumb" src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
                 <div class="search-item-info">
                   <div>
                     <div class="search-item-title">${item.title}</div>
@@ -747,7 +730,7 @@
       const cleanSlug = cleanPath(item.slug);
       const historyItem = {
         title: item.title,
-        poster: item.poster,
+        poster: item.poster || item.image,
         mainPath: cleanSlug,
         episode: item.episode || item.ep || 'Lanjut'
       };
