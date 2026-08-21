@@ -39,7 +39,7 @@ window.fbUpdatePassword = updatePassword;
 
 window.currentUser = null;
 
-// Listener status login
+// Listener status autentikasi Firebase
 window.fbOnAuth(window.auth, (user) => {
   window.currentUser = user;
   
