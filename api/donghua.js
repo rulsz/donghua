@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       return result;
     };
 
-    // 1. Ambil Data Gabungan Beranda
+    // 1. Ambil Data Beranda Gabungan
     if (type === 'all') {
       const response = await fetch('https://animexin.dev/', { headers });
       if (!response.ok) return res.status(404).json({ success: false, message: 'Gagal akses Animexin' });
@@ -39,6 +39,7 @@ export default async function handler(req, res) {
       let popularToday = parseList($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li').slice(0, 10);
       let popularAll = parseList($, '.serieslist .bs, .poppost .bs, .sidebar .bs').slice(0, 10);
 
+      // Cadangan jika widget populer kosong
       if (popularToday.length === 0) popularToday = latest.slice(0, 8);
       if (popularAll.length === 0) popularAll = latest.slice(5, 15);
 
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Mode Modal Dialog "Lihat Semua" (Menggunakan URL direktori anime/?page=X&order=update)
+    // 2. Mode Dialog "Lihat Semua" (30 Item + Pagination)
     if (type === 'latest') {
       const targetUrl = pageNum > 1 
         ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
