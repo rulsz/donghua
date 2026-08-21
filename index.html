@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tabTitle">RZSTREAM - Streaming Donghua Sub Indo</title>
 
+  <!-- Panggil Konfigurasi Firebase dari file eksternal -->
+  <script type="module" src="/assets/firebase-config.js"></script>
+
   <style>
     /* ==================== VARIABEL WARNA HITAM PEKAT ==================== */
     :root {
-      --bg-main: #000000;             /* Latar belakang hitam pekat */
-      --bg-card: #0a0a0a;             /* Latar belakang kartu donghua */
+      --bg-main: #000000;
+      --bg-card: #0a0a0a;
       --bg-header-scrolled: rgba(10, 10, 10, 0.92);
-      --bg-search-input: #121212;     /* Field input pencarian */
-      --color-primary: #0284c7;       /* Biru aksen utama */
+      --bg-search-input: #121212;
+      --color-primary: #0284c7;
       --color-primary-hover: #0369a1;
-      --color-accent: #38bdf8;        /* Cyan cerah */
+      --color-accent: #38bdf8;
       --color-star: #f59e0b;
       --text-main: #ffffff;
       --text-sub: #d1d5db;
@@ -36,32 +39,23 @@
     /* ==================== HEADER ==================== */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      padding: 10px 12px; 
-      pointer-events: none;
+      padding: 10px 12px; pointer-events: none;
       transition: padding 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     
     .header-content { 
       max-width: 100%; width: 100%; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
-      position: relative; 
-      height: 52px; 
-      padding: 0 8px; 
-      border-radius: 26px;
-      pointer-events: auto;
-      background: transparent;
-      border: 1px solid transparent;
+      position: relative; height: 52px; padding: 0 8px; border-radius: 26px;
+      pointer-events: auto; background: transparent; border: 1px solid transparent;
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
     header.scrolled { padding: 10px 20px; }
     header.scrolled .header-content {
-      max-width: 880px; 
-      padding: 0 16px;
-      background: var(--bg-header-scrolled);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color);
+      max-width: 880px; padding: 0 16px;
+      background: var(--bg-header-scrolled); backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
     }
     
@@ -70,54 +64,37 @@
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
     .icon-circle-btn { 
-      background: rgba(255, 255, 255, 0.08); 
-      backdrop-filter: blur(12px);
-      color: var(--text-main); 
-      border-radius: 50%; 
-      width: 38px; height: 38px; 
-      cursor: pointer; 
+      background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); color: var(--text-main); 
+      border-radius: 50%; width: 38px; height: 38px; cursor: pointer; 
       display: flex; align-items: center; justify-content: center; 
-      border: 1px solid var(--border-color);
-      text-decoration: none;
-      -webkit-tap-highlight-color: transparent;
+      border: 1px solid var(--border-color); text-decoration: none;
     }
 
     .icon-circle-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; }
+    
+    .btn-login-header {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(56, 189, 248, 0.12); color: var(--color-accent);
+      border: 1px solid var(--border-color); padding: 6px 14px;
+      border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .user-avatar-img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+
     .brand-title { font-size: 22px; font-weight: 900; color: var(--color-accent); letter-spacing: 0.5px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.4); text-decoration: none; }
 
     .menu-dropdown {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 16px;
-      background: #0d0d0d;
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 8px;
-      min-width: 170px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-      z-index: 101;
+      display: none; position: absolute; top: 60px; right: 16px;
+      background: #0d0d0d; backdrop-filter: blur(16px); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 8px; min-width: 170px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 101;
     }
     .menu-dropdown.active { display: block; }
-    .menu-dropdown a {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      color: var(--text-main);
-      text-decoration: none;
-      font-size: 13px; font-weight: 600;
-      border-radius: 8px;
-    }
+    .menu-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 8px; }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
 
     /* ==================== MODAL OVERLAY GENERAL ==================== */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg-main); z-index: 999; padding: 16px; overflow-y: auto;
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-main); z-index: 999; padding: 16px; overflow-y: auto; }
     .modal-overlay.active { display: block; }
 
-    /* Modal Header & Items */
     .search-modal-header { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 16px auto; }
     .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
     .search-input-box svg { position: absolute; left: 14px; width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 2; }
@@ -138,12 +115,7 @@
     .search-item-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
     .search-item-ep { font-size: 12px; font-weight: 700; color: var(--color-accent); margin-top: 6px; }
 
-    /* Modal Dialog Header untuk Donghua Terbaru */
-    .dialog-header {
-      display: flex; justify-content: space-between; align-items: center;
-      max-width: 800px; margin: 0 auto 20px auto;
-      padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
-    }
+    .dialog-header { display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto 20px auto; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
     .dialog-title { font-size: 20px; font-weight: 800; color: var(--color-accent); }
 
     .load-more-btn { display: block; width: 100%; max-width: 800px; margin: 24px auto 0 auto; padding: 14px; background: var(--bg-card); color: var(--color-accent); border: 1px solid var(--border-color); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; }
@@ -181,14 +153,22 @@
     .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
     .card-continue img { width: 100%; height: 100%; object-fit: cover; }
     
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
+    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; z-index: 2; }
+    
+    .badge-view-count { 
+      position: absolute; bottom: 8px; right: 8px; 
+      background: rgba(0, 0, 0, 0.82); color: #e2e8f0; 
+      border: 1px solid var(--border-color); 
+      font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; 
+      backdrop-filter: blur(4px); display: flex; align-items: center; gap: 3px; z-index: 2;
+    }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .card-grid { cursor: pointer; }
     .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
     .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     
-    .badge-bottom { position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); background: rgba(0, 0, 0, 0.85); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .badge-bottom { position: absolute; bottom: 8px; left: 8px; max-width: calc(60%); background: rgba(0, 0, 0, 0.85); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
     
     .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .see-all-btn { color: var(--color-accent); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; background: none; }
@@ -207,6 +187,11 @@
           <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
         </div>
         <div class="header-right-group">
+          <button class="btn-login-header" onclick="handleAuthAction()">
+            <img id="userAvatar" class="user-avatar-img" style="display:none;" />
+            <span id="loginBtnText">Login</span>
+          </button>
+
           <button class="icon-circle-btn" onclick="openSearchModal()">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </button>
@@ -276,7 +261,7 @@
     <!-- 2. Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">Populer Hari Ini</h2>
-      <div class="scroll-row" id="popularTodayRow">Memuat...</div>
+      <div class="scroll-row" id="popularTodayRow">Memuat data real-time...</div>
     </section>
 
     <!-- 3. Donghua Terbaru -->
@@ -291,7 +276,7 @@
     <!-- 4. Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">Donghua Populer</h2>
-      <div class="grid-3" id="popularAllGrid">Memuat...</div>
+      <div class="grid-3" id="popularAllGrid">Memuat data real-time...</div>
     </section>
   </div>
 
@@ -306,6 +291,60 @@
     let currentSlide = 0;
     let slideInterval = null;
     let dialogPage = 1;
+    let allMasterDonghuaList = [];
+
+    function getTodayString() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatViews(num) {
+      if (!num || isNaN(num)) return '0';
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+      return num;
+    }
+
+    async function trackDonghuaClick(item) {
+      const slug = cleanPath(item.slug);
+      const today = getTodayString();
+
+      saveToContinueHistory(item);
+
+      if (!window.db) {
+        window.location.href = `/detail/${slug}`;
+        return;
+      }
+
+      try {
+        const totalRef = window.fbRef(window.db, `views_total/${slug}`);
+        window.fbTransaction(totalRef, (current) => (current || 0) + 1);
+
+        const dailyRef = window.fbRef(window.db, `views_daily/${today}/${slug}`);
+        await window.fbTransaction(dailyRef, (current) => (current || 0) + 1);
+      } catch (e) {
+        console.error("Gagal update view:", e);
+      }
+
+      window.location.href = `/detail/${slug}`;
+    }
+
+    async function handleAuthAction() {
+      if (window.currentUser) {
+        if (confirm("Apakah Anda ingin keluar dari akun Google?")) {
+          await window.fbSignOut(window.auth);
+        }
+      } else {
+        try {
+          await window.fbSignIn(window.auth, window.googleProvider);
+        } catch (e) {
+          alert("Gagal Login: " + e.message);
+        }
+      }
+    }
 
     async function applyDashboardSettings() {
       try {
@@ -336,18 +375,13 @@
     function openSearchModal() { document.getElementById('searchModalOverlay').classList.add('active'); document.getElementById('searchInputModal').focus(); }
     function closeSearchModal() { document.getElementById('searchModalOverlay').classList.remove('active'); }
 
-    /* POP-UP DIALOG DONGHUA TERBARU */
     function openLatestDialog() {
       document.getElementById('menuDropdown').classList.remove('active');
       document.getElementById('latestModalOverlay').classList.add('active');
-      if (dialogPage === 1) {
-        loadMoreDialogData();
-      }
+      if (dialogPage === 1) loadMoreDialogData();
     }
 
-    function closeLatestDialog() {
-      document.getElementById('latestModalOverlay').classList.remove('active');
-    }
+    function closeLatestDialog() { document.getElementById('latestModalOverlay').classList.remove('active'); }
 
     async function loadMoreDialogData() {
       const btn = document.getElementById('loadMoreDialogBtn');
@@ -388,7 +422,7 @@
             res.data.forEach(item => {
               const card = document.createElement('div');
               card.className = 'search-item-card';
-              card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+              card.onclick = () => trackDonghuaClick(item);
               card.innerHTML = `
                 <img class="search-item-thumb" src="${item.poster}" alt="${item.title}" loading="lazy" />
                 <div class="search-item-info">
@@ -433,7 +467,7 @@
               <span>•</span>
               <span>${item.episode || 'Ep 1'}</span>
             </div>
-            <button class="btn-watch" onclick="window.location.href='/detail/${cleanPath(item.slug)}'">
+            <button class="btn-watch" onclick="trackDonghuaClick(${JSON.stringify(item).replace(/"/g, '&quot;')})">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               Tonton
             </button>
@@ -482,12 +516,18 @@
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
-      card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+      card.onclick = () => trackDonghuaClick(item);
+
+      const viewBadge = item.views !== undefined 
+        ? `<span class="badge-view-count">👁️ ${formatViews(item.views)}</span>` 
+        : '';
+
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${item.status || 'Ongoing'}</span>
           <span class="badge-bottom">${item.episode || 'Ep 1'}</span>
+          ${viewBadge}
         </div>
         <div class="card-title">${item.title}</div>
       `;
@@ -497,12 +537,18 @@
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
-      card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+      card.onclick = () => trackDonghuaClick(item);
+
+      const viewBadge = item.views !== undefined 
+        ? `<span class="badge-view-count">👁️ ${formatViews(item.views)}</span>` 
+        : '';
+
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${item.status || 'Ongoing'}</span>
           <span class="badge-bottom">${item.episode || 'Ep 1'}</span>
+          ${viewBadge}
         </div>
         <div class="card-title">${item.title}</div>
       `;
@@ -521,41 +567,115 @@
       }
     }
 
+    async function loadFirebasePopularData() {
+      if (!window.db) return;
+
+      const today = getTodayString();
+
+      try {
+        const totalSnap = await window.fbGet(window.fbRef(window.db, 'views_total'));
+        const dailySnap = await window.fbGet(window.fbRef(window.db, `views_daily/${today}`));
+
+        const totalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
+        const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
+
+        let totalPopularList = [...allMasterDonghuaList].map(item => {
+          const s = cleanPath(item.slug);
+          return { ...item, views: totalViewsMap[s] || 0 };
+        }).sort((a, b) => b.views - a.views).slice(0, 12);
+
+        const popAllGrid = document.getElementById('popularAllGrid');
+        if (popAllGrid) renderGridItems(totalPopularList, popAllGrid);
+
+        let dailyPopularList = [...allMasterDonghuaList].map(item => {
+          const s = cleanPath(item.slug);
+          return { ...item, views: dailyViewsMap[s] || 0 };
+        }).sort((a, b) => b.views - a.views).slice(0, 12);
+
+        const popRow = document.getElementById('popularTodayRow');
+        if (popRow) {
+          popRow.innerHTML = '';
+          if (dailyPopularList.length > 0) {
+            dailyPopularList.forEach(item => popRow.appendChild(createScrollCard(item)));
+          } else {
+            popRow.innerText = 'Data tidak tersedia.';
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memuat populer dari Firebase:", e);
+      }
+    }
+
     async function loadMainContent() {
-      const popRow = document.getElementById('popularTodayRow');
       const latestGrid = document.getElementById('latestGrid');
-      const popAllGrid = document.getElementById('popularAllGrid');
 
       try {
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
         if (res && res.success && res.data) {
-          if (res.data.popularToday && res.data.popularToday.length > 0) renderHeroSlider(res.data.popularToday);
+          const masterMap = new Map();
+          [...(res.data.latest || []), ...(res.data.popularToday || []), ...(res.data.popularAll || [])].forEach(i => {
+            if (i && i.slug) masterMap.set(cleanPath(i.slug), i);
+          });
+          allMasterDonghuaList = Array.from(masterMap.values());
 
-          if (popRow) {
-            popRow.innerHTML = '';
-            const popToday = res.data.popularToday || [];
-            if (popToday.length > 0) popToday.forEach(item => popRow.appendChild(createScrollCard(item)));
-            else popRow.innerText = 'Data tidak tersedia.';
+          if (res.data.popularToday && res.data.popularToday.length > 0) {
+            renderHeroSlider(res.data.popularToday);
           }
 
           if (latestGrid) renderGridItems(res.data.latest || [], latestGrid);
-          if (popAllGrid) renderGridItems(res.data.popularAll || [], popAllGrid);
+
+          loadFirebasePopularData();
         }
       } catch (e) {
         console.error('Gagal memuat beranda:', e);
       }
     }
 
-    function renderContinueWatching() {
-      const history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+    async function saveToContinueHistory(item) {
+      const cleanSlug = cleanPath(item.slug);
+      const historyItem = {
+        title: item.title,
+        poster: item.poster,
+        mainPath: cleanSlug,
+        episode: item.episode || 'Lanjut'
+      };
+
+      if (window.currentUser && window.db) {
+        const userHistRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${cleanSlug}`);
+        await window.fbSet(userHistRef, historyItem);
+      } else {
+        let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+        history = history.filter(i => cleanPath(i.mainPath) !== cleanSlug);
+        history.unshift(historyItem);
+        localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 10)));
+      }
+    }
+
+    window.renderContinueWatching = async function() {
       const container = document.getElementById('continueSection');
       const row = document.getElementById('continueRow');
+      let historyList = [];
 
-      if (!history || history.length === 0) { container.style.display = 'none'; return; }
+      if (window.currentUser && window.db) {
+        try {
+          const snap = await window.fbGet(window.fbRef(window.db, `users/${window.currentUser.uid}/history`));
+          if (snap.exists()) {
+            historyList = Object.values(snap.val());
+          }
+        } catch (e) {}
+      } else {
+        historyList = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
+      }
+
+      if (!historyList || historyList.length === 0) { 
+        container.style.display = 'none'; 
+        return; 
+      }
+
       container.style.display = 'block';
       row.innerHTML = '';
 
-      history.forEach((item) => {
+      historyList.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'card-continue';
         card.onclick = () => window.location.href = `/detail/${cleanPath(item.mainPath)}`;
@@ -568,11 +688,10 @@
         `;
         row.appendChild(card);
       });
-    }
+    };
 
     window.onload = () => {
       applyDashboardSettings();
-      renderContinueWatching();
       loadMainContent();
     };
   </script>
