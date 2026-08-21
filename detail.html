@@ -31,7 +31,7 @@
     .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; }
     .ep-box.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
     
-    /* Action Bar Diselaraskan */
+    /* Action Bar */
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; position: relative; }
     .action-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; font-size: 11px; cursor: pointer; background: none; border: none; outline: none; }
     .action-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
@@ -43,7 +43,7 @@
     .server-label-text { font-size: 11px; font-weight: 500; color: #94a3b8; }
     .server-select-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-    /* Tooltip Petunjuk Server */
+    /* Tooltip Server */
     .server-tooltip-hint {
       position: absolute; top: -45px; left: 10px;
       background: #0284c7; color: #ffffff;
@@ -132,22 +132,21 @@
         <div class="ep-scroll-grid" id="epGrid"></div>
       </div>
 
-      <!-- Action Bar Baru -->
+      <!-- Action Bar -->
       <div class="action-bar">
-        <!-- Petunjuk Tooltip Server -->
         <div class="server-tooltip-hint" id="serverHint">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
           Ganti server pemutaran di sini
         </div>
 
-        <!-- Tombol Server (SVG Atas, Teks Bawah) -->
+        <!-- Tombol Server (Hanya Tulisan 'Server' Bawah) -->
         <div class="server-custom-btn">
           <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-          <span class="server-label-text" id="serverDisplayTitle">Server</span>
+          <span class="server-label-text">Server</span>
           <select class="server-select-hidden" id="serverSelect" onchange="switchServer(this.value, this.options[this.selectedIndex].text)"></select>
         </div>
 
-        <!-- Tombol View (SVG Atas, Angka Bawah) -->
+        <!-- Tombol View (SVG Atas, Jumlah Bawah) -->
         <div class="action-item">
           <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           <span id="viewCountText">0</span>
@@ -221,6 +220,11 @@
     let currentServerUrl = '';
     let isFavorite = false;
 
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
     function cleanSlug(str) {
       const urlParams = new URLSearchParams(window.location.search);
       let paramSlug = urlParams.get('slug');
@@ -243,7 +247,7 @@
       if (!num || isNaN(num)) return '0';
       if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
       if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-      return num;
+      return String(num);
     }
 
     let targetSlug = cleanSlug();
@@ -251,7 +255,6 @@
     function goBack() { window.location.href = '/'; }
     function goToHomeLogin() { window.location.href = '/'; }
 
-    // Tooltip Petunjuk Server
     function showServerHint() {
       const hint = document.getElementById('serverHint');
       if (!hint) return;
@@ -261,19 +264,29 @@
       }, 4000);
     }
 
+    // Penambahan View HANYA Saat Buka Detail
     async function initViewsAndComments() {
-      if (!window.db || !targetSlug) return;
+      if (!targetSlug) return;
 
-      try {
-        const totalRef = window.fbRef(window.db, `views_total/${targetSlug}`);
-        window.fbTransaction(totalRef, (current) => (current || 0) + 1);
+      if (window.db) {
+        const today = getTodayString();
+        try {
+          // Increment Total View
+          const totalRef = window.fbRef(window.db, `views_total/${targetSlug}`);
+          await window.fbTransaction(totalRef, (current) => (current || 0) + 1);
 
-        const viewSnap = await window.fbGet(totalRef);
-        if (viewSnap.exists()) {
-          document.getElementById('viewCountText').innerText = formatViews(viewSnap.val());
+          // Increment Daily View
+          const dailyRef = window.fbRef(window.db, `views_daily/${today}/${targetSlug}`);
+          await window.fbTransaction(dailyRef, (current) => (current || 0) + 1);
+
+          // Ambil total nilai penonton terbaru
+          const viewSnap = await window.fbGet(totalRef);
+          if (viewSnap.exists()) {
+            document.getElementById('viewCountText').innerText = formatViews(viewSnap.val());
+          }
+        } catch (e) {
+          console.error("Gagal update view:", e);
         }
-      } catch (e) {
-        console.error("Gagal update view:", e);
       }
 
       checkFavoriteStatus();
@@ -281,7 +294,6 @@
       loadComments();
     }
 
-    // Fitur Favorit
     async function checkFavoriteStatus() {
       const btn = document.getElementById('btnFavorite');
       if (!targetSlug || !btn) return;
@@ -333,7 +345,6 @@
       }
     }
 
-    // Fitur Unduh
     function triggerDownload() {
       if (currentServerUrl) {
         window.open(currentServerUrl, '_blank');
@@ -342,7 +353,6 @@
       }
     }
 
-    // Fitur Bagikan
     function triggerShare() {
       const shareData = {
         title: currentMainTitle || 'RZSTREAM Donghua',
@@ -354,7 +364,7 @@
         navigator.share(shareData).catch(() => {});
       } else {
         navigator.clipboard.writeText(window.location.href);
-        alert("Tautan halaman berhasil disalin ke clipboard!");
+        alert("Tautan berhasil disalin ke clipboard!");
       }
     }
 
@@ -645,7 +655,6 @@
 
     function setupServers(servers) {
       const serverSelect = document.getElementById('serverSelect');
-      const serverDisplayTitle = document.getElementById('serverDisplayTitle');
       serverSelect.innerHTML = '';
 
       if (servers && servers.length > 0) {
@@ -661,7 +670,6 @@
         });
 
         serverSelect.selectedIndex = defaultIndex;
-        serverDisplayTitle.innerText = servers[defaultIndex].name;
         currentServerUrl = servers[defaultIndex].url;
         renderPlayerMedia(servers[defaultIndex].url);
       } else {
@@ -669,9 +677,8 @@
       }
     }
 
-    function switchServer(url, name) {
+    function switchServer(url) {
       if (url) {
-        document.getElementById('serverDisplayTitle').innerText = name || 'Server';
         currentServerUrl = url;
         renderPlayerMedia(url);
       }
