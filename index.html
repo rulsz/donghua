@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tabTitle">RZSTREAM - Streaming Donghua</title>
+  <title id="tabTitle">RZSTREAM - Streaming Donghua Sub Indo</title>
 
   <style>
     :root {
@@ -26,7 +26,7 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Header Outer Wrapper */
+    /* Header Outer Container */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       padding: 10px 12px; 
@@ -34,7 +34,7 @@
       transition: padding 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     
-    /* Header Transparan & Menyempit */
+    /* Header Content (Pill Bar & Transparan Transisi) */
     .header-content { 
       max-width: 100%; width: 100%; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
@@ -48,6 +48,7 @@
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
+    /* Saat di-scroll: Menyempit ke Tengah Membentuk Kapsul Melayang */
     header.scrolled { padding: 10px 20px; }
     header.scrolled .header-content {
       max-width: 880px; 
@@ -73,6 +74,7 @@
       display: flex; align-items: center; justify-content: center; 
       border: 1px solid rgba(56, 189, 248, 0.2);
       text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .icon-circle-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; }
@@ -89,8 +91,8 @@
       border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 12px;
       padding: 8px;
-      min-width: 160px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      min-width: 170px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       z-index: 101;
     }
     .menu-dropdown.active { display: block; }
@@ -104,6 +106,7 @@
       font-size: 13px;
       font-weight: 600;
       border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
     }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--cyan-bright); }
 
@@ -128,10 +131,10 @@
     .rating-star { color: #f59e0b; font-weight: 800; display: flex; align-items: center; gap: 4px; }
     .badge-status-green { background: rgba(56, 189, 248, 0.15); color: var(--cyan-bright); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
     
-    .btn-watch { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #0284c7 0%, #0284c7 100%); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4); }
+    .btn-watch { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4); }
     .btn-watch svg { width: 16px; height: 16px; fill: currentColor; }
 
-    /* Indikator Slider Dots */
+    /* Indikator Slider Dots (Terkunci Di Dalam Hero Slider) */
     .slider-dots { position: absolute; bottom: 16px; left: 0; right: 0; z-index: 10; display: flex; justify-content: center; align-items: center; gap: 6px; }
     .dot { width: 8px; height: 8px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
     .dot.active { width: 28px; background: var(--cyan-bright); border-radius: 10px; }
@@ -179,9 +182,9 @@
         </div>
       </div>
 
-      <!-- Dropdown Navigasi Menu -->
+      <!-- Menu Navigasi Dropdown -->
       <div class="menu-dropdown" id="menuDropdown">
-        <a href="/dashboard.html">📊 Dashboard Panel</a>
+        <a href="/dashboard">⚙️ Admin Dashboard</a>
         <a href="/latest">🔥 Donghua Terbaru</a>
       </div>
 
@@ -238,15 +241,23 @@
     let currentSlide = 0;
     let slideInterval = null;
 
-    // Load Pengaturan dari Dashboard
-    function applyDashboardSettings() {
-      const savedBrand = localStorage.getItem('rz_brand_title');
-      const savedPageTitle = localStorage.getItem('rz_page_title');
-
-      if (savedBrand) document.getElementById('displayBrandTitle').innerText = savedBrand;
-      if (savedPageTitle) document.title = savedPageTitle;
+    // Load Pengaturan Global dari Server
+    async function applyDashboardSettings() {
+      try {
+        const res = await fetch('/api/settings').then(r => r.json());
+        if (res.success && res.settings) {
+          if (res.settings.brandTitle) document.getElementById('displayBrandTitle').innerText = res.settings.brandTitle;
+          if (res.settings.pageTitle) document.title = res.settings.pageTitle;
+        }
+      } catch (e) {
+        const savedBrand = localStorage.getItem('rz_brand_title');
+        const savedPageTitle = localStorage.getItem('rz_page_title');
+        if (savedBrand) document.getElementById('displayBrandTitle').innerText = savedBrand;
+        if (savedPageTitle) document.title = savedPageTitle;
+      }
     }
 
+    // Scroll Listener untuk Animasi Menyempitkan Header
     window.addEventListener('scroll', () => {
       const header = document.getElementById('mainHeader');
       if (window.scrollY > 15) {
