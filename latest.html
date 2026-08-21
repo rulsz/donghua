@@ -4,68 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tabTitle">Donghua Terbaru - RZSTREAM</title>
+  <link rel="stylesheet" href="/style.css">
 
   <style>
-    :root {
-      --bg-main: #030712;
-      --blue-accent: #0284c7;
-      --cyan-bright: #38bdf8;
-      --card-bg: #0f172a;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-    
-    body { 
-      background-color: var(--bg-main); 
-      color: var(--text-main); 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      padding-top: 75px;
-      padding-bottom: 40px; 
-    }
-
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
-
-    header { 
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
-      padding: 10px 16px; 
-      background: rgba(3, 7, 18, 0.9);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-    }
-    
-    .header-content { 
-      max-width: 1000px; margin: 0 auto; 
-      display: flex; justify-content: space-between; align-items: center; 
-      height: 48px; 
-    }
-    
-    .brand-title { font-size: 20px; font-weight: 900; color: var(--cyan-bright); text-decoration: none; }
+    body { padding-top: 75px; }
     .page-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; color: var(--cyan-bright); }
-
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .card-grid { cursor: pointer; }
-    .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--card-bg); border: 1px solid rgba(56, 189, 248, 0.15); }
-    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
-    
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: rgba(2, 132, 199, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; }
-    .badge-bottom { position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); background: rgba(15, 23, 42, 0.85); color: var(--cyan-bright); border: 1px solid rgba(56, 189, 248, 0.2); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
-    .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    .load-more-btn { display: block; width: 100%; margin-top: 24px; padding: 14px; background: var(--card-bg); color: var(--cyan-bright); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; }
-    .back-btn { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.2); color: var(--cyan-bright); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; }
+    .load-more-btn { display: block; width: 100%; margin-top: 24px; padding: 14px; background: var(--bg-card); color: var(--cyan-bright); border: 1px solid var(--border-color); border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; }
   </style>
 </head>
 <body>
 
-  <header>
+  <!-- Header Presisi Sama dengan Beranda -->
+  <header id="mainHeader">
     <div class="header-content">
-      <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
-      <a href="/" class="back-btn">✕ Kembali</a>
+      <div class="header-normal-group">
+        <div class="header-left-group">
+          <a href="/" class="brand-title" id="displayBrandTitle">RZSTREAM</a>
+        </div>
+        <div class="header-right-group">
+          <button class="icon-circle-btn" onclick="openSearchModal()">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="icon-circle-btn" onclick="toggleMenu()">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="menu-dropdown" id="menuDropdown">
+        <a href="/">🏠 Beranda</a>
+        <a href="/dashboard">⚙️ Admin Dashboard</a>
+      </div>
     </div>
   </header>
+
+  <!-- Overlay Modal Pencarian -->
+  <div class="search-modal-overlay" id="searchModalOverlay">
+    <div class="search-modal-header">
+      <div class="search-input-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" class="search-input-field" id="searchInputModal" placeholder="Cari donghua..." onkeyup="handleSearchInput(event)">
+      </div>
+      <button class="search-close-btn" onclick="closeSearchModal()">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="search-info-bar">
+      <span>Mencari di:</span>
+      <span class="search-badge-source" id="searchBrandBadge">RZSTREAM</span>
+    </div>
+
+    <div class="search-results-list" id="searchResultsList">
+      <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>
+    </div>
+  </div>
 
   <div class="container">
     <h1 class="page-title">🔥 Donghua Terbaru</h1>
@@ -75,20 +68,85 @@
 
   <script>
     let page = 1;
+    let searchTimer = null;
 
     async function applySettings() {
       try {
         const res = await fetch('/api/settings').then(r => r.json());
         if (res.success && res.settings) {
-          document.getElementById('displayBrandTitle').innerText = res.settings.brandTitle;
-          document.title = `Donghua Terbaru - ${res.settings.brandTitle}`;
+          if (res.settings.brandTitle) {
+            document.getElementById('displayBrandTitle').innerText = res.settings.brandTitle;
+            document.getElementById('searchBrandBadge').innerText = res.settings.brandTitle;
+          }
+          document.title = `Donghua Terbaru - ${res.settings.brandTitle || 'RZSTREAM'}`;
         }
       } catch (e) {}
     }
 
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('mainHeader');
+      if (window.scrollY > 15) header.classList.add('scrolled');
+      else header.classList.remove('scrolled');
+    });
+
     function cleanPath(input) {
       if (!input) return '';
       return String(input).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/detail\//, '').replace(/^\/anime\//, '').replace(/^\/+|\/+$/g, '');
+    }
+
+    function toggleMenu() {
+      document.getElementById('menuDropdown').classList.toggle('active');
+    }
+
+    function openSearchModal() {
+      document.getElementById('searchModalOverlay').classList.add('active');
+      document.getElementById('searchInputModal').focus();
+    }
+
+    function closeSearchModal() {
+      document.getElementById('searchModalOverlay').classList.remove('active');
+    }
+
+    function handleSearchInput(event) {
+      const query = event.target.value.trim();
+      const resultsList = document.getElementById('searchResultsList');
+
+      clearTimeout(searchTimer);
+      if (query === '') {
+        resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Ketik judul donghua yang ingin dicari...</p>';
+        return;
+      }
+
+      resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Mencari donghua...</p>';
+
+      searchTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json());
+          resultsList.innerHTML = '';
+          if (res.success && res.data && res.data.length > 0) {
+            res.data.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'search-item-card';
+              card.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+              card.innerHTML = `
+                <img class="search-item-thumb" src="${item.poster}" alt="${item.title}" loading="lazy" />
+                <div class="search-item-info">
+                  <div>
+                    <div class="search-item-title">${item.title}</div>
+                    <div class="search-item-desc">${item.synopsis || 'Saksikan keseruan petualangan donghua sub indo berkualitas HD secara gratis.'}</div>
+                  </div>
+                  <div class="search-item-ep">${item.episode || 'Episode Terbaru'}</div>
+                </div>
+              `;
+              resultsList.appendChild(card);
+            });
+          } else {
+            resultsList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 40px;">Donghua tidak ditemukan.</p>';
+          }
+        } catch (e) {
+          resultsList.innerHTML = '<p style="color: #ef4444; font-size: 13px; text-align: center; margin-top: 40px;">Gagal memuat hasil pencarian.</p>';
+        }
+      }, 400);
     }
 
     function createCard(item) {
