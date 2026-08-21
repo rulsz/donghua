@@ -2,15 +2,16 @@ import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
   try {
-    const type = req.query.type || 'all';
-    const page = parseInt(req.query.page) || 1;
+    const { type, page = 1 } = req.query;
+    const pageNum = parseInt(page) || 1;
 
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     };
 
-    const parseItems = ($, selector) => {
-      const items = [];
+    // Fungsi pembantu parser sesuai struktur elemen Animexin
+    const parseList = ($, selector) => {
+      const result = [];
       $(selector).each((_, el) => {
         const title = $(el).find('h2, .title, .tt, .entry-title').first().text().trim();
         const poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
@@ -19,13 +20,13 @@ export default async function handler(req, res) {
 
         if (title && href) {
           const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          items.push({ title, poster, slug, episode, type: 'Donghua' });
+          result.push({ title, poster, slug, episode, type: 'Donghua' });
         }
       });
-      return items;
+      return result;
     };
 
-    // Ambil Data Beranda
+    // 1. Ambil Data Gabungan Beranda (Populer Hari Ini, 15 Terbaru, & Populer)
     if (type === 'all') {
       const response = await fetch('https://animexin.vip/', { headers });
       if (!response.ok) return res.status(404).json({ success: false });
@@ -33,9 +34,9 @@ export default async function handler(req, res) {
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      const popularToday = parseItems($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li').slice(0, 10);
-      const latest = parseItems($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 15);
-      const popularAll = parseItems($, '.serieslist .bs, .poppost .bs, .sidebar .bs').slice(0, 10);
+      const popularToday = parseList($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li').slice(0, 10);
+      const latest = parseList($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 15);
+      const popularAll = parseList($, '.serieslist .bs, .poppost .bs, .sidebar .bs').slice(0, 10);
 
       return res.status(200).json({
         success: true,
@@ -43,18 +44,29 @@ export default async function handler(req, res) {
       });
     }
 
-    // Pagination 30 data untuk Dialog / Modal "Lihat Semua"
+    // 2. Ambil 30 Data untuk Modal Dialog "Lihat Semua" + Load More
     if (type === 'latest') {
-      const targetUrl = page > 1 ? `https://animexin.vip/page/${page}/` : 'https://animexin.vip/';
+      const targetUrl = pageNum > 1 ? `https://animexin.vip/page/${pageNum}/` : 'https://animexin.vip/';
       const response = await fetch(targetUrl, { headers });
       if (!response.ok) return res.status(404).json({ success: false });
 
       const html = await response.text();
       const $ = cheerio.load(html);
-      const latestList = parseItems($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 30);
+      const latestList = parseList($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 30);
 
-      return res.status(200).json({ success: true, page, data: latestList });
+      return res.status(200).json({ success: true, page: pageNum, data: latestList });
     }
+
+    // 3. Fallback Standard Fetch
+    const targetUrl = pageNum > 1 ? `https://animexin.vip/page/${pageNum}/` : 'https://animexin.vip/';
+    const response = await fetch(targetUrl, { headers });
+    if (!response.ok) return res.status(404).json({ success: false });
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const data = parseList($, '.post-show .bs, .listupd .bs, .article .bs');
+
+    return res.status(200).json({ success: true, page: pageNum, data });
 
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
