@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/api/donghua", "destination": "/api/donghua.js" },
     { "source": "/api/detail", "destination": "/api/detail.js" },
     { "source": "/api/search", "destination": "/api/search.js" },
@@ -7,6 +8,6 @@
     { "source": "/latest", "destination": "/latest.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/detail/(.*)", "destination": "/detail.html?slug=$1" },
-    { "source": "/((?!api/|latest|dashboard|detail).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|latest|dashboard|detail).*)", "destination": "/index.html" }
   ]
 }
