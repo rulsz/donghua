@@ -18,24 +18,31 @@ export default async function handler(req, res) {
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // Ambil status bawaan (Ongoing / Completed / Update)
-        let status = $(el).find('.bt .ep, .epx, .episode, .sb, .status').first().text().trim() || 'Ongoing';
+        // Ambil teks episode langsung dari HTML Animexin (.epx / .ep / .sb)
+        let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
+        let epNumber = 'Ep 1';
+
+        if (rawEp) {
+          const numMatch = rawEp.match(/\d+/);
+          if (numMatch) {
+            epNumber = `Ep ${numMatch[0]}`;
+          } else {
+            epNumber = rawEp;
+          }
+        } else {
+          // Fallback parsing dari judul jika ada angka episode di judul
+          const titleNum = title.match(/episode\s*(\d+)|ep\s*(\d+)|s\d+\s*ep\d+/i);
+          if (titleNum) {
+            const num = titleNum[1] || titleNum[2];
+            if (num) epNumber = `Ep ${num}`;
+          }
+        }
+
+        // Status default
+        let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
 
         if (title && href) {
           const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          
-          // Parsing nomor episode dari slug/link (contoh: "...-episode-283-...")
-          let epNumber = 'Ep ?';
-          const epMatch = slug.match(/episode[a-z0-9\-]*?-(\d+)/i) || slug.match(/-(\d+)-sub/i) || slug.match(/ep-(\d+)/i);
-          
-          if (epMatch && epMatch[1]) {
-            epNumber = `Ep ${epMatch[1]}`;
-          } else {
-            // Jika nomor episode tidak ada di slug, gunakan angka pertama dari text status jika ada
-            const numFallback = status.match(/\d+/);
-            if (numFallback) epNumber = `Ep ${numFallback[0]}`;
-          }
-
           result.push({ 
             title, 
             poster, 
@@ -56,7 +63,7 @@ export default async function handler(req, res) {
     const response = await fetch(targetUrl, { headers });
 
     if (!response.ok) {
-      return res.status(response.status).json({ success: false, message: `Cloudflare Block Status: ${response.status}` });
+      return res.status(response.status).json({ success: false, message: `Status HTTP: ${response.status}` });
     }
 
     const html = await response.text();
