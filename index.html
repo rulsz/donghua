@@ -132,7 +132,7 @@
     .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
     .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
     .card-continue img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; z-index: 2; }
+    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; z-index: 2; text-transform: uppercase; }
     
     .badge-view-count { 
       position: absolute; bottom: 8px; right: 8px; 
@@ -178,6 +178,9 @@
         </a>
         <a href="javascript:void(0)" onclick="openLatestDialog()">
           <svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg> Donghua Terbaru
+        </a>
+        <a href="/dashboard#favoritesSection">
+          <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Daftar Favorit
         </a>
         <a href="/dashboard" id="menuDashboardBtn" style="display: none;">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profil Saya
@@ -502,7 +505,7 @@
                     <div class="search-item-title">${item.title}</div>
                     <div class="search-item-desc">${item.synopsis || 'Saksikan keseruan petualangan donghua sub indo berkualitas HD secara gratis.'}</div>
                   </div>
-                  <div class="search-item-ep">${item.episode || 'Episode Terbaru'}</div>
+                  <div class="search-item-ep">${item.episode || item.ep || 'Episode Terbaru'}</div>
                 </div>
               `;
               resultsList.appendChild(card);
@@ -526,6 +529,9 @@
         const slide = document.createElement('div');
         slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
         
+        const epText = item.episode || item.ep || 'Ep 1';
+        const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'ONGOING');
+
         slide.innerHTML = `
           <img class="hero-bg-img" src="${item.poster}" alt="${item.title}" />
           <div class="hero-overlay"></div>
@@ -535,9 +541,9 @@
             <div class="hero-meta">
               <span class="rating-star">★ 9.0</span>
               <span>•</span>
-              <span class="badge-status-green">${item.status || 'ONGOING'}</span>
+              <span class="badge-status-green">${statusText}</span>
               <span>•</span>
-              <span>${item.episode || 'Ep 1'}</span>
+              <span>${epText}</span>
             </div>
             <button class="btn-watch" onclick="trackDonghuaClick(${JSON.stringify(item).replace(/"/g, '&quot;')})">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -590,6 +596,9 @@
       card.className = 'card-grid';
       card.onclick = () => trackDonghuaClick(item);
 
+      const episodeText = item.episode || item.ep || 'Terbaru';
+      const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'Ongoing');
+
       const viewBadge = item.views !== undefined 
         ? `<span class="badge-view-count">${eyeSvgIcon} ${formatViews(item.views)}</span>` 
         : '';
@@ -597,8 +606,8 @@
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-          <span class="badge-ep">${item.status || 'Ongoing'}</span>
-          <span class="badge-bottom">${item.episode || 'Ep 1'}</span>
+          <span class="badge-ep">${statusText}</span>
+          <span class="badge-bottom">${episodeText}</span>
           ${viewBadge}
         </div>
         <div class="card-title">${item.title}</div>
@@ -611,6 +620,9 @@
       card.className = 'card-continue';
       card.onclick = () => trackDonghuaClick(item);
 
+      const episodeText = item.episode || item.ep || 'Terbaru';
+      const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'Ongoing');
+
       const viewBadge = item.views !== undefined 
         ? `<span class="badge-view-count">${eyeSvgIcon} ${formatViews(item.views)}</span>` 
         : '';
@@ -618,8 +630,8 @@
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
           <img src="${item.poster}" alt="${item.title}" loading="lazy" />
-          <span class="badge-ep">${item.status || 'Ongoing'}</span>
-          <span class="badge-bottom">${item.episode || 'Ep 1'}</span>
+          <span class="badge-ep">${statusText}</span>
+          <span class="badge-bottom">${episodeText}</span>
           ${viewBadge}
         </div>
         <div class="card-title">${item.title}</div>
@@ -651,7 +663,7 @@
         const totalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
         const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        // 1. POPULER HARI INI: Disaring berdasarkan tontonan hari ini, tapi menampilkan VIEW TOTAL
+        // 1. POPULER HARI INI
         let dailyPopularList = allMasterDonghuaList
           .map(item => {
             const s = cleanPath(item.slug);
@@ -677,7 +689,7 @@
           }
         }
 
-        // 2. DONGHUA TERBARU: Tampilkan jumlah VIEW TOTAL realtime di setiap kartu
+        // 2. DONGHUA TERBARU
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
@@ -690,7 +702,7 @@
           renderGridItems(latestWithViews, latestGrid);
         }
 
-        // 3. DONGHUA POPULER (SEMUA): Urutkan berdasarkan total view tertinggi
+        // 3. DONGHUA POPULER (SEMUA)
         let totalPopularList = allMasterDonghuaList
           .map(item => {
             const s = cleanPath(item.slug);
@@ -737,7 +749,7 @@
         title: item.title,
         poster: item.poster,
         mainPath: cleanSlug,
-        episode: item.episode || 'Lanjut'
+        episode: item.episode || item.ep || 'Lanjut'
       };
 
       if (window.currentUser && window.db) {
