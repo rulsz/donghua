@@ -11,7 +11,6 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/'
     };
 
-    // Parser universal yang aman untuk semua bagian Animexin
     const parseList = ($, selector) => {
       const result = [];
       $(selector).each((_, el) => {
@@ -36,14 +35,10 @@ export default async function handler(req, res) {
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      // Ambil Donghua Terbaru dulu (pasti ada di Animexin)
       const latest = parseList($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 15);
+      let popularToday = parseList($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li').slice(0, 10);
+      let popularAll = parseList($, '.serieslist .bs, .poppost .bs, .sidebar .bs').slice(0, 10);
 
-      // Ambil Populer Hari Ini & Populer All Time dengan selector fleksibel
-      let popularToday = parseList($, '.popular .bs, .popseries-content .bs, .serieslist.pop .bs, .wpp-list li, .popseries-content .item').slice(0, 10);
-      let popularAll = parseList($, '.serieslist .bs, .poppost .bs, .sidebar .bs, .serieslist ul li').slice(0, 10);
-
-      // Fallback: Jika widget popular kosong/tidak ter-parse, isi dari daftar latest agar web tidak "Memuat..."
       if (popularToday.length === 0) popularToday = latest.slice(0, 8);
       if (popularAll.length === 0) popularAll = latest.slice(5, 15);
 
@@ -53,15 +48,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Ambil 30 Data untuk Modal Dialog "Lihat Semua"
+    // 2. Mode Modal Dialog "Lihat Semua" (Menggunakan URL direktori anime/?page=X&order=update)
     if (type === 'latest') {
-      const targetUrl = pageNum > 1 ? `https://animexin.dev/page/${pageNum}/` : 'https://animexin.dev/';
+      const targetUrl = pageNum > 1 
+        ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
+        : `https://animexin.dev/anime/?status=&type=&order=update`;
+
       const response = await fetch(targetUrl, { headers });
       if (!response.ok) return res.status(404).json({ success: false });
 
       const html = await response.text();
       const $ = cheerio.load(html);
-      const latestList = parseList($, '.post-show .bs, .listupd .bs, .article .bs').slice(0, 30);
+      const latestList = parseList($, '.listupd .bs, .article .bs, .post-show .bs').slice(0, 30);
 
       return res.status(200).json({ success: true, page: pageNum, data: latestList });
     }
