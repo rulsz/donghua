@@ -31,49 +31,50 @@
 
     .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
 
-    /* Container Header Melayang */
+    /* Header Dasar (Di Atas: Lebar Penuh, Transparan, Logo di Ujung Kiri, Tombol di Ujung Kanan) */
     header { 
       position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
       padding: 12px 16px; 
       pointer-events: none;
-      transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    /* Header Content (Pill Bar dengan Animasi Transisi Ukuran & Background) */
     .header-content { 
-      max-width: 1000px; margin: 0 auto; 
+      max-width: 100%; width: 100%; margin: 0 auto; 
       display: flex; justify-content: space-between; align-items: center; 
       position: relative; 
-      height: 60px; /* Ukuran Awal Besar */
-      padding: 0 20px;
-      border-radius: 30px;
+      height: 65px; 
+      padding: 0 24px;
+      border-radius: 0px;
       pointer-events: auto;
       background: transparent;
       border: 1px solid transparent;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: none;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* KONDISI SAAT DI-SCROLL KE BAWAH: Header Mengecil + Muncul Background Floating */
+    /* KONDISI SAAT DI-SCROLL: Berubah Animasi Menjadi Kapsul Melayang (Pill Bar) */
     header.scrolled {
-      padding: 8px 16px;
+      padding: 10px 16px;
     }
 
     header.scrolled .header-content {
-      height: 46px; /* Ukuran Mengecil */
       max-width: 920px;
-      padding: 0 14px;
-      background: rgba(18, 24, 38, 0.85);
+      width: 100%;
+      height: 50px;
+      padding: 0 18px;
+      border-radius: 35px;
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
     
     .header-normal-group { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .header-left-group { display: flex; align-items: center; gap: 12px; }
     .header-right-group { display: flex; align-items: center; gap: 8px; }
 
-    /* Tombol Icon Ikut Menyesuaikan Ukuran */
     .icon-circle-btn { 
       background: rgba(255, 255, 255, 0.12); 
       backdrop-filter: blur(12px);
@@ -84,22 +85,22 @@
       display: flex; align-items: center; justify-content: center; 
       border: 1px solid rgba(255, 255, 255, 0.2);
       -webkit-tap-highlight-color: transparent;
-      transition: all 0.35s ease;
+      transition: all 0.4s ease;
     }
 
     header.scrolled .icon-circle-btn {
       width: 34px; height: 34px;
     }
 
-    .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; transition: all 0.35s ease; }
+    .icon-circle-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; transition: all 0.4s ease; }
     header.scrolled .icon-circle-btn svg { width: 15px; height: 15px; }
 
     .brand-title { 
-      font-size: 22px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; 
-      transition: all 0.35s ease;
+      font-size: 24px; font-weight: 900; color: #e11d48; letter-spacing: 0.5px; 
+      transition: all 0.4s ease;
     }
     header.scrolled .brand-title {
-      font-size: 18px;
+      font-size: 19px;
     }
 
     .header-search-box { 
@@ -107,8 +108,8 @@
     }
     .header-search-box.active { display: flex; }
     .search-input-header { 
-      flex: 1; height: 40px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 18px; border-radius: 20px; color: #ffffff; font-size: 14px; outline: none; 
+      flex: 1; height: 38px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2); padding: 0 18px; border-radius: 19px; color: #ffffff; font-size: 14px; outline: none; 
     }
 
     .search-results-dropdown { display: none; position: fixed; top: 68px; left: 0; right: 0; background: #000000; z-index: 99; padding: 16px; max-height: calc(100vh - 68px); overflow-y: auto; border-bottom: 1px solid #1e293b; }
@@ -172,7 +173,7 @@
 </head>
 <body>
 
-  <!-- Header Melayang -->
+  <!-- Header Animasi Transisi IDLIX Style -->
   <header id="mainHeader">
     <div class="header-content">
       <div class="header-normal-group">
@@ -241,10 +242,10 @@
     let currentSlide = 0;
     let slideInterval = null;
 
-    // Listener Scroll untuk Menyalakan/Mematikan Animasi Ukuran Header
+    // Trigger Animasi Header Shrink & Floating saat di-scroll
     window.addEventListener('scroll', () => {
       const header = document.getElementById('mainHeader');
-      if (window.scrollY > 30) {
+      if (window.scrollY > 25) {
         header.classList.add('scrolled');
       } else {
         header.classList.remove('scrolled');
