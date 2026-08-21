@@ -1,8 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Kredensial Firebase Proyek Anda
 const firebaseConfig = {
   apiKey: "AIzaSyC0fPxoN63hX6QsXnCet-xXhLhOLkUnWS4",
   authDomain: "donghu-91808.firebaseapp.com",
@@ -14,24 +19,22 @@ const firebaseConfig = {
   measurementId: "G-QFQ77XRGQ8"
 };
 
-// Inisialisasi Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Ekspor instance dan metode ke objek global (window)
 window.db = getDatabase(app);
 window.auth = getAuth(app);
-window.googleProvider = new GoogleAuthProvider();
 window.fbRef = ref;
 window.fbGet = get;
 window.fbSet = set;
 window.fbTransaction = runTransaction;
-window.fbSignIn = signInWithPopup;
+window.fbSignIn = signInWithEmailAndPassword;
+window.fbSignUp = createUserWithEmailAndPassword;
 window.fbSignOut = signOut;
 window.fbOnAuth = onAuthStateChanged;
 
 window.currentUser = null;
 
-// Listener status login Firebase
+// Listener status login
 window.fbOnAuth(window.auth, (user) => {
   window.currentUser = user;
   
@@ -39,27 +42,18 @@ window.fbOnAuth(window.auth, (user) => {
   const dashboardMenuItem = document.getElementById('menuDashboardBtn');
 
   if (user) {
-    // 1. Jika User Sudah Login
     if (loginMenuItem) {
-      const name = user.displayName ? user.displayName.split(' ')[0] : 'User';
-      loginMenuItem.innerHTML = `🚪 Logout (${name})`;
+      const emailShort = user.email ? user.email.split('@')[0] : 'User';
+      loginMenuItem.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Keluar (${emailShort})`;
     }
-    // Tampilkan Menu Dashboard
-    if (dashboardMenuItem) {
-      dashboardMenuItem.style.display = 'flex';
-    }
+    if (dashboardMenuItem) dashboardMenuItem.style.display = 'flex';
   } else {
-    // 2. Jika User Belum Login / Logout
     if (loginMenuItem) {
-      loginMenuItem.innerHTML = `🔑 Login dengan Google`;
+      loginMenuItem.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk / Daftar`;
     }
-    // Sembunyikan Menu Dashboard
-    if (dashboardMenuItem) {
-      dashboardMenuItem.style.display = 'none';
-    }
+    if (dashboardMenuItem) dashboardMenuItem.style.display = 'none';
   }
 
-  // Muat/Render Ulang Riwayat Menonton
   if (typeof window.renderContinueWatching === 'function') {
     window.renderContinueWatching();
   }
