@@ -179,7 +179,6 @@
         <a href="javascript:void(0)" onclick="openLatestDialog()">
           <svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg> Donghua Terbaru
         </a>
-        <!-- MENU PROFIL SAYA (DASHBOARD) -->
         <a href="/dashboard" id="menuDashboardBtn" style="display: none;">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profil Saya
         </a>
@@ -640,7 +639,7 @@
       }
     }
 
-    async function loadFirebasePopularData() {
+    async function loadFirebasePopularData(latestListFromApi = []) {
       if (!window.db) return;
 
       const today = getTodayString();
@@ -652,40 +651,70 @@
         const totalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
         const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        let totalPopularList = [...allMasterDonghuaList].map(item => {
-          const s = cleanPath(item.slug);
-          return { ...item, views: totalViewsMap[s] || 0 };
-        }).sort((a, b) => b.views - a.views).slice(0, 12);
-
-        const popAllGrid = document.getElementById('popularAllGrid');
-        if (popAllGrid) renderGridItems(totalPopularList, popAllGrid);
-
-        let dailyPopularList = [...allMasterDonghuaList].map(item => {
-          const s = cleanPath(item.slug);
-          return { ...item, views: dailyViewsMap[s] || 0 };
-        }).sort((a, b) => b.views - a.views).slice(0, 12);
+        // 1. POPULER HARI INI: Disaring berdasarkan tontonan hari ini, tapi menampilkan VIEW TOTAL
+        let dailyPopularList = allMasterDonghuaList
+          .map(item => {
+            const s = cleanPath(item.slug);
+            return { 
+              ...item, 
+              todayActivity: dailyViewsMap[s] || 0,
+              views: totalViewsMap[s] || 0
+            };
+          })
+          .filter(item => item.todayActivity > 0)
+          .sort((a, b) => b.todayActivity - a.todayActivity)
+          .slice(0, 12);
 
         const popRow = document.getElementById('popularTodayRow');
         if (popRow) {
           popRow.innerHTML = '';
           if (dailyPopularList.length > 0) {
-            dailyPopularList.forEach(item => popRow.appendChild(createScrollCard(item)));
+            dailyPopularList.forEach(item => {
+              popRow.appendChild(createScrollCard(item));
+            });
           } else {
-            popRow.innerText = 'Data tidak tersedia.';
+            popRow.innerHTML = '<p style="color: var(--text-muted); font-size: 12px; padding: 10px;">Belum ada tontonan hari ini.</p>';
           }
         }
+
+        // 2. DONGHUA TERBARU: Tampilkan jumlah VIEW TOTAL realtime di setiap kartu
+        const latestGrid = document.getElementById('latestGrid');
+        if (latestGrid && latestListFromApi.length > 0) {
+          const latestWithViews = latestListFromApi.map(item => {
+            const s = cleanPath(item.slug);
+            return {
+              ...item,
+              views: totalViewsMap[s] || 0
+            };
+          });
+          renderGridItems(latestWithViews, latestGrid);
+        }
+
+        // 3. DONGHUA POPULER (SEMUA): Urutkan berdasarkan total view tertinggi
+        let totalPopularList = allMasterDonghuaList
+          .map(item => {
+            const s = cleanPath(item.slug);
+            return { ...item, views: totalViewsMap[s] || 0 };
+          })
+          .sort((a, b) => b.views - a.views)
+          .slice(0, 12);
+
+        const popAllGrid = document.getElementById('popularAllGrid');
+        if (popAllGrid) {
+          renderGridItems(totalPopularList, popAllGrid);
+        }
+
       } catch (e) {
-        console.error("Gagal memuat populer dari Firebase:", e);
+        console.error("Gagal memuat data view dari Firebase:", e);
       }
     }
 
     async function loadMainContent() {
-      const latestGrid = document.getElementById('latestGrid');
-
       try {
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
         if (res && res.success && res.data) {
           const masterMap = new Map();
+          
           [...(res.data.latest || []), ...(res.data.popularToday || []), ...(res.data.popularAll || [])].forEach(i => {
             if (i && i.slug) masterMap.set(cleanPath(i.slug), i);
           });
@@ -695,9 +724,7 @@
             renderHeroSlider(res.data.popularToday);
           }
 
-          if (latestGrid) renderGridItems(res.data.latest || [], latestGrid);
-
-          loadFirebasePopularData();
+          loadFirebasePopularData(res.data.latest || []);
         }
       } catch (e) {
         console.error('Gagal memuat beranda:', e);
