@@ -11,46 +11,48 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/anime/'
     };
 
+    // Helper pembersih judul ganda
+    const cleanTitle = (rawTitle) => {
+      if (!rawTitle) return '';
+      const text = rawTitle.trim();
+      const halfLength = Math.floor(text.length / 2);
+      
+      // Jika teks terdiri dari pengulangan dua kalimat persis sama
+      if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
+        return text.substring(0, halfLength).trim();
+      }
+      
+      // Hapus duplikasi dengan regex jika dipisahkan spasi/karakter
+      const words = text.split(/\s+/);
+      const halfWords = Math.floor(words.length / 2);
+      if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
+        return words.slice(0, halfWords).join(' ');
+      }
+      return text;
+    };
+
     const parseList = ($, selector) => {
       const result = [];
       $(selector).each((_, el) => {
-        const title = $(el).find('h2, h3, .title, .tt, .entry-title, .series-title').first().text().trim();
+        let rawTitle = $(el).find('h2, h3, .title, .tt, .entry-title, .series-title').first().text();
+        const title = cleanTitle(rawTitle);
+
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // Ambil teks episode langsung dari HTML Animexin (.epx / .ep / .sb)
         let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
         let epNumber = 'Ep 1';
 
         if (rawEp) {
           const numMatch = rawEp.match(/\d+/);
-          if (numMatch) {
-            epNumber = `Ep ${numMatch[0]}`;
-          } else {
-            epNumber = rawEp;
-          }
-        } else {
-          // Fallback parsing dari judul jika ada angka episode di judul
-          const titleNum = title.match(/episode\s*(\d+)|ep\s*(\d+)|s\d+\s*ep\d+/i);
-          if (titleNum) {
-            const num = titleNum[1] || titleNum[2];
-            if (num) epNumber = `Ep ${num}`;
-          }
+          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
         }
 
-        // Status default
         let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
 
         if (title && href) {
           const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          result.push({ 
-            title, 
-            poster, 
-            slug, 
-            status, 
-            episode: epNumber, 
-            type: 'Donghua' 
-          });
+          result.push({ title, poster, slug, status, episode: epNumber, type: 'Donghua' });
         }
       });
       return result;
@@ -61,9 +63,8 @@ export default async function handler(req, res) {
       : `https://animexin.dev/anime/?status=&type=&order=update`;
 
     const response = await fetch(targetUrl, { headers });
-
     if (!response.ok) {
-      return res.status(response.status).json({ success: false, message: `Status HTTP: ${response.status}` });
+      return res.status(response.status).json({ success: false, message: `Status: ${response.status}` });
     }
 
     const html = await response.text();
