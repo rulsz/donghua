@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
   try {
-    const { type, page = 1 } = req.query;
+    const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
     const headers = {
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       return result;
     };
 
-    // Jika dipanggil tanpa type, atau dipanggil dengan ?type=all
+    // 1. Fetch Beranda Gabungan
     if (!type || type === 'all') {
       const response = await fetch('https://animexin.dev/', { headers });
       if (!response.ok) return res.status(404).json({ success: false, message: 'Gagal akses Animexin' });
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Untuk Modal Dialog "Lihat Semua" (?type=latest)
+    // 2. Fetch Modal "Lihat Semua" (30 Data per Page)
     if (type === 'latest') {
       const targetUrl = pageNum > 1 
         ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
