@@ -132,7 +132,7 @@
     }
     .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-    /* Modal Dialog untuk Lihat Semua */
+    /* Modal Dialog */
     .modal-dialog { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; backdrop-filter: blur(8px); }
     .modal-dialog.active { display: block; }
     .modal-container { max-width: 900px; margin: 40px auto 0; height: calc(100vh - 80px); background: #090d16; border-radius: 16px; border: 1px solid #1e293b; display: flex; flex-direction: column; overflow: hidden; }
@@ -177,19 +177,19 @@
   </div>
 
   <div class="container">
-    <!-- 1. Barisan Pertama: Lanjutkan Menonton -->
+    <!-- 1. Lanjutkan Menonton -->
     <section class="section-block" id="continueSection" style="display: none;">
       <h2 class="section-title">Lanjutkan Menonton</h2>
       <div class="scroll-row" id="continueRow"></div>
     </section>
 
-    <!-- 2. Barisan Kedua: Populer Hari Ini -->
+    <!-- 2. Populer Hari Ini -->
     <section class="section-block">
       <h2 class="section-title">Populer Hari Ini</h2>
       <div class="scroll-row" id="popularTodayRow">Memuat...</div>
     </section>
 
-    <!-- 3. Barisan Ketiga: Donghua Terbaru (15 List + Lihat Semua) -->
+    <!-- 3. Donghua Terbaru (15 List + Lihat Semua) -->
     <section class="section-block">
       <div class="section-header-flex">
         <h2 class="section-title">Donghua Terbaru</h2>
@@ -198,7 +198,7 @@
       <div class="grid-3" id="latestGrid">Memuat...</div>
     </section>
 
-    <!-- 4. Barisan Keempat: Donghua Populer -->
+    <!-- 4. Donghua Populer -->
     <section class="section-block">
       <h2 class="section-title">Donghua Populer</h2>
       <div class="grid-3" id="popularAllGrid">Memuat...</div>
@@ -219,7 +219,7 @@
     </div>
   </div>
 
-  <!-- Bottom Nav (Tab Movie Dihapus) -->
+  <!-- Bottom Navigation -->
   <div class="bottom-nav-wrapper">
     <div class="bottom-nav-container">
       <div class="nav-item active" id="tabHome" onclick="switchTab('home')">
@@ -288,7 +288,6 @@
       window.location.href = `/detail/${cleanPath(slug)}`;
     }
 
-    // Generator Item Grid
     function createGridCard(item) {
       const card = document.createElement('div');
       card.className = 'card-grid';
@@ -304,7 +303,6 @@
       return card;
     }
 
-    // Generator Item Scroll Row
     function createScrollCard(item) {
       const card = document.createElement('div');
       card.className = 'card-continue';
@@ -325,22 +323,21 @@
       list.forEach(item => targetElement.appendChild(createGridCard(item)));
     }
 
-    // Load Beranda Utama (Animexin Sections)
     async function loadMainContent() {
       try {
         const res = await fetch('/api/donghua?type=all').then(r => r.json());
         if (res.success && res.data) {
           
-          // 1. Populer Hari Ini
+          // 1. Render Populer Hari Ini
           const popRow = document.getElementById('popularTodayRow');
           popRow.innerHTML = '';
           (res.data.popularToday || []).forEach(item => popRow.appendChild(createScrollCard(item)));
 
-          // 2. Donghua Terbaru (Maksimal 15 item)
+          // 2. Render Donghua Terbaru (15 Item)
           const latestGrid = document.getElementById('latestGrid');
           renderGridItems(res.data.latest || [], latestGrid);
 
-          // 3. Donghua Populer
+          // 3. Render Donghua Populer
           const popAllGrid = document.getElementById('popularAllGrid');
           renderGridItems(res.data.popularAll || [], popAllGrid);
         }
@@ -349,7 +346,6 @@
       }
     }
 
-    // Load Lanjutkan Menonton
     function renderContinueWatching() {
       const history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
       const container = document.getElementById('continueSection');
@@ -375,7 +371,6 @@
       });
     }
 
-    // Modal Dialog Logic
     function openAllModal() {
       document.getElementById('allModal').classList.add('active');
       if (modalPage === 1 && document.getElementById('modalGrid').children.length === 0) {
