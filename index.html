@@ -141,7 +141,7 @@
     .scroll-row::-webkit-scrollbar { display: none; }
     .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
     
-    /* STYLING POSTER MODERN GLASSMORPHISM */
+    /* STYLING POSTER MODERN & ANTI TUMPANG TINDIH */
     .card-continue-img-wrapper, .card-grid-img-wrapper { 
       position: relative; width: 100%; height: 180px; 
       border-radius: 14px; overflow: hidden; background: var(--bg-card); 
@@ -151,27 +151,32 @@
     .card-continue img, .card-grid img { width: 100%; height: 100%; object-fit: cover; }
     
     .badge-ep { 
-      position: absolute; top: 10px; left: 10px; 
-      background: rgba(2, 132, 199, 0.85); backdrop-filter: blur(8px);
-      color: var(--text-main); font-size: 9.5px; font-weight: 800; 
-      padding: 3px 8px; border-radius: 6px; z-index: 2; text-transform: uppercase; 
-      letter-spacing: 0.5px;
+      position: absolute; top: 8px; left: 8px; 
+      background: rgba(2, 132, 199, 0.88); backdrop-filter: blur(8px);
+      color: var(--text-main); font-size: 9px; font-weight: 800; 
+      padding: 3px 7px; border-radius: 6px; z-index: 2; text-transform: uppercase; 
+    }
+
+    /* CONTAINER FLEX BAWAH AGAR TIDAK BERTABRAKAN */
+    .card-bottom-info {
+      position: absolute; bottom: 8px; left: 8px; right: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 2; pointer-events: none; gap: 4px;
     }
 
     .badge-bottom { 
-      position: absolute; bottom: 10px; left: 10px; 
-      background: rgba(15, 23, 42, 0.88); color: var(--color-accent); 
+      background: rgba(15, 23, 42, 0.92); color: var(--color-accent); 
       border: 1px solid rgba(56, 189, 248, 0.3); 
-      font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 8px; 
-      backdrop-filter: blur(6px); z-index: 2;
+      font-size: 9px; font-weight: 700; padding: 2.5px 6px; border-radius: 6px; 
+      backdrop-filter: blur(6px); white-space: nowrap;
     }
     
     .badge-view-count { 
-      position: absolute; bottom: 10px; right: 10px; 
-      background: rgba(0, 0, 0, 0.88); color: #e2e8f0; 
+      background: rgba(0, 0, 0, 0.92); color: #e2e8f0; 
       border: 1px solid var(--border-color); 
-      font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; 
-      backdrop-filter: blur(6px); display: flex; align-items: center; gap: 4px; z-index: 2;
+      font-size: 8.5px; font-weight: 700; padding: 2.5px 5px; border-radius: 6px; 
+      backdrop-filter: blur(6px); display: flex; align-items: center; gap: 3px; 
+      white-space: nowrap;
     }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -757,8 +762,10 @@
         <div class="card-grid-img-wrapper">
           <img src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${statusText}</span>
-          <span class="badge-bottom">${episodeText}</span>
-          ${viewBadge}
+          <div class="card-bottom-info">
+            <span class="badge-bottom">${episodeText}</span>
+            ${viewBadge}
+          </div>
         </div>
         <div class="card-title">${item.title}</div>
       `;
@@ -781,8 +788,10 @@
         <div class="card-continue-img-wrapper">
           <img src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${statusText}</span>
-          <span class="badge-bottom">${episodeText}</span>
-          ${viewBadge}
+          <div class="card-bottom-info">
+            <span class="badge-bottom">${episodeText}</span>
+            ${viewBadge}
+          </div>
         </div>
         <div class="card-title">${item.title}</div>
       `;
