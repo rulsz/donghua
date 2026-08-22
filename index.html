@@ -377,18 +377,14 @@
     function parseEpisodeText(item) {
       if (!item) return 'Terbaru';
 
-      // 1. Ambil data episode langsung jika tersedia dari API
       let directEp = item.episode || item.ep || item.latestEpisode;
-      if (directEp && String(directEp).trim() !== '') {
-        const epNum = String(directEp).replace(/[^0-9]/g, '');
-        if (epNum) return `Ep ${epNum}`;
+      if (directEp && String(directEp).trim() !== '' && directEp !== 'Ep 1') {
+        const epNum = String(directEp).match(/\d+/);
+        if (epNum) return `Ep ${epNum[0]}`;
         return directEp;
       }
 
-      // 2. Scan gabungan teks judul, slug, dan link
-      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`;
-
-      // 3. Cari pola kata "episode", "ep", atau "sub" (Abaikan season)
+      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''} ${item.url || ''}`;
       const epMatch = rawText.match(/(?:episode|ep)[^\d]*(\d+)/i) || 
                       rawText.match(/-episode-(\d+)/i) || 
                       rawText.match(/(\d+)\s*(?:sub|indonesia|eng)/i);
@@ -397,7 +393,6 @@
         return `Ep ${epMatch[1]}`;
       }
 
-      // 4. Jika hanya ada angka di paling akhir slug (bukan angka season)
       const lastNumMatch = rawText.replace(/season\s*\d+/gi, '').match(/(\d+)(?=[^\d]*$)/);
       if (lastNumMatch && lastNumMatch[1]) {
         return `Ep ${lastNumMatch[1]}`;
@@ -793,6 +788,7 @@
       }
     }
 
+    // PEMASANGAN MURNI DARI FIREBASE UNTUK URUTAN VIEW POPULER TERBANYAK -> TERDIDIK
     async function loadFirebasePopularData(latestListFromApi = []) {
       if (!window.db) return;
 
@@ -802,21 +798,79 @@
         const totalSnap = await window.fbGet(window.fbRef(window.db, 'views_total'));
         const dailySnap = await window.fbGet(window.fbRef(window.db, `views_daily/${today}`));
 
-        cachedTotalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
-        const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
+        const rawTotalMap = totalSnap.exists() ? totalSnap.val() : {};
+        const rawDailyMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        let dailyPopularList = allMasterDonghuaList
-          .map(item => {
-            const s = getCleanMainSlug(item.slug || item.link);
-            return { 
-              ...item, 
-              todayActivity: dailyViewsMap[s] || 0,
-              views: cachedTotalViewsMap[s] || 0
-            };
-          })
+        // Buat pencarian cepat dari data API
+        const masterMapBySlug = new Map();
+        allMasterDonghuaList.forEach(item => {
+          const cleanS = getCleanMainSlug(item.slug || item.link);
+          if (cleanS) masterMapBySlug.set(cleanS, item);
+        });
+
+        // 1. PROSES DONGHUA POPULER KESELURUHAN (Murni Urut dari Firebase)
+        const sortedTotalSlugs = Object.keys(rawTotalMap)
+          .map(slugKey => ({
+            slug: getCleanMainSlug(slugKey),
+            views: Number(rawTotalMap[slugKey]) || 0
+          }))
+          .filter(item => item.views > 0)
+          .sort((a, b) => b.views - a.views);
+
+        const totalPopularList = sortedTotalSlugs.slice(0, 12).map(item => {
+          const matchedMaster = masterMapBySlug.get(item.slug);
+          if (matchedMaster) {
+            return { ...matchedMaster, views: item.views };
+          }
+          
+          // Format judul dari slug jika tidak ada di API beranda
+          const formatTitle = item.slug
+            .split('-')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+          return {
+            title: formatTitle,
+            slug: item.slug,
+            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
+            views: item.views
+          };
+        });
+
+        const popAllGrid = document.getElementById('popularAllGrid');
+        if (popAllGrid) {
+          renderGridItems(totalPopularList, popAllGrid);
+        }
+
+        // 2. PROSES DONGHUA POPULER HARI INI
+        const sortedDailySlugs = Object.keys(rawDailyMap)
+          .map(slugKey => ({
+            slug: getCleanMainSlug(slugKey),
+            todayActivity: Number(rawDailyMap[slugKey]) || 0,
+            views: Number(rawTotalMap[slugKey]) || 0
+          }))
           .filter(item => item.todayActivity > 0)
-          .sort((a, b) => b.todayActivity - a.todayActivity)
-          .slice(0, 12);
+          .sort((a, b) => b.todayActivity - a.todayActivity);
+
+        const dailyPopularList = sortedDailySlugs.slice(0, 12).map(item => {
+          const matchedMaster = masterMapBySlug.get(item.slug);
+          if (matchedMaster) {
+            return { ...matchedMaster, views: item.views, todayActivity: item.todayActivity };
+          }
+
+          const formatTitle = item.slug
+            .split('-')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+          return {
+            title: formatTitle,
+            slug: item.slug,
+            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
+            views: item.views,
+            todayActivity: item.todayActivity
+          };
+        });
 
         const popRow = document.getElementById('popularTodayRow');
         if (popRow) {
@@ -830,29 +884,17 @@
           }
         }
 
+        // 3. Update view count pada grid Donghua Terbaru
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
             const s = getCleanMainSlug(item.slug || item.link);
             return {
               ...item,
-              views: cachedTotalViewsMap[s] || 0
+              views: Number(rawTotalMap[s]) || 0
             };
           });
           renderGridItems(latestWithViews, latestGrid);
-        }
-
-        let totalPopularList = allMasterDonghuaList
-          .map(item => {
-            const s = getCleanMainSlug(item.slug || item.link);
-            return { ...item, views: cachedTotalViewsMap[s] || 0 };
-          })
-          .sort((a, b) => b.views - a.views)
-          .slice(0, 12);
-
-        const popAllGrid = document.getElementById('popularAllGrid');
-        if (popAllGrid) {
-          renderGridItems(totalPopularList, popAllGrid);
         }
 
       } catch (e) {
