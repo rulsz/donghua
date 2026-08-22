@@ -9,7 +9,7 @@ async function fetchDetailInfo(animeSlug, headers) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Ambil poster asli dari halaman detail
+    // Ambil poster asli dari halaman detail jika tersedia
     const poster = $('.fotoanime img').attr('src') || $('.thumb img').attr('src') || $('.infox img').attr('src') || '';
 
     // Ambil nomor episode terbaru
@@ -29,7 +29,8 @@ async function fetchDetailInfo(animeSlug, headers) {
 
     return {
       poster,
-      episode: latestEp ? `Ep ${latestEp}` : null
+      // Dikurangi 1 angka jika terbukti kelebihan 1 dari aslinya
+      episode: latestEp ? `Ep ${Math.max(1, latestEp - 1)}` : null
     };
   } catch (err) {
     return null;
@@ -47,7 +48,6 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/anime/'
     };
 
-    // Jika ada request spesifik untuk melengkapi data detail via slug (opsional untuk frontend)
     if (slug) {
       const info = await fetchDetailInfo(slug, headers);
       return res.status(200).json({ success: true, data: info });
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         let rawTitle = $(el).find('h2, h3, .title, .tt, .entry-title, .series-title').first().text();
         const title = cleanTitle(rawTitle);
 
-        let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
+        let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || $(el).find('img').attr('data-lazy-src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
         let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
@@ -78,7 +78,8 @@ export default async function handler(req, res) {
         if (rawEp) {
           const numMatch = rawEp.match(/\d+/);
           if (numMatch) {
-            epNumber = `Ep ${Math.max(1, parseInt(numMatch[0], 10))}`;
+            const correctedNum = Math.max(1, parseInt(numMatch[0], 10) - 1);
+            epNumber = `Ep ${correctedNum}`;
           }
         }
 
@@ -105,12 +106,12 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
+    // Hanya ambil detail untuk item yang posternya benar-benar kosong agar thumbnail utama aman
     allItems = await Promise.all(allItems.map(async (item) => {
-      if (item.slug && (!item.poster || item.episode === 'Ep 1')) {
+      if (item.slug && (!item.poster || item.poster.trim() === '')) {
         const detail = await fetchDetailInfo(item.slug, headers);
-        if (detail) {
-          if (!item.poster && detail.poster) item.poster = detail.poster;
-          if (detail.episode) item.episode = detail.episode;
+        if (detail && detail.poster) {
+          item.poster = detail.poster;
         }
       }
       return item;
