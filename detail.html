@@ -395,7 +395,6 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    // Pembacaan slug serbaguna (Mendukung /detail/slug dan ?slug=...)
     function cleanSlug(str) {
       let slug = str;
       if (!slug) {
@@ -414,7 +413,6 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    // Pemotong slug murni agar mengembalikan judul/season utama
     function getCleanMainSlug(str) {
       const raw = cleanSlug(str);
       return raw.replace(/-episode-\d+.*$/i, '');
@@ -952,6 +950,7 @@
         .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
+    // PEMBACAAN EPISODE OTOMATIS DARI QUERY PARAMETER URL (?ep=...)
     async function loadDetail() {
       if (!targetSlug) {
         document.getElementById('mediaDetailsGroup').innerHTML = '<h1 class="media-title">Slug Tidak Ditemukan</h1>';
@@ -998,9 +997,19 @@
             epGrid.appendChild(box);
           });
 
-          if (globalEpisodes.length > 0) {
-            const firstNum = extractEpNumber(globalEpisodes[0].title || globalEpisodes[0].slug, 1);
-            selectEpisode(globalEpisodes[0].slug, data.title, data.poster, `Ep ${firstNum}`);
+          // PENTING: Mengecek apakah ada episode spesifik dari URL Lanjutkan Menonton (?ep=...)
+          const urlParams = new URLSearchParams(window.location.search);
+          const targetEpParam = urlParams.get('ep');
+
+          let initialEp = globalEpisodes[0];
+          if (targetEpParam) {
+            const matchedEp = globalEpisodes.find(ep => cleanSlug(ep.slug) === cleanSlug(targetEpParam));
+            if (matchedEp) initialEp = matchedEp;
+          }
+
+          if (initialEp) {
+            const initialNum = extractEpNumber(initialEp.title || initialEp.slug, 1);
+            selectEpisode(initialEp.slug, data.title, data.poster, `Ep ${initialNum}`);
           }
         }
       } else {
