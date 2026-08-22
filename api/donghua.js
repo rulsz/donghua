@@ -10,14 +10,11 @@ async function fetchEpisodeFromDetail(animeSlug, headers) {
     const $ = cheerio.load(html);
 
     let latestEp = null;
-    
-    // Pencarian menyeluruh ke semua link atau elemen list di halaman detail
     $('.eplister a, .episodelist a, ul.clstyle li a, .daftar-episode.zechs a').each((_, el) => {
       const text = $(el).text().trim();
       const match = text.match(/(?:Episode|Ep)\s*(\d+)/i) || text.match(/\b(\d+)\b/);
       if (match) {
         const num = parseInt(match[1], 10);
-        // Pastikan angka masuk akal sebagai episode (bukan tahun atau tanggal)
         if (num > 0 && num < 5000) {
           if (!latestEp || num > latestEp) {
             latestEp = num;
@@ -27,7 +24,8 @@ async function fetchEpisodeFromDetail(animeSlug, headers) {
     });
 
     if (latestEp) {
-      return `Ep ${latestEp}`;
+      // Dikurangi 1 jika terbukti selalu kelebihan 1 angka dari indeks rilis asli
+      return `Ep ${Math.max(1, latestEp - 1)}`;
     }
     return null;
   } catch (err) {
@@ -50,15 +48,8 @@ export default async function handler(req, res) {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
       const halfLength = Math.floor(text.length / 2);
-      
       if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
         return text.substring(0, halfLength).trim();
-      }
-      
-      const words = text.split(/\s+/);
-      const halfWords = Math.floor(words.length / 2);
-      if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
-        return words.slice(0, halfWords).join(' ');
       }
       return text;
     };
@@ -77,7 +68,10 @@ export default async function handler(req, res) {
 
         if (rawEp) {
           const numMatch = rawEp.match(/\d+/);
-          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
+          if (numMatch) {
+            const correctedNum = Math.max(1, parseInt(numMatch[0], 10) - 1);
+            epNumber = `Ep ${correctedNum}`;
+          }
         }
 
         let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
@@ -103,8 +97,9 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
+    // Lengkapi item yang masih "Ep 1" dengan mengambil datanya langsung ke halaman detail
     allItems = await Promise.all(allItems.map(async (item) => {
-      if (item.slug) {
+      if (item.slug && (item.episode === 'Ep 1' || !item.episode)) {
         const detailEp = await fetchEpisodeFromDetail(item.slug, headers);
         if (detailEp) {
           item.episode = detailEp;
