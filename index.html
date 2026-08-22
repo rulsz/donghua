@@ -391,10 +391,29 @@
       return 'Terbaru';
     }
 
+    function cleanPath(input) {
+      if (!input) return '';
+      return String(input)
+        .replace(/^https?:\/\/[^\/]+/, '')
+        .replace(/^\/?detail\//, '')
+        .replace(/^\/?anime\//, '')
+        .replace(/^\/+|\/+$/g, '');
+    }
+
+    // Fungsi ekstraksi Slug Donghua Utama yang Murni (Mempertahankan Season, memotong episode)
+    function getCleanMainSlug(input) {
+      if (!input) return '';
+      let str = cleanPath(input);
+      str = str.replace(/-episode-\d+.*$/i, '');
+      return str;
+    }
+
     async function trackDonghuaClick(item) {
-      const slug = cleanPath(item.slug || item.link || item.url);
+      const rawSlug = item.slug || item.link || item.url || '';
+      const cleanMainSlug = getCleanMainSlug(rawSlug);
+      
       saveToContinueHistory(item);
-      window.location.href = `/detail.html?slug=${slug}`;
+      window.location.href = `/detail/${cleanMainSlug}`;
     }
 
     function handleAuthAction() {
@@ -466,11 +485,6 @@
       else header.classList.remove('scrolled');
     });
 
-    function cleanPath(input) {
-      if (!input) return '';
-      return String(input).replace(/^https?:\/\/[^\/]+/, '').replace(/^\/detail\//, '').replace(/^\/anime\//, '').replace(/^\/+|\/+$/g, '');
-    }
-
     function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('active'); }
     function openSearchModal() { document.getElementById('searchModalOverlay').classList.add('active'); document.getElementById('searchInputModal').focus(); }
     function closeSearchModal() { document.getElementById('searchModalOverlay').classList.remove('active'); }
@@ -507,7 +521,7 @@
       favs.forEach(item => {
         const div = document.createElement('div');
         div.className = 'fav-item';
-        div.onclick = () => window.location.href = `/detail.html?slug=${cleanPath(item.slug)}`;
+        div.onclick = () => window.location.href = `/detail/${getCleanMainSlug(item.slug)}`;
         div.innerHTML = `
           <img class="fav-thumb" src="${item.poster || 'https://via.placeholder.com/40x52'}" alt="${item.title}">
           <div class="fav-info">
@@ -570,7 +584,7 @@
 
         if (listData && listData.length > 0) {
           listData.forEach(item => {
-            const s = cleanPath(item.slug || item.link);
+            const s = getCleanMainSlug(item.slug || item.link);
             const itemWithView = {
               ...item,
               views: cachedTotalViewsMap[s] || 0
@@ -777,10 +791,9 @@
         cachedTotalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
         const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        // 1. POPULER HARI INI
         let dailyPopularList = allMasterDonghuaList
           .map(item => {
-            const s = cleanPath(item.slug || item.link);
+            const s = getCleanMainSlug(item.slug || item.link);
             return { 
               ...item, 
               todayActivity: dailyViewsMap[s] || 0,
@@ -803,11 +816,10 @@
           }
         }
 
-        // 2. DONGHUA TERBARU
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
-            const s = cleanPath(item.slug || item.link);
+            const s = getCleanMainSlug(item.slug || item.link);
             return {
               ...item,
               views: cachedTotalViewsMap[s] || 0
@@ -816,10 +828,9 @@
           renderGridItems(latestWithViews, latestGrid);
         }
 
-        // 3. DONGHUA POPULER (SEMUA)
         let totalPopularList = allMasterDonghuaList
           .map(item => {
-            const s = cleanPath(item.slug || item.link);
+            const s = getCleanMainSlug(item.slug || item.link);
             return { ...item, views: cachedTotalViewsMap[s] || 0 };
           })
           .sort((a, b) => b.views - a.views)
@@ -842,7 +853,7 @@
           const masterMap = new Map();
           
           [...(res.data.latest || []), ...(res.data.popularToday || []), ...(res.data.popularAll || [])].forEach(i => {
-            if (i && (i.slug || i.link)) masterMap.set(cleanPath(i.slug || i.link), i);
+            if (i && (i.slug || i.link)) masterMap.set(getCleanMainSlug(i.slug || i.link), i);
           });
           allMasterDonghuaList = Array.from(masterMap.values());
 
@@ -858,27 +869,28 @@
     }
 
     async function saveToContinueHistory(item) {
-      const cleanSlug = cleanPath(item.slug || item.link);
+      const rawSlug = item.slug || item.link || item.url || '';
+      const cleanMainSlug = getCleanMainSlug(rawSlug);
+
       const historyItem = {
         title: item.title,
         poster: item.poster || item.image,
-        mainPath: cleanSlug,
+        mainPath: cleanMainSlug,
         episode: parseEpisodeText(item),
         timestamp: Date.now()
       };
 
       if (window.currentUser && window.db) {
-        const userHistRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${cleanSlug}`);
+        const userHistRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${cleanMainSlug}`);
         await window.fbSet(userHistRef, historyItem);
       } else {
         let history = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-        history = history.filter(i => cleanPath(i.mainPath) !== cleanSlug);
+        history = history.filter(i => getCleanMainSlug(i.mainPath) !== cleanMainSlug);
         history.unshift(historyItem);
         localStorage.setItem('rz_continue_history', JSON.stringify(history.slice(0, 10)));
       }
     }
 
-    // FUNGSI UTAMA LANJUTKAN MENONTON DENGAN SINKRONISASI FIREBASE + EPISODE PRESISI
     window.renderContinueWatching = async function() {
       const container = document.getElementById('continueSection');
       const row = document.getElementById('continueRow');
@@ -912,12 +924,12 @@
       row.innerHTML = '';
 
       historyList.forEach((item) => {
-        const targetPath = item.epPath || item.mainPath;
-        const cleanSlug = cleanPath(targetPath);
+        const rawSlug = item.mainPath || item.epPath || '';
+        const cleanMainSlug = getCleanMainSlug(rawSlug);
 
         let displayEp = item.episode;
         if (!displayEp || displayEp === 'Ep 1') {
-          const matches = String(targetPath || '').match(/\d+/g);
+          const matches = String(rawSlug).match(/\d+/g);
           if (matches && matches.length > 0) {
             displayEp = `Ep ${matches[matches.length - 1]}`;
           } else {
@@ -927,7 +939,7 @@
 
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => window.location.href = `/detail.html?slug=${cleanSlug}`;
+        card.onclick = () => window.location.href = `/detail/${cleanMainSlug}`;
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
             <img src="${item.poster}" alt="${item.title}" loading="lazy" />
