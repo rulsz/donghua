@@ -73,6 +73,17 @@
     .menu-dropdown a svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
 
+    /* Pop-up Favorit Melayang Kanan */
+    .fav-popover { display: none; position: absolute; top: 60px; right: 16px; background: #0a0a0a; border: 1px solid var(--border-color); border-radius: 14px; width: 300px; max-height: 400px; overflow-y: auto; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.95); z-index: 102; }
+    .fav-popover.active { display: block; }
+    .fav-header { font-size: 14px; font-weight: 800; color: var(--color-accent); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .fav-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 8px; cursor: pointer; }
+    .fav-item:hover { background: rgba(56, 189, 248, 0.1); }
+    .fav-thumb { width: 40px; height: 52px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+    .fav-info { flex: 1; overflow: hidden; }
+    .fav-title { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .fav-del-btn { background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 4px; }
+
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-main); z-index: 999; padding: 16px; overflow-y: auto; }
     .modal-overlay.active { display: block; }
     .search-modal-header { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 16px auto; }
@@ -179,7 +190,7 @@
         <a href="javascript:void(0)" onclick="openLatestDialog()">
           <svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg> Donghua Terbaru
         </a>
-        <a href="/dashboard#favoritesSection">
+        <a href="javascript:void(0)" onclick="toggleFavoritesPopover()">
           <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Daftar Favorit
         </a>
         <a href="/dashboard" id="menuDashboardBtn" style="display: none;">
@@ -188,6 +199,17 @@
         <a href="javascript:void(0)" id="menuLoginBtn" onclick="handleAuthAction()">
           <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk / Daftar
         </a>
+      </div>
+
+      <!-- Popup Melayang Favorit -->
+      <div class="fav-popover" id="favPopover">
+        <div class="fav-header">
+          <span>Daftar Favorit</span>
+          <span style="font-size:11px; cursor:pointer; color:#ef4444;" onclick="toggleFavoritesPopover()">✕</span>
+        </div>
+        <div id="favListItems">
+          <p style="font-size:12px; color:var(--text-muted); text-align:center;">Memuat favorit...</p>
+        </div>
       </div>
     </div>
   </header>
@@ -333,6 +355,7 @@
     let dialogPage = 1;
     let allMasterDonghuaList = [];
     let authMode = 'login';
+    let cachedTotalViewsMap = {};
 
     const eyeSvgIcon = `<svg class="icon-svg icon-inline" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 
@@ -348,9 +371,31 @@
       return String(num);
     }
 
-    // Klik Item: Hanya Mengalihkan ke Halaman Detail Tanpa Menambah View di Sini
+    // Fungsi Pembantu Presisi: Penentuan Status Ongoing/Completed
+    function parseStatusText(item) {
+      const rawStatus = (item.status || item.type || '').toString().toLowerCase();
+      if (rawStatus.includes('completed') || rawStatus.includes('tamat') || rawStatus.includes('end')) {
+        return 'COMPLETED';
+      }
+      return 'ONGOING';
+    }
+
+    // Fungsi Pembantu Presisi: Penentuan Episode
+    function parseEpisodeText(item) {
+      if (item.episode) return item.episode;
+      if (item.ep) return item.ep;
+      if (item.latestEpisode) return item.latestEpisode;
+
+      // Extract number from title if available
+      const title = item.title || '';
+      const match = title.match(/ep(?:isode)?\s*(\d+)/i) || title.match(/(\d+)/);
+      if (match) return `Ep ${match[1]}`;
+
+      return 'Terbaru';
+    }
+
     async function trackDonghuaClick(item) {
-      const slug = cleanPath(item.slug || item.link);
+      const slug = cleanPath(item.slug || item.link || item.url);
       saveToContinueHistory(item);
       window.location.href = `/detail/${slug}`;
     }
@@ -433,26 +478,113 @@
     function openSearchModal() { document.getElementById('searchModalOverlay').classList.add('active'); document.getElementById('searchInputModal').focus(); }
     function closeSearchModal() { document.getElementById('searchModalOverlay').classList.remove('active'); }
 
+    // Toggle Popover Favorit Melayang Kanan
+    async function toggleFavoritesPopover() {
+      document.getElementById('menuDropdown').classList.remove('active');
+      const popover = document.getElementById('favPopover');
+      popover.classList.toggle('active');
+
+      if (popover.classList.contains('active')) {
+        await loadFavoritesList();
+      }
+    }
+
+    async function loadFavoritesList() {
+      const container = document.getElementById('favListItems');
+      let favs = [];
+
+      if (window.currentUser && window.db) {
+        try {
+          const snap = await window.fbGet(window.fbRef(window.db, `users/${window.currentUser.uid}/favorites`));
+          if (snap.exists()) favs = Object.values(snap.val());
+        } catch (e) {}
+      } else {
+        favs = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
+      }
+
+      if (!favs || favs.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); text-align:center; padding: 10px 0;">Belum ada favorit.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      favs.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'fav-item';
+        div.onclick = () => window.location.href = `/detail/${cleanPath(item.slug)}`;
+        div.innerHTML = `
+          <img class="fav-thumb" src="${item.poster || 'https://via.placeholder.com/40x52'}" alt="${item.title}">
+          <div class="fav-info">
+            <div class="fav-title">${item.title}</div>
+          </div>
+          <button class="fav-del-btn" onclick="removeFavoriteItem(event, '${item.slug}')">✕</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function removeFavoriteItem(event, slug) {
+      event.stopPropagation();
+      if (window.currentUser && window.db) {
+        await window.fbRemove(window.fbRef(window.db, `users/${window.currentUser.uid}/favorites/${slug}`));
+      } else {
+        let favs = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
+        favs = favs.filter(f => f.slug !== slug);
+        localStorage.setItem('rz_favorites', JSON.stringify(favs));
+      }
+      loadFavoritesList();
+    }
+
     function openLatestDialog() {
       document.getElementById('menuDropdown').classList.remove('active');
       document.getElementById('latestModalOverlay').classList.add('active');
-      if (dialogPage === 1) loadMoreDialogData();
+      if (dialogPage === 1) {
+        loadMoreDialogData();
+      }
     }
 
     function closeLatestDialog() { document.getElementById('latestModalOverlay').classList.remove('active'); }
 
+    function showDialogSkeleton(gridContainer, count = 6) {
+      gridContainer.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const skel = document.createElement('div');
+        skel.className = 'card-skeleton';
+        skel.innerHTML = `
+          <div class="skeleton card-skeleton-img"></div>
+          <div class="skeleton card-skeleton-title"></div>
+          <div class="skeleton card-skeleton-sub"></div>
+        `;
+        gridContainer.appendChild(skel);
+      }
+    }
+
     async function loadMoreDialogData() {
       const btn = document.getElementById('loadMoreDialogBtn');
+      const grid = document.getElementById('latestModalGrid');
+      
       btn.innerText = 'Memuat...';
+      if (dialogPage === 1) showDialogSkeleton(grid, 6);
 
       try {
         const res = await fetch(`/api/donghua?type=latest&page=${dialogPage}`).then(r => r.json());
-        if (res.success && res.data && res.data.length > 0) {
-          const grid = document.getElementById('latestModalGrid');
-          res.data.forEach(item => grid.appendChild(createGridCard(item)));
+        if (dialogPage === 1) grid.innerHTML = '';
+
+        const listData = res.data || res.result || res.donghua || (Array.isArray(res) ? res : []);
+
+        if (listData && listData.length > 0) {
+          listData.forEach(item => {
+            const s = cleanPath(item.slug || item.link);
+            const itemWithView = {
+              ...item,
+              views: cachedTotalViewsMap[s] || 0
+            };
+            grid.appendChild(createGridCard(itemWithView));
+          });
           dialogPage++;
           btn.innerText = 'Muat Lainnya';
         } else {
+          if (dialogPage === 1) grid.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; grid-column: span 3; text-align:center;">Data tidak tersedia.</p>';
           btn.innerText = 'Tidak ada data lagi';
         }
       } catch (e) {
@@ -476,19 +608,22 @@
         try {
           const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json());
           resultsList.innerHTML = '';
-          if (res.success && res.data && res.data.length > 0) {
-            res.data.forEach(item => {
+          
+          const searchItems = res.data || res.result || res.donghua || (Array.isArray(res) ? res : []);
+
+          if (searchItems && searchItems.length > 0) {
+            searchItems.forEach(item => {
               const card = document.createElement('div');
               card.className = 'search-item-card';
               card.onclick = () => trackDonghuaClick(item);
               card.innerHTML = `
-                <img class="search-item-thumb" src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
+                <img class="search-item-thumb" src="${item.poster || item.image || 'https://via.placeholder.com/75x100'}" alt="${item.title}" loading="lazy" />
                 <div class="search-item-info">
                   <div>
                     <div class="search-item-title">${item.title}</div>
                     <div class="search-item-desc">${item.synopsis || 'Saksikan keseruan petualangan donghua sub indo berkualitas HD secara gratis.'}</div>
                   </div>
-                  <div class="search-item-ep">${item.episode || item.ep || 'Episode Terbaru'}</div>
+                  <div class="search-item-ep">${parseEpisodeText(item)}</div>
                 </div>
               `;
               resultsList.appendChild(card);
@@ -512,11 +647,11 @@
         const slide = document.createElement('div');
         slide.className = `hero-slide ${index === 0 ? 'active' : ''}`;
         
-        const epText = item.episode || item.ep || 'Ep 1';
-        const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'ONGOING');
+        const epText = parseEpisodeText(item);
+        const statusText = parseStatusText(item);
 
         slide.innerHTML = `
-          <img class="hero-bg-img" src="${item.poster}" alt="${item.title}" />
+          <img class="hero-bg-img" src="${item.poster || item.image}" alt="${item.title}" />
           <div class="hero-overlay"></div>
           <div class="hero-content">
             <span class="badge-tag">DONGHUA</span>
@@ -579,8 +714,8 @@
       card.className = 'card-grid';
       card.onclick = () => trackDonghuaClick(item);
 
-      const episodeText = item.episode || item.ep || 'Terbaru';
-      const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'Ongoing');
+      const episodeText = parseEpisodeText(item);
+      const statusText = parseStatusText(item);
 
       const viewBadge = item.views !== undefined 
         ? `<span class="badge-view-count">${eyeSvgIcon} ${formatViews(item.views)}</span>` 
@@ -588,7 +723,7 @@
 
       card.innerHTML = `
         <div class="card-grid-img-wrapper">
-          <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+          <img src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${statusText}</span>
           <span class="badge-bottom">${episodeText}</span>
           ${viewBadge}
@@ -603,8 +738,8 @@
       card.className = 'card-continue';
       card.onclick = () => trackDonghuaClick(item);
 
-      const episodeText = item.episode || item.ep || 'Terbaru';
-      const statusText = (item.status && item.status !== 'ONA') ? item.status : (item.type || 'Ongoing');
+      const episodeText = parseEpisodeText(item);
+      const statusText = parseStatusText(item);
 
       const viewBadge = item.views !== undefined 
         ? `<span class="badge-view-count">${eyeSvgIcon} ${formatViews(item.views)}</span>` 
@@ -612,7 +747,7 @@
 
       card.innerHTML = `
         <div class="card-continue-img-wrapper">
-          <img src="${item.poster}" alt="${item.title}" loading="lazy" />
+          <img src="${item.poster || item.image}" alt="${item.title}" loading="lazy" />
           <span class="badge-ep">${statusText}</span>
           <span class="badge-bottom">${episodeText}</span>
           ${viewBadge}
@@ -643,17 +778,17 @@
         const totalSnap = await window.fbGet(window.fbRef(window.db, 'views_total'));
         const dailySnap = await window.fbGet(window.fbRef(window.db, `views_daily/${today}`));
 
-        const totalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
+        cachedTotalViewsMap = totalSnap.exists() ? totalSnap.val() : {};
         const dailyViewsMap = dailySnap.exists() ? dailySnap.val() : {};
 
         // 1. POPULER HARI INI
         let dailyPopularList = allMasterDonghuaList
           .map(item => {
-            const s = cleanPath(item.slug);
+            const s = cleanPath(item.slug || item.link);
             return { 
               ...item, 
               todayActivity: dailyViewsMap[s] || 0,
-              views: totalViewsMap[s] || 0
+              views: cachedTotalViewsMap[s] || 0
             };
           })
           .filter(item => item.todayActivity > 0)
@@ -676,10 +811,10 @@
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
-            const s = cleanPath(item.slug);
+            const s = cleanPath(item.slug || item.link);
             return {
               ...item,
-              views: totalViewsMap[s] || 0
+              views: cachedTotalViewsMap[s] || 0
             };
           });
           renderGridItems(latestWithViews, latestGrid);
@@ -688,8 +823,8 @@
         // 3. DONGHUA POPULER (SEMUA)
         let totalPopularList = allMasterDonghuaList
           .map(item => {
-            const s = cleanPath(item.slug);
-            return { ...item, views: totalViewsMap[s] || 0 };
+            const s = cleanPath(item.slug || item.link);
+            return { ...item, views: cachedTotalViewsMap[s] || 0 };
           })
           .sort((a, b) => b.views - a.views)
           .slice(0, 12);
@@ -711,7 +846,7 @@
           const masterMap = new Map();
           
           [...(res.data.latest || []), ...(res.data.popularToday || []), ...(res.data.popularAll || [])].forEach(i => {
-            if (i && i.slug) masterMap.set(cleanPath(i.slug), i);
+            if (i && (i.slug || i.link)) masterMap.set(cleanPath(i.slug || i.link), i);
           });
           allMasterDonghuaList = Array.from(masterMap.values());
 
@@ -727,12 +862,12 @@
     }
 
     async function saveToContinueHistory(item) {
-      const cleanSlug = cleanPath(item.slug);
+      const cleanSlug = cleanPath(item.slug || item.link);
       const historyItem = {
         title: item.title,
         poster: item.poster || item.image,
         mainPath: cleanSlug,
-        episode: item.episode || item.ep || 'Lanjut'
+        episode: parseEpisodeText(item)
       };
 
       if (window.currentUser && window.db) {
