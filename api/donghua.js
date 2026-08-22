@@ -1,53 +1,5 @@
 import * as cheerio from 'cheerio';
 
-// 1. Fungsi Pencari Episode dari API Pihak Ketiga (AniList)
-async function fetchEpisodeFromAPI(title) {
-  try {
-    const query = `
-      query ($search: String) {
-        Media(search: $search, type: ANIME) {
-          episodes
-          nextAiringEpisode {
-            episode
-          }
-        }
-      }
-    `;
-    
-    // Membatasi waktu fetch pihak ke-3 maksimal 1.5 detik agar Vercel tidak timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-
-    const response = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ query, variables: { search: title } }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    
-    const json = await response.json();
-    if (json.data && json.data.Media) {
-      const media = json.data.Media;
-      // Jika sedang ongoing, ambil episode sebelum jadwal tayang berikutnya
-      if (media.nextAiringEpisode && media.nextAiringEpisode.episode > 1) {
-        return `Ep ${media.nextAiringEpisode.episode - 1}`;
-      }
-      // Jika sudah tamat, ambil total episodenya
-      if (media.episodes) {
-        return `Ep ${media.episodes}`;
-      }
-    }
-    return null;
-  } catch (e) {
-    return null; // Abaikan error jika API pihak ketiga gagal/timeout
-  }
-}
-
 export default async function handler(req, res) {
   try {
     const { type = 'all', page = 1 } = req.query;
@@ -65,10 +17,12 @@ export default async function handler(req, res) {
       const text = rawTitle.trim();
       const halfLength = Math.floor(text.length / 2);
       
+      // Jika teks terdiri dari pengulangan dua kalimat persis sama
       if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
         return text.substring(0, halfLength).trim();
       }
       
+      // Hapus duplikasi dengan regex jika dipisahkan spasi/karakter
       const words = text.split(/\s+/);
       const halfWords = Math.floor(words.length / 2);
       if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
@@ -87,7 +41,7 @@ export default async function handler(req, res) {
         let href = $(el).find('a').first().attr('href') || '';
         
         let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
-        let epNumber = 'Ep 1'; // Default Fallback awal
+        let epNumber = 'Ep 1';
 
         if (rawEp) {
           const numMatch = rawEp.match(/\d+/);
@@ -115,17 +69,7 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
-
-    // 2. PROSES PENGAYAAN DATA (Mengambil episode dari API Pihak Ketiga secara asinkron)
-    allItems = await Promise.all(allItems.map(async (item) => {
-      // Tarik info dari API pihak ketiga berdasarkan judul donghua-nya
-      const apiEpisode = await fetchEpisodeFromAPI(item.title);
-      if (apiEpisode) {
-        item.episode = apiEpisode; // Timpa dengan data dari API publik jika berhasil
-      }
-      return item;
-    }));
+    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
     if (!type || type === 'all') {
       return res.status(200).json({
