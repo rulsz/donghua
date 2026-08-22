@@ -5,10 +5,20 @@ export default async function handler(req, res) {
     const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
+    // Headers penyamaran agar lolos dari proteksi Cloudflare / 403 Forbidden
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Referer': 'https://animexin.dev/'
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Referer': 'https://animexin.dev/',
+      'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'Sec-Ch-Ua-Mobile': '?0',
+      'Sec-Ch-Ua-Platform': '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'same-origin',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1'
     };
 
     const cleanTitle = (rawTitle) => {
@@ -37,7 +47,6 @@ export default async function handler(req, res) {
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // PENGAMBILAN EPISODE: Menambahkan selector .epx dan .bt .epx agar tertangkap di /page/2/
         let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
         let epNumber = 'Ep 1';
 
@@ -56,7 +65,6 @@ export default async function handler(req, res) {
       return result;
     };
 
-    // MENYESUAIKAN URL TARGET: Jika page > 1, gunakan struktur /page/N/ agar sama persis dengan link yang Anda maksud
     const targetUrl = pageNum > 1 
       ? `https://animexin.dev/page/${pageNum}/` 
       : `https://animexin.dev/`;
@@ -68,8 +76,6 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    
-    // Selector card Animexin di halaman utama dan arsip /page/N/
     const allItems = parseList($, '.listupd .bs, .bsx, .article .bs, .post-show .bs');
 
     if (!type || type === 'all') {
