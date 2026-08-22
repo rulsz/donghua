@@ -1,18 +1,65 @@
 import * as cheerio from 'cheerio';
 
+// Fungsi bantuan untuk mengambil halaman detail dan mendeteksi total episode
+async function fetchDetailEpisode(slug) {
+  try {
+    const detailUrl = `https://animexin.dev/${slug}/`;
+    const response = await fetch(detailUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Referer': 'https://animexin.dev/'
+      }
+    });
+
+    if (!response.ok) return null;
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Mencari teks episode di halaman detail (biasanya ada di list episode / info / .epx)
+    let episodeText = '';
+    
+    // Cek pada list episode atau tabel info halaman detail
+    $('.eplister ul li, .episodelist ul li, .info-content, .spe').each((_, el) => {
+      const text = $(el).text();
+      if (/episode|ep/i.test(text)) {
+        episodeText = text;
+      }
+    });
+
+    // Jika tidak ketemu di list, cari elemen umum yang memuat angka episode di halaman detail
+    if (!episodeText) {
+      episodeText = $('.infox, .entry-content').text();
+    }
+
+    // Ambil angka terbesar atau angka episode yang ditemukan
+    const matches = episodeText.match(/(?:Episode|Ep)\s*(\d+)/gi);
+    if (matches && matches.length > 0) {
+      // Ambil angka dari kecocokan terakhir (biasanya episode terbaru)
+      const lastMatch = matches[matches.length - 1].match(/\d+/);
+      if (lastMatch) {
+        return `Ep ${lastMatch[0]}`;
+      }
+    }
+
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   try {
     const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
-    // Headers lengkap agar tidak diblokir Cloudflare di halaman utama
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Referer': 'https://animexin.dev/'
+      'Referer': 'https://animexin.dev/anime/'
     };
 
+    // Helper pembersih judul ganda
     const cleanTitle = (rawTitle) => {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
@@ -38,30 +85,19 @@ export default async function handler(req, res) {
 
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
-        
-        // Mengambil teks episode dari halaman utama (.epx atau .bt .epx)
-        let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
-        let epNumber = 'Ep 1';
-
-        if (rawEp) {
-          const numMatch = rawEp.match(/\d+/);
-          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
-        }
-
         let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
 
         if (title && href) {
           const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          result.push({ title, poster, slug, status, episode: epNumber, type: 'Donghua' });
+          result.push({ title, poster, slug, status, episode: 'Ep 1', type: 'Donghua' });
         }
       });
       return result;
     };
 
-    // Kembali menggunakan URL Homepage Animexin tempat badge episode berada
     const targetUrl = pageNum > 1 
-      ? `https://animexin.dev/page/${pageNum}/` 
-      : `https://animexin.dev/`;
+      ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
+      : `https://animexin.dev/anime/?status=&type=&order=update`;
 
     const response = await fetch(targetUrl, { headers });
     if (!response.ok) {
@@ -70,23 +106,36 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
+    let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
+
+    // Batasi jumlah item yang diambil detailnya agar proses serverless tidak terlalu berat/timeout (misal 15 item pertama)
+    const targetItems = allItems.slice(0, 15);
     
-    // Selector card di halaman utama Animexin
-    const allItems = parseList($, '.listupd .bs, .bsx, .article .bs, .post-show .bs');
+    // Ambil nomor episode dari halaman detail masing-masing secara paralel
+    const enrichedItems = await Promise.all(targetItems.map(async (item) => {
+      const realEpisode = await fetchDetailEpisode(item.slug);
+      if (realEpisode) {
+        item.episode = realEpisode;
+      }
+      return item;
+    }));
+
+    // Gabungkan kembali dengan sisa item jika ada
+    const finalItems = [...enrichedItems, ...allItems.slice(15)];
 
     if (!type || type === 'all') {
       return res.status(200).json({
         success: true,
         data: {
-          popularToday: allItems.slice(0, 10),
-          latest: allItems.slice(0, 15),
-          popularAll: allItems.slice(5, 15)
+          popularToday: finalItems.slice(0, 10),
+          latest: finalItems.slice(0, 15),
+          popularAll: finalItems.slice(5, 15)
         }
       });
     }
 
     if (type === 'latest') {
-      return res.status(200).json({ success: true, page: pageNum, data: allItems.slice(0, 30) });
+      return res.status(200).json({ success: true, page: pageNum, data: finalItems.slice(0, 30) });
     }
 
   } catch (error) {
