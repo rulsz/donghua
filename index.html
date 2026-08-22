@@ -373,32 +373,29 @@
       return 'ONGOING';
     }
 
-    // PEMBACAAN EPISODE PRESISI DENGAN FILTER CANGGIH
+    // PEMBACAAN EPISODE TANPA KATA 'SEASON X'
     function parseEpisodeText(item) {
-      if (!item) return 'Terbaru';
+      if (!item) return 'ONGOING';
 
       let directEp = item.episode || item.ep || item.latestEpisode;
-      if (directEp && String(directEp).trim() !== '' && directEp !== 'Ep 1') {
+      if (directEp && String(directEp).trim() !== '' && directEp !== 'Ep 1' && directEp !== 'Terbaru') {
         const epNum = String(directEp).match(/\d+/);
         if (epNum) return `Ep ${epNum[0]}`;
-        return directEp;
       }
 
-      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''} ${item.url || ''}`;
+      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`
+        .replace(/season\s*\d+/gi, '')
+        .replace(/s\d+/gi, '');
+
       const epMatch = rawText.match(/(?:episode|ep)[^\d]*(\d+)/i) || 
-                      rawText.match(/-episode-(\d+)/i) || 
+                      rawText.match(/-episode-(\d+)/i) ||
                       rawText.match(/(\d+)\s*(?:sub|indonesia|eng)/i);
 
       if (epMatch && epMatch[1]) {
         return `Ep ${epMatch[1]}`;
       }
 
-      const lastNumMatch = rawText.replace(/season\s*\d+/gi, '').match(/(\d+)(?=[^\d]*$)/);
-      if (lastNumMatch && lastNumMatch[1]) {
-        return `Ep ${lastNumMatch[1]}`;
-      }
-
-      return 'Terbaru';
+      return 'Ep 1';
     }
 
     function cleanPath(input) {
@@ -415,6 +412,26 @@
       let str = cleanPath(input);
       str = str.replace(/-episode-\d+.*$/i, '');
       return str;
+    }
+
+    function findMasterDonghuaBySlug(dbSlug) {
+      if (!dbSlug || !allMasterDonghuaList.length) return null;
+
+      const cleanDb = getCleanMainSlug(dbSlug).toLowerCase();
+
+      let found = allMasterDonghuaList.find(item => {
+        const masterSlug = getCleanMainSlug(item.slug || item.link).toLowerCase();
+        return masterSlug === cleanDb;
+      });
+
+      if (found) return found;
+
+      found = allMasterDonghuaList.find(item => {
+        const masterSlug = getCleanMainSlug(item.slug || item.link).toLowerCase();
+        return masterSlug.includes(cleanDb) || cleanDb.includes(masterSlug);
+      });
+
+      return found || null;
     }
 
     async function trackDonghuaClick(item) {
@@ -788,7 +805,7 @@
       }
     }
 
-    // PEMASANGAN MURNI DARI FIREBASE UNTUK URUTAN VIEW POPULER TERBANYAK -> TERDIDIK
+    // PEMUATAN DONGHUA POPULER DENGAN POSTER OTOMATIS BERDASARKAN FIREBASE
     async function loadFirebasePopularData(latestListFromApi = []) {
       if (!window.db) return;
 
@@ -801,14 +818,7 @@
         const rawTotalMap = totalSnap.exists() ? totalSnap.val() : {};
         const rawDailyMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        // Buat pencarian cepat dari data API
-        const masterMapBySlug = new Map();
-        allMasterDonghuaList.forEach(item => {
-          const cleanS = getCleanMainSlug(item.slug || item.link);
-          if (cleanS) masterMapBySlug.set(cleanS, item);
-        });
-
-        // 1. PROSES DONGHUA POPULER KESELURUHAN (Murni Urut dari Firebase)
+        // 1. DONGHUA POPULER KESELURUHAN
         const sortedTotalSlugs = Object.keys(rawTotalMap)
           .map(slugKey => ({
             slug: getCleanMainSlug(slugKey),
@@ -817,32 +827,43 @@
           .filter(item => item.views > 0)
           .sort((a, b) => b.views - a.views);
 
-        const totalPopularList = sortedTotalSlugs.slice(0, 12).map(item => {
-          const matchedMaster = masterMapBySlug.get(item.slug);
-          if (matchedMaster) {
-            return { ...matchedMaster, views: item.views };
-          }
-          
-          // Format judul dari slug jika tidak ada di API beranda
-          const formatTitle = item.slug
-            .split('-')
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+        const totalPopularList = await Promise.all(
+          sortedTotalSlugs.slice(0, 12).map(async (item) => {
+            const matched = findMasterDonghuaBySlug(item.slug);
+            
+            if (matched) {
+              return { ...matched, views: item.views };
+            }
 
-          return {
-            title: formatTitle,
-            slug: item.slug,
-            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
-            views: item.views
-          };
-        });
+            try {
+              const detailRes = await fetch(`/api/detail?slug=${encodeURIComponent(item.slug)}`).then(r => r.json());
+              if (detailRes && detailRes.success && detailRes.data) {
+                return {
+                  title: detailRes.data.title || item.slug.replace(/-/g, ' '),
+                  slug: item.slug,
+                  poster: detailRes.data.poster || detailRes.data.image,
+                  views: item.views,
+                  status: detailRes.data.status || 'ONGOING'
+                };
+              }
+            } catch (e) {}
+
+            const formatTitle = item.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            return {
+              title: formatTitle,
+              slug: item.slug,
+              poster: `https://images.placeholders.dev/?width=160&height=220&text=${encodeURIComponent(formatTitle)}&bgColor=%23121212&textColor=%23ffffff`,
+              views: item.views
+            };
+          })
+        );
 
         const popAllGrid = document.getElementById('popularAllGrid');
         if (popAllGrid) {
           renderGridItems(totalPopularList, popAllGrid);
         }
 
-        // 2. PROSES DONGHUA POPULER HARI INI
+        // 2. DONGHUA POPULER HARI INI
         const sortedDailySlugs = Object.keys(rawDailyMap)
           .map(slugKey => ({
             slug: getCleanMainSlug(slugKey),
@@ -852,25 +873,36 @@
           .filter(item => item.todayActivity > 0)
           .sort((a, b) => b.todayActivity - a.todayActivity);
 
-        const dailyPopularList = sortedDailySlugs.slice(0, 12).map(item => {
-          const matchedMaster = masterMapBySlug.get(item.slug);
-          if (matchedMaster) {
-            return { ...matchedMaster, views: item.views, todayActivity: item.todayActivity };
-          }
+        const dailyPopularList = await Promise.all(
+          sortedDailySlugs.slice(0, 12).map(async (item) => {
+            const matched = findMasterDonghuaBySlug(item.slug);
+            if (matched) {
+              return { ...matched, views: item.views, todayActivity: item.todayActivity };
+            }
 
-          const formatTitle = item.slug
-            .split('-')
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+            try {
+              const detailRes = await fetch(`/api/detail?slug=${encodeURIComponent(item.slug)}`).then(r => r.json());
+              if (detailRes && detailRes.success && detailRes.data) {
+                return {
+                  title: detailRes.data.title || item.slug.replace(/-/g, ' '),
+                  slug: item.slug,
+                  poster: detailRes.data.poster || detailRes.data.image,
+                  views: item.views,
+                  todayActivity: item.todayActivity
+                };
+              }
+            } catch (e) {}
 
-          return {
-            title: formatTitle,
-            slug: item.slug,
-            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
-            views: item.views,
-            todayActivity: item.todayActivity
-          };
-        });
+            const formatTitle = item.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            return {
+              title: formatTitle,
+              slug: item.slug,
+              poster: `https://images.placeholders.dev/?width=160&height=220&text=${encodeURIComponent(formatTitle)}&bgColor=%23121212&textColor=%23ffffff`,
+              views: item.views,
+              todayActivity: item.todayActivity
+            };
+          })
+        );
 
         const popRow = document.getElementById('popularTodayRow');
         if (popRow) {
@@ -884,7 +916,7 @@
           }
         }
 
-        // 3. Update view count pada grid Donghua Terbaru
+        // 3. Update View Count Grid Terbaru
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
