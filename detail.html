@@ -100,57 +100,95 @@
     .sheet-close { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
-    /* Komentar Modern & Perbagus UI */
-    .comments-section { margin-top: 30px; border-top: 1px solid #1e293b; padding-top: 24px; }
-    .comments-header { font-size: 17px; font-weight: 800; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; color: #f8fafc; }
-    .comments-header svg { width: 20px; height: 20px; stroke: #38bdf8; fill: none; stroke-width: 2.2; }
+    /* =========================================================
+       UI KOMENTAR TIKTOK STYLE 
+       ========================================================= */
+    .comments-section { margin-top: 30px; border-top: 1px solid #1e293b; padding-top: 20px; }
+    .comments-header { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #f8fafc; }
     
-    .comment-input-box { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 14px; padding: 14px; margin-bottom: 24px; backdrop-filter: blur(8px); }
-    .comment-textarea { width: 100%; height: 72px; background: transparent; border: none; color: #fff; font-size: 13.5px; outline: none; resize: none; font-family: inherit; }
-    .comment-form-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 10px; }
-    .comment-user-info { font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 8px; }
-    .comment-user-info img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+    /* Input Komentar TikTok Style */
+    .comment-input-box {
+      display: flex; align-items: center; gap: 10px;
+      background: #121722; border: 1px solid #222e42;
+      border-radius: 24px; padding: 6px 8px 6px 14px;
+      margin-bottom: 24px; transition: border-color 0.2s;
+    }
+    .comment-input-box:focus-within { border-color: #38bdf8; }
+    .comment-textarea {
+      flex: 1; height: 36px; background: transparent; border: none;
+      color: #fff; font-size: 13px; outline: none; resize: none;
+      font-family: inherit; line-height: 36px;
+    }
+    .btn-send-comment {
+      background: #0284c7; color: #fff; border: none;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: transform 0.2s;
+    }
+    .btn-send-comment:active { transform: scale(0.9); }
+    .btn-send-comment svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; }
     
-    .btn-send-comment { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); transition: transform 0.2s; }
-    .btn-send-comment:active { transform: scale(0.96); }
-    .btn-send-comment svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; }
-    
-    .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 18px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+    .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 16px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
     .comment-login-notice a { color: #38bdf8; font-weight: 700; text-decoration: none; cursor: pointer; }
 
-    .comments-list { display: flex; flex-direction: column; gap: 14px; }
-    .comment-item { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; backdrop-filter: blur(6px); transition: border-color 0.2s; }
-    .comment-item:hover { border-color: rgba(56, 189, 248, 0.2); }
-    .comment-item.reply { margin-left: 28px; border-left: 3px solid #38bdf8; background: rgba(10, 16, 31, 0.8); }
+    /* List Komentar TikTok */
+    .comments-list { display: flex; flex-direction: column; gap: 18px; }
+    .comment-card { display: flex; gap: 12px; position: relative; }
     
-    .comment-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .comment-author-group { display: flex; align-items: center; gap: 10px; }
-    .avatar-circle { width: 32px; height: 32px; border-radius: 50%; background: #0284c7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
-    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tiktok-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #0284c7; color: #fff; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; overflow: hidden;
+      flex-shrink: 0;
+    }
+    .tiktok-avatar img { width: 100%; height: 100%; object-fit: cover; }
     
-    /* Styling Nama User & Admin */
-    .comment-author { font-size: 13px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
-    .comment-author.admin-name { color: #f59e0b !important; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+    .comment-content { flex: 1; }
+    .comment-user-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+    .tiktok-username { font-size: 12.5px; font-weight: 700; color: #94a3b8; }
+    .tiktok-username.admin { color: #f59e0b !important; }
     
-    /* Badge Admin Emas */
     .badge-admin {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      color: #000000; font-size: 9.5px; font-weight: 900;
-      padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
-      display: inline-flex; align-items: center; gap: 3px;
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+      background: #f59e0b; color: #000; font-size: 9px; font-weight: 900;
+      padding: 1px 5px; border-radius: 3px; letter-spacing: 0.3px;
     }
 
-    .comment-date { font-size: 11px; color: #64748b; }
-    .comment-text { font-size: 13.5px; color: #e2e8f0; line-height: 1.5; word-break: break-word; margin-top: 6px; }
-    .comment-actions { display: flex; gap: 14px; margin-top: 10px; font-size: 11px; }
-    .btn-action-text { color: #38bdf8; font-weight: 700; cursor: pointer; background: none; border: none; padding: 0; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-action-text:hover { text-decoration: underline; }
-    .btn-action-text.delete { color: #ef4444; }
+    .comment-body-text { font-size: 13.5px; color: #f1f5f9; line-height: 1.4; word-break: break-word; }
+    
+    .comment-footer-actions { display: flex; align-items: center; gap: 16px; margin-top: 6px; font-size: 12px; color: #64748b; }
+    .comment-time { font-size: 11px; }
+    .btn-reply-tiktok { font-weight: 700; color: #94a3b8; cursor: pointer; background: none; border: none; padding: 0; font-size: 12px; }
+    .btn-reply-tiktok:hover { color: #fff; }
+    .btn-delete-tiktok { font-weight: 700; color: #ef4444; cursor: pointer; background: none; border: none; padding: 0; font-size: 12px; }
 
-    .reply-input-box { margin-top: 12px; display: flex; gap: 8px; }
-    .reply-input { flex: 1; height: 38px; background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0 12px; color: #fff; font-size: 12px; outline: none; }
-    .btn-reply-send { background: #0284c7; color: #fff; border: none; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    /* Tombol Like TikTok Samping Kanan */
+    .comment-like-box { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px; gap: 2px; color: #64748b; font-size: 11px; cursor: pointer; }
+    .comment-like-box svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; transition: all 0.2s; }
+    .comment-like-box.liked svg { fill: #ef4444; stroke: #ef4444; }
+    .comment-like-box.liked { color: #ef4444; }
+
+    /* Tombol "Lihat X Balasan" Ala TikTok */
+    .replies-toggle-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #8b92a5; font-size: 12px; font-weight: 700;
+      margin-top: 8px; cursor: pointer; background: none; border: none; padding: 0;
+    }
+    .replies-toggle-btn::before {
+      content: ""; display: inline-block; width: 20px; height: 1px; background: #334155;
+    }
+    .replies-toggle-btn:hover { color: #e2e8f0; }
+
+    /* Wrapper Balasan Tersembunyi */
+    .replies-container { display: none; margin-top: 10px; flex-direction: column; gap: 14px; }
+    .replies-container.show { display: flex; }
+
+    .reply-card { display: flex; gap: 10px; }
+    .reply-card .tiktok-avatar { width: 28px; height: 28px; font-size: 11px; }
+
+    .reply-input-box { margin-top: 10px; display: flex; gap: 8px; }
+    .reply-input { flex: 1; height: 34px; background: #0b1329; border: 1px solid #1e293b; border-radius: 18px; padding: 0 12px; color: #fff; font-size: 12px; outline: none; }
+    .btn-reply-send { background: #0284c7; color: #fff; border: none; padding: 0 14px; border-radius: 18px; font-size: 12px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -173,7 +211,6 @@
 
     <div class="detail-body">
       <div id="epContainer">
-        <!-- UI Header Episode & Tombol "Lihat Semua Episode" Modern -->
         <div class="ep-header-row">
           <span class="ep-header-title">
             Episode List
@@ -231,24 +268,19 @@
         <div class="skeleton skeleton-synopsis" style="width: 80%;"></div>
       </div>
 
-      <!-- Section Komentar -->
+      <!-- Section Komentar TikTok -->
       <section class="comments-section">
         <h3 class="comments-header">
           <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Komentar
         </h3>
 
+        <!-- Input Komentar TikTok -->
         <div class="comment-input-box" id="commentFormBox" style="display: none;">
-          <textarea class="comment-textarea" id="commentInput" placeholder="Tulis komentar kamu di sini..."></textarea>
-          <div class="comment-form-footer">
-            <div class="comment-user-info" id="commentUserInfo">
-              <span>Mengirim sebagai User</span>
-            </div>
-            <button class="btn-send-comment" onclick="submitComment()">
-              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Kirim
-            </button>
-          </div>
+          <input class="comment-textarea" id="commentInput" placeholder="Tambah komentar..." />
+          <button class="btn-send-comment" onclick="submitComment()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </div>
 
         <div class="comment-login-notice" id="commentLoginNotice">
@@ -438,22 +470,10 @@
     window.updateCommentAuthUI = function() {
       const formBox = document.getElementById('commentFormBox');
       const noticeBox = document.getElementById('commentLoginNotice');
-      const userInfoLabel = document.getElementById('commentUserInfo');
 
       if (window.currentUser) {
-        if (formBox) formBox.style.display = 'block';
+        if (formBox) formBox.style.display = 'flex';
         if (noticeBox) noticeBox.style.display = 'none';
-        
-        const name = window.currentUser.displayName || (window.currentUser.email ? window.currentUser.email.split('@')[0] : 'User');
-        const photo = window.currentUser.photoURL ? `<img src="${window.currentUser.photoURL}" />` : '';
-        const isAdmin = window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-        if (userInfoLabel) {
-          userInfoLabel.innerHTML = `
-            ${photo}
-            <span>Mengirim sebagai: <b style="color:${isAdmin ? '#f59e0b' : '#38bdf8'};">${name}</b> ${isAdmin ? '<span class="badge-admin">ADMIN</span>' : ''}</span>
-          `;
-        }
       } else {
         if (formBox) formBox.style.display = 'none';
         if (noticeBox) noticeBox.style.display = 'block';
@@ -496,12 +516,8 @@
           }
 
           mainComments.forEach(item => {
-            container.appendChild(renderCommentCard(item, false));
-            if (repliesMap[item.id]) {
-              repliesMap[item.id].forEach(reply => {
-                container.appendChild(renderCommentCard(reply, true));
-              });
-            }
+            const replies = repliesMap[item.id] || [];
+            container.appendChild(renderTikTokCommentCard(item, replies));
           });
         } else {
           container.innerHTML = '<p style="font-size:12px; color:#64748b;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
@@ -511,16 +527,16 @@
       }
     }
 
-    function renderCommentCard(item, isReply) {
+    // Render Komentar & Balasan Bergaya TikTok
+    function renderTikTokCommentCard(item, replies = []) {
       const card = document.createElement('div');
-      card.className = `comment-item ${isReply ? 'reply' : ''}`;
+      card.className = 'comment-card';
       card.id = `comment-${item.id}`;
 
-      const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja';
+      const timeAgo = item.timestamp ? getTimeAgo(item.timestamp) : 'Baru saja';
       const authorEmail = (item.email || '').toLowerCase();
       const isAdmin = authorEmail === ADMIN_EMAIL.toLowerCase();
 
-      // Ambil nama & foto profil realtime jika user sedang login
       let currentAuthorName = item.author || 'User';
       let currentPhotoURL = item.photoURL || '';
 
@@ -531,43 +547,115 @@
 
       const initial = currentAuthorName.charAt(0).toUpperCase();
       const photoHtml = currentPhotoURL ? `<img src="${currentPhotoURL}" />` : initial;
-      
       const adminBadge = isAdmin ? `<span class="badge-admin">★ ADMIN</span>` : '';
-      const nameClass = isAdmin ? 'comment-author admin-name' : 'comment-author';
-
       const isMyComment = window.currentUser && (window.currentUser.uid === item.uid);
 
       let actionButtons = '';
       if (window.currentUser) {
-        if (!isReply) {
-          actionButtons += `<button class="btn-action-text" onclick="toggleReplyBox('${item.id}')">Balas</button>`;
-        }
+        actionButtons += `<button class="btn-reply-tiktok" onclick="toggleReplyBox('${item.id}')">Balas</button>`;
         if (isMyComment || (window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())) {
-          actionButtons += `<button class="btn-action-text delete" onclick="deleteComment('${item.id}')">Hapus</button>`;
+          actionButtons += `<button class="btn-delete-tiktok" onclick="deleteComment('${item.id}')">Hapus</button>`;
         }
       }
 
-      card.innerHTML = `
-        <div class="comment-item-header">
-          <div class="comment-author-group">
-            <div class="avatar-circle">${photoHtml}</div>
-            <span class="${nameClass}">
-              ${escapeHtml(currentAuthorName)}
-              ${adminBadge}
-            </span>
+      // Render Balasan (jika ada)
+      let repliesHtml = '';
+      if (replies.length > 0) {
+        repliesHtml = `
+          <button class="replies-toggle-btn" id="btn-toggle-${item.id}" onclick="toggleRepliesDisplay('${item.id}', ${replies.length})">
+            Lihat ${replies.length} balasan ▾
+          </button>
+          <div class="replies-container" id="replies-box-${item.id}">
+            ${replies.map(reply => renderTikTokReplyCardHtml(reply)).join('')}
           </div>
-          <span class="comment-date">${dateStr}</span>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="tiktok-avatar">${photoHtml}</div>
+        <div class="comment-content">
+          <div class="comment-user-row">
+            <span class="tiktok-username ${isAdmin ? 'admin' : ''}">${escapeHtml(currentAuthorName)}</span>
+            ${adminBadge}
+          </div>
+          <div class="comment-body-text">${escapeHtml(item.text)}</div>
+          <div class="comment-footer-actions">
+            <span class="comment-time">${timeAgo}</span>
+            ${actionButtons}
+          </div>
+          <div id="reply-input-wrapper-${item.id}"></div>
+          ${repliesHtml}
         </div>
-        <div class="comment-text">${escapeHtml(item.text)}</div>
-        <div class="comment-actions">${actionButtons}</div>
-        <div id="reply-box-${item.id}"></div>
+        <div class="comment-like-box" onclick="toggleLikeComment(this)">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </div>
       `;
 
       return card;
     }
 
+    function renderTikTokReplyCardHtml(reply) {
+      const timeAgo = reply.timestamp ? getTimeAgo(reply.timestamp) : 'Baru saja';
+      const authorEmail = (reply.email || '').toLowerCase();
+      const isAdmin = authorEmail === ADMIN_EMAIL.toLowerCase();
+
+      let currentAuthorName = reply.author || 'User';
+      let currentPhotoURL = reply.photoURL || '';
+
+      if (window.currentUser && window.currentUser.uid === reply.uid) {
+        currentAuthorName = window.currentUser.displayName || currentAuthorName;
+        currentPhotoURL = window.currentUser.photoURL || currentPhotoURL;
+      }
+
+      const initial = currentAuthorName.charAt(0).toUpperCase();
+      const photoHtml = currentPhotoURL ? `<img src="${currentPhotoURL}" />` : initial;
+      const adminBadge = isAdmin ? `<span class="badge-admin">★ ADMIN</span>` : '';
+      const isMyComment = window.currentUser && (window.currentUser.uid === reply.uid);
+
+      let deleteBtn = '';
+      if (window.currentUser && (isMyComment || (window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()))) {
+        deleteBtn = `<button class="btn-delete-tiktok" onclick="deleteComment('${reply.id}')">Hapus</button>`;
+      }
+
+      return `
+        <div class="reply-card" id="comment-${reply.id}">
+          <div class="tiktok-avatar">${photoHtml}</div>
+          <div class="comment-content">
+            <div class="comment-user-row">
+              <span class="tiktok-username ${isAdmin ? 'admin' : ''}">${escapeHtml(currentAuthorName)}</span>
+              ${adminBadge}
+            </div>
+            <div class="comment-body-text">${escapeHtml(reply.text)}</div>
+            <div class="comment-footer-actions">
+              <span class="comment-time">${timeAgo}</span>
+              ${deleteBtn}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Toggle Sembunyi/Tampil Balasan TikTok
+    function toggleRepliesDisplay(commentId, count) {
+      const container = document.getElementById(`replies-box-${commentId}`);
+      const btn = document.getElementById(`btn-toggle-${commentId}`);
+      if (!container || !btn) return;
+
+      if (container.classList.contains('show')) {
+        container.classList.remove('show');
+        btn.innerText = `Lihat ${count} balasan ▾`;
+      } else {
+        container.classList.add('show');
+        btn.innerText = `Sembunyikan balasan ▴`;
+      }
+    }
+
+    function toggleLikeComment(el) {
+      el.classList.toggle('liked');
+    }
+
     function toggleReplyBox(commentId) {
-      const container = document.getElementById(`reply-box-${commentId}`);
+      const container = document.getElementById(`reply-input-wrapper-${commentId}`);
       if (!container) return;
 
       if (container.innerHTML !== '') {
@@ -592,10 +680,7 @@
       const input = document.getElementById('commentInput');
       const text = input.value.trim();
 
-      if (!text) {
-        alert("Silakan tulis komentar terlebih dahulu.");
-        return;
-      }
+      if (!text) return;
 
       const name = window.currentUser.displayName || (window.currentUser.email ? window.currentUser.email.split('@')[0] : 'User');
 
@@ -657,6 +742,18 @@
       } catch (e) {
         alert("Gagal menghapus komentar: " + e.message);
       }
+    }
+
+    function getTimeAgo(timestamp) {
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'Baru saja';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}j`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}d`;
+      return new Date(timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     }
 
     function escapeHtml(str) {
