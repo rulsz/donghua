@@ -101,90 +101,192 @@
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
     /* =========================================================
-       UI KOMENTAR TIKTOK STYLE 
+       PERBAIKAN TOTAL LAYOUT KOMENTAR TIKTOK STYLE
        ========================================================= */
-    .comments-section { margin-top: 30px; border-top: 1px solid #1e293b; padding-top: 20px; }
-    .comments-header { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #f8fafc; }
+    .comments-section { 
+      margin-top: 24px; 
+      border-top: 1px solid #1e293b; 
+      padding-top: 20px; 
+      width: 100%;
+      text-align: left; /* Memastikan rata kiri */
+    }
     
-    /* Input Komentar TikTok Style */
+    .comments-header { 
+      font-size: 16px; 
+      font-weight: 800; 
+      margin-bottom: 16px; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      color: #f8fafc;
+      justify-content: flex-start; /* Paksa Rata Kiri */
+      text-align: left;
+    }
+    
+    /* Form Input Komentar */
     .comment-input-box {
-      display: flex; align-items: center; gap: 10px;
-      background: #121722; border: 1px solid #222e42;
-      border-radius: 24px; padding: 6px 8px 6px 14px;
-      margin-bottom: 24px; transition: border-color 0.2s;
+      display: flex; 
+      align-items: center; 
+      gap: 10px;
+      background: #111827; 
+      border: 1px solid #1e293b;
+      border-radius: 24px; 
+      padding: 6px 8px 6px 16px;
+      margin-bottom: 20px; 
+      width: 100%;
     }
     .comment-input-box:focus-within { border-color: #38bdf8; }
     .comment-textarea {
-      flex: 1; height: 36px; background: transparent; border: none;
-      color: #fff; font-size: 13px; outline: none; resize: none;
-      font-family: inherit; line-height: 36px;
+      flex: 1; 
+      height: 38px; 
+      background: transparent; 
+      border: none;
+      color: #fff; 
+      font-size: 13px; 
+      outline: none; 
+      resize: none;
+      font-family: inherit; 
+      line-height: 38px;
     }
     .btn-send-comment {
-      background: #0284c7; color: #fff; border: none;
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0; transition: transform 0.2s;
+      background: #0284c7; 
+      color: #fff; 
+      border: none;
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      cursor: pointer; 
+      flex-shrink: 0;
     }
-    .btn-send-comment:active { transform: scale(0.9); }
-    .btn-send-comment svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+    .btn-send-comment svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; }
     
-    .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 16px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+    .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 14px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
     .comment-login-notice a { color: #38bdf8; font-weight: 700; text-decoration: none; cursor: pointer; }
 
-    /* List Komentar TikTok */
-    .comments-list { display: flex; flex-direction: column; gap: 18px; }
-    .comment-card { display: flex; gap: 12px; position: relative; }
+    /* List Komentar & Struktur Kartu TikTok */
+    .comments-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+    
+    .comment-card { 
+      display: flex; 
+      gap: 12px; 
+      width: 100%; 
+      align-items: flex-start;
+    }
     
     .tiktok-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: #0284c7; color: #fff; display: flex;
-      align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800; overflow: hidden;
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%;
+      background: #0284c7; 
+      color: #fff; 
+      display: flex;
+      align-items: center; 
+      justify-content: center;
+      font-size: 13px; 
+      font-weight: 800; 
+      overflow: hidden;
       flex-shrink: 0;
     }
     .tiktok-avatar img { width: 100%; height: 100%; object-fit: cover; }
     
-    .comment-content { flex: 1; }
-    .comment-user-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+    .comment-content { flex: 1; min-width: 0; text-align: left; }
+    
+    .comment-user-row { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      margin-bottom: 4px; 
+      flex-wrap: wrap;
+    }
+    
     .tiktok-username { font-size: 12.5px; font-weight: 700; color: #94a3b8; }
     .tiktok-username.admin { color: #f59e0b !important; }
     
     .badge-admin {
-      background: #f59e0b; color: #000; font-size: 9px; font-weight: 900;
-      padding: 1px 5px; border-radius: 3px; letter-spacing: 0.3px;
+      background: #f59e0b; 
+      color: #000; 
+      font-size: 9px; 
+      font-weight: 900;
+      padding: 1px 5px; 
+      border-radius: 3px; 
+      letter-spacing: 0.3px;
+      display: inline-block;
     }
 
-    .comment-body-text { font-size: 13.5px; color: #f1f5f9; line-height: 1.4; word-break: break-word; }
+    .comment-body-text { 
+      font-size: 13px; 
+      color: #f1f5f9; 
+      line-height: 1.4; 
+      word-break: break-word; 
+      margin-bottom: 4px;
+    }
     
-    .comment-footer-actions { display: flex; align-items: center; gap: 16px; margin-top: 6px; font-size: 12px; color: #64748b; }
+    .comment-footer-actions { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+      font-size: 11.5px; 
+      color: #64748b; 
+    }
     .comment-time { font-size: 11px; }
-    .btn-reply-tiktok { font-weight: 700; color: #94a3b8; cursor: pointer; background: none; border: none; padding: 0; font-size: 12px; }
+    .btn-reply-tiktok { font-weight: 700; color: #94a3b8; cursor: pointer; background: none; border: none; padding: 0; font-size: 11.5px; }
     .btn-reply-tiktok:hover { color: #fff; }
-    .btn-delete-tiktok { font-weight: 700; color: #ef4444; cursor: pointer; background: none; border: none; padding: 0; font-size: 12px; }
+    .btn-delete-tiktok { font-weight: 700; color: #ef4444; cursor: pointer; background: none; border: none; padding: 0; font-size: 11.5px; }
 
-    /* Tombol Like TikTok Samping Kanan */
-    .comment-like-box { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px; gap: 2px; color: #64748b; font-size: 11px; cursor: pointer; }
-    .comment-like-box svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; transition: all 0.2s; }
+    /* Tombol Like TikTok */
+    .comment-like-box { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: flex-start; 
+      padding-top: 2px; 
+      color: #64748b; 
+      font-size: 11px; 
+      cursor: pointer; 
+      flex-shrink: 0;
+    }
+    .comment-like-box svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
     .comment-like-box.liked svg { fill: #ef4444; stroke: #ef4444; }
-    .comment-like-box.liked { color: #ef4444; }
 
-    /* Tombol "Lihat X Balasan" Ala TikTok */
+    /* Tombol "Lihat Balasan" */
     .replies-toggle-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      color: #8b92a5; font-size: 12px; font-weight: 700;
-      margin-top: 8px; cursor: pointer; background: none; border: none; padding: 0;
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px;
+      color: #8b92a5; 
+      font-size: 12px; 
+      font-weight: 700;
+      margin-top: 8px; 
+      cursor: pointer; 
+      background: none; 
+      border: none; 
+      padding: 0;
     }
     .replies-toggle-btn::before {
-      content: ""; display: inline-block; width: 20px; height: 1px; background: #334155;
+      content: ""; 
+      display: inline-block; 
+      width: 18px; 
+      height: 1px; 
+      background: #334155;
     }
     .replies-toggle-btn:hover { color: #e2e8f0; }
 
-    /* Wrapper Balasan Tersembunyi */
-    .replies-container { display: none; margin-top: 10px; flex-direction: column; gap: 14px; }
+    /* PERBAIKAN: Kontainer Balasan Bergeser ke Kanan (Indentation) */
+    .replies-container { 
+      display: none; 
+      margin-top: 10px; 
+      flex-direction: column; 
+      gap: 12px; 
+      padding-left: 12px; 
+      border-left: 2px solid #1e293b; /* Garis vertikal pembatas balasan */
+    }
     .replies-container.show { display: flex; }
 
-    .reply-card { display: flex; gap: 10px; }
-    .reply-card .tiktok-avatar { width: 28px; height: 28px; font-size: 11px; }
+    .reply-card { display: flex; gap: 10px; align-items: flex-start; }
+    .reply-card .tiktok-avatar { width: 26px; height: 26px; font-size: 10px; }
 
     .reply-input-box { margin-top: 10px; display: flex; gap: 8px; }
     .reply-input { flex: 1; height: 34px; background: #0b1329; border: 1px solid #1e293b; border-radius: 18px; padding: 0 12px; color: #fff; font-size: 12px; outline: none; }
@@ -212,9 +314,7 @@
     <div class="detail-body">
       <div id="epContainer">
         <div class="ep-header-row">
-          <span class="ep-header-title">
-            Episode List
-          </span>
+          <span class="ep-header-title">Episode List</span>
           <button class="btn-see-all-ep" onclick="openEpisodeSheet()">
             <span id="epTotalInfo">0 Episode</span>
             <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
@@ -268,7 +368,7 @@
         <div class="skeleton skeleton-synopsis" style="width: 80%;"></div>
       </div>
 
-      <!-- Section Komentar TikTok -->
+      <!-- Section Komentar TikTok Rata Kiri -->
       <section class="comments-section">
         <h3 class="comments-header">
           <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -527,7 +627,6 @@
       }
     }
 
-    // Render Komentar & Balasan Bergaya TikTok
     function renderTikTokCommentCard(item, replies = []) {
       const card = document.createElement('div');
       card.className = 'comment-card';
@@ -558,7 +657,6 @@
         }
       }
 
-      // Render Balasan (jika ada)
       let repliesHtml = '';
       if (replies.length > 0) {
         repliesHtml = `
@@ -635,7 +733,6 @@
       `;
     }
 
-    // Toggle Sembunyi/Tampil Balasan TikTok
     function toggleRepliesDisplay(commentId, count) {
       const container = document.getElementById(`replies-box-${commentId}`);
       const btn = document.getElementById(`btn-toggle-${commentId}`);
