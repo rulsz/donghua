@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 
-async function fetchDetailInfo(animeSlug, headers) {
+async function fetchEpisodeOnly(animeSlug, headers) {
   try {
     const detailUrl = `https://animexin.dev/${animeSlug}/`;
     const response = await fetch(detailUrl, { headers });
@@ -9,10 +9,6 @@ async function fetchDetailInfo(animeSlug, headers) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Ambil poster asli dari halaman detail jika tersedia
-    const poster = $('.fotoanime img').attr('src') || $('.thumb img').attr('src') || $('.infox img').attr('src') || '';
-
-    // Ambil nomor episode terbaru yang valid
     let latestEp = null;
     $('.eplister a, .episodelist a, ul.clstyle li a, .daftar-episode.zechs a').each((_, el) => {
       const text = $(el).text().trim();
@@ -27,10 +23,7 @@ async function fetchDetailInfo(animeSlug, headers) {
       }
     });
 
-    return {
-      poster,
-      episode: latestEp ? `Ep ${latestEp}` : null
-    };
+    return latestEp ? `Ep ${latestEp}` : null;
   } catch (err) {
     return null;
   }
@@ -38,7 +31,7 @@ async function fetchDetailInfo(animeSlug, headers) {
 
 export default async function handler(req, res) {
   try {
-    const { type = 'all', page = 1, slug } = req.query;
+    const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
     const headers = {
@@ -47,17 +40,19 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/anime/'
     };
 
-    if (slug) {
-      const info = await fetchDetailInfo(slug, headers);
-      return res.status(200).json({ success: true, data: info });
-    }
-
     const cleanTitle = (rawTitle) => {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
       const halfLength = Math.floor(text.length / 2);
+      
       if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
         return text.substring(0, halfLength).trim();
+      }
+      
+      const words = text.split(/\s+/);
+      const halfWords = Math.floor(words.length / 2);
+      if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
+        return words.slice(0, halfWords).join(' ');
       }
       return text;
     };
@@ -68,7 +63,17 @@ export default async function handler(req, res) {
         let rawTitle = $(el).find('h2, h3, .title, .tt, .entry-title, .series-title').first().text();
         const title = cleanTitle(rawTitle);
 
-        let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || $(el).find('img').attr('data-lazy-src') || '';
+        // Ambil poster secara aman dari berbagai kemungkinan atribut gambar
+        let poster = $(el).find('img').attr('data-src') || 
+                     $(el).find('img').attr('src') || 
+                     $(el).find('img').attr('data-lazy-src') || 
+                     $(el).find('img').attr('srcset') || '';
+        
+        // Bersihkan URL gambar jika ada spasi atau format ganda
+        if (poster && poster.includes(' ')) {
+          poster = poster.split(' ')[0];
+        }
+
         let href = $(el).find('a').first().attr('href') || '';
         
         let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
@@ -104,17 +109,12 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
-    // Lengkapi data untuk item yang posternya kosong atau episodenya masih "Ep 1"
+    // Hanya ambil episode tambahan jika episodenya masih "Ep 1" (seperti Renegade Immortal), JANGAN sentuh posternya agar aman
     allItems = await Promise.all(allItems.map(async (item) => {
-      if (item.slug && (!item.poster || item.poster.trim() === '' || item.episode === 'Ep 1')) {
-        const detail = await fetchDetailInfo(item.slug, headers);
-        if (detail) {
-          if (!item.poster || item.poster.trim() === '') {
-            if (detail.poster) item.poster = detail.poster;
-          }
-          if (item.episode === 'Ep 1' && detail.episode) {
-            item.episode = detail.episode;
-          }
+      if (item.slug && item.episode === 'Ep 1') {
+        const detailEp = await fetchEpisodeOnly(item.slug, headers);
+        if (detailEp) {
+          item.episode = detailEp;
         }
       }
       return item;
