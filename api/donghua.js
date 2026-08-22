@@ -1,92 +1,105 @@
-import * as cheerio from 'cheerio';
+const axios = require('axios');
+const cheerio = require('cheerio');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
+  // Set Header CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
-    const { type = 'all', page = 1 } = req.query;
-    const pageNum = parseInt(page) || 1;
+    const type = req.query.type || 'all';
+    const page = parseInt(req.query.page) || 1;
 
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Referer': 'https://animexin.dev/anime/'
-    };
+    // Tentukan URL target Animexin berdasarkan parameter page
+    const targetUrl = page === 1 
+      ? 'https://animexin.dev/' 
+      : `https://animexin.dev/page/${page}/`;
 
-    // Helper pembersih judul ganda
-    const cleanTitle = (rawTitle) => {
-      if (!rawTitle) return '';
-      const text = rawTitle.trim();
-      const halfLength = Math.floor(text.length / 2);
-      
-      // Jika teks terdiri dari pengulangan dua kalimat persis sama
-      if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
-        return text.substring(0, halfLength).trim();
-      }
-      
-      // Hapus duplikasi dengan regex jika dipisahkan spasi/karakter
-      const words = text.split(/\s+/);
-      const halfWords = Math.floor(words.length / 2);
-      if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
-        return words.slice(0, halfWords).join(' ');
-      }
-      return text;
-    };
+    const { data: html } = await axios.get(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9'
+      },
+      timeout: 10000
+    });
 
-    const parseList = ($, selector) => {
-      const result = [];
-      $(selector).each((_, el) => {
-        let rawTitle = $(el).find('h2, h3, .title, .tt, .entry-title, .series-title').first().text();
-        const title = cleanTitle(rawTitle);
+    const $ = cheerio.load(html);
 
-        let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
-        let href = $(el).find('a').first().attr('href') || '';
+    // Fungsi Pembantu untuk Memproses Set Tiap Card Animexin
+    function parseAnimexinCards(selector) {
+      const items = [];
+      $(selector).each((i, el) => {
+        const title = $(el).find('.tt').text().trim();
+        const link = $(el).find('a').attr('href') || '';
+        const poster = $(el).find('img').attr('src') || $(el).find('img').attr('data-src') || '';
         
-        let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
-        let epNumber = 'Ep 1';
+        // LOGIKA UTAMA: Mengambil teks episode langsung dari Animexin (.epx / .bt .epx)
+        const rawEp = $(el).find('.epx').text().trim() || $(el).find('.bt .epx').text().trim() || '';
+        const typeText = $(el).find('.typez').text().trim() || 'ONA';
 
-        if (rawEp) {
-          const numMatch = rawEp.match(/\d+/);
-          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
-        }
+        // Ekstraksi angka episode (misal: "Episode 155" -> "Ep 155")
+        const epMatch = rawEp.match(/\d+/);
+        const formattedEp = epMatch ? `Ep ${epMatch[0]}` : (rawEp || 'ONGOING');
 
-        let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
+        // Pembersihan Slug Utama
+        const cleanSlug = link
+          .replace(/^https?:\/\/[^\/]+\//, '')
+          .replace(/\/$/, '')
+          .replace(/-episode-\d+.*$/i, '');
 
-        if (title && href) {
-          const slug = href.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/+|\/+$/g, '');
-          result.push({ title, poster, slug, status, episode: epNumber, type: 'Donghua' });
+        if (title) {
+          items.push({
+            title,
+            slug: cleanSlug,
+            link,
+            poster,
+            episode: formattedEp, // Properti ini yang dibaca oleh index.html
+            type: typeText
+          });
         }
       });
-      return result;
-    };
-
-    const targetUrl = pageNum > 1 
-      ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
-      : `https://animexin.dev/anime/?status=&type=&order=update`;
-
-    const response = await fetch(targetUrl, { headers });
-    if (!response.ok) {
-      return res.status(response.status).json({ success: false, message: `Status: ${response.status}` });
+      return items;
     }
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
-
-    if (!type || type === 'all') {
+    // 1. Jika permintaan khusus untuk pagination / latest
+    if (type === 'latest') {
+      const latestItems = parseAnimexinCards('.listupd .bs .bsx');
       return res.status(200).json({
         success: true,
-        data: {
-          popularToday: allItems.slice(0, 10),
-          latest: allItems.slice(0, 15),
-          popularAll: allItems.slice(5, 15)
-        }
+        page: page,
+        data: latestItems
       });
     }
 
-    if (type === 'latest') {
-      return res.status(200).json({ success: true, page: pageNum, data: allItems.slice(0, 30) });
-    }
+    // 2. Jika permintaan type=all (default beranda)
+    const popularToday = parseAnimexinCards('#content .popular .bs .bsx, .popularToday .bs .bsx');
+    const latestList = parseAnimexinCards('.listupd .bs .bsx');
+    
+    // Jika bagian Popular Today di HTML Animexin kosong, gunakan fallback slice
+    const finalPopularToday = popularToday.length > 0 
+      ? popularToday 
+      : latestList.slice(0, 5);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        latest: latestList,
+        popularToday: finalPopularToday,
+        popularAll: latestList
+      }
+    });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('Error in donghua.js scraping:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data dari Animexin',
+      error: error.message
+    });
   }
-}
+};
