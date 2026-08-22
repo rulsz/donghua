@@ -1,5 +1,40 @@
 import * as cheerio from 'cheerio';
 
+// Fungsi helper untuk mengambil episode terbaru dari halaman detail anime
+async function fetchEpisodeFromDetail(animeSlug, headers) {
+  try {
+    // URL detail mengikuti struktur Animexin
+    const detailUrl = `https://animexin.dev/${animeSlug}/`;
+    const response = await fetch(detailUrl, { headers });
+    if (!response.ok) return null;
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Mencari teks episode dari elemen list episode di halaman detail
+    let latestEp = null;
+    
+    // Biasannya list episode ada di .eplister atau .episodelist
+    $('.eplister ul li, .episodelist ul li').each((_, el) => {
+      const epText = $(el).find('.epl-num, .eps-num').text().trim() || $(el).text();
+      const match = epText.match(/\d+/);
+      if (match) {
+        const num = parseInt(match[0], 10);
+        if (!latestEp || num > latestEp) {
+          latestEp = num;
+        }
+      }
+    });
+
+    if (latestEp) {
+      return `Ep ${latestEp}`;
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   try {
     const { type = 'all', page = 1 } = req.query;
@@ -17,12 +52,10 @@ export default async function handler(req, res) {
       const text = rawTitle.trim();
       const halfLength = Math.floor(text.length / 2);
       
-      // Jika teks terdiri dari pengulangan dua kalimat persis sama
       if (text.length % 2 === 0 && text.substring(0, halfLength) === text.substring(halfLength)) {
         return text.substring(0, halfLength).trim();
       }
       
-      // Hapus duplikasi dengan regex jika dipisahkan spasi/karakter
       const words = text.split(/\s+/);
       const halfWords = Math.floor(words.length / 2);
       if (words.length > 1 && words.slice(0, halfWords).join(' ') === words.slice(halfWords).join(' ')) {
@@ -69,7 +102,18 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
+    let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
+
+    // Mengambil episode dari halaman detail secara paralel agar cepat dan akurat
+    allItems = await Promise.all(allItems.map(async (item) => {
+      if (item.slug) {
+        const detailEp = await fetchEpisodeFromDetail(item.slug, headers);
+        if (detailEp) {
+          item.episode = detailEp;
+        }
+      }
+      return item;
+    }));
 
     if (!type || type === 'all') {
       return res.status(200).json({
