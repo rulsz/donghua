@@ -5,10 +5,12 @@ export default async function handler(req, res) {
     const { type = 'all', page = 1 } = req.query;
     const pageNum = parseInt(page) || 1;
 
+    // Headers lengkap agar tidak diblokir Cloudflare di halaman utama
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Referer': 'https://animexin.dev/anime/'
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Referer': 'https://animexin.dev/'
     };
 
     const cleanTitle = (rawTitle) => {
@@ -37,16 +39,13 @@ export default async function handler(req, res) {
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // PENCARIAN EPISODE: Memindai seluruh teks di dalam kartu atau elemen badge episode
-        let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep, .limit').text().trim() || 
-                    $(el).text(); // Fallback membaca teks card jika class spesifik tidak ketemu
-        
+        // Mengambil teks episode dari halaman utama (.epx atau .bt .epx)
+        let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
         let epNumber = 'Ep 1';
-        
-        // Ekstraksi angka setelah kata 'Episode' atau 'Ep' atau angka di dalam teks card
-        const match = rawEp.match(/(?:Episode|Ep)\s*(\d+)/i) || rawEp.match(/\b(\d+)\b/);
-        if (match && match[1]) {
-          epNumber = `Ep ${match[1]}`;
+
+        if (rawEp) {
+          const numMatch = rawEp.match(/\d+/);
+          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
         }
 
         let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
@@ -59,9 +58,10 @@ export default async function handler(req, res) {
       return result;
     };
 
+    // Kembali menggunakan URL Homepage Animexin tempat badge episode berada
     const targetUrl = pageNum > 1 
-      ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
-      : `https://animexin.dev/anime/?status=&type=&order=update`;
+      ? `https://animexin.dev/page/${pageNum}/` 
+      : `https://animexin.dev/`;
 
     const response = await fetch(targetUrl, { headers });
     if (!response.ok) {
@@ -70,7 +70,9 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
+    
+    // Selector card di halaman utama Animexin
+    const allItems = parseList($, '.listupd .bs, .bsx, .article .bs, .post-show .bs');
 
     if (!type || type === 'all') {
       return res.status(200).json({
