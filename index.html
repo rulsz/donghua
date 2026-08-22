@@ -373,21 +373,34 @@
       return 'ONGOING';
     }
 
-    // PEMBACAAN EPISODE PRESISI UNTUK POPULER & TERBARU
+    // PEMBACAAN EPISODE PRESISI DENGAN FILTER CANGGIH
     function parseEpisodeText(item) {
       if (!item) return 'Terbaru';
-      
-      let epRaw = item.episode || item.ep || item.latestEpisode;
-      if (epRaw && epRaw !== 'Ep 1') {
-        const numMatch = String(epRaw).match(/\d+/);
-        return numMatch ? `Ep ${numMatch[0]}` : epRaw;
+
+      // 1. Ambil data episode langsung jika tersedia dari API
+      let directEp = item.episode || item.ep || item.latestEpisode;
+      if (directEp && String(directEp).trim() !== '') {
+        const epNum = String(directEp).replace(/[^0-9]/g, '');
+        if (epNum) return `Ep ${epNum}`;
+        return directEp;
       }
 
-      const textToScan = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`;
-      const epMatch = textToScan.match(/episode[^\d]*(\d+)/i) || textToScan.match(/ep[^\d]*(\d+)/i) || textToScan.match(/(\d+)/);
-      
+      // 2. Scan gabungan teks judul, slug, dan link
+      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`;
+
+      // 3. Cari pola kata "episode", "ep", atau "sub" (Abaikan season)
+      const epMatch = rawText.match(/(?:episode|ep)[^\d]*(\d+)/i) || 
+                      rawText.match(/-episode-(\d+)/i) || 
+                      rawText.match(/(\d+)\s*(?:sub|indonesia|eng)/i);
+
       if (epMatch && epMatch[1]) {
         return `Ep ${epMatch[1]}`;
+      }
+
+      // 4. Jika hanya ada angka di paling akhir slug (bukan angka season)
+      const lastNumMatch = rawText.replace(/season\s*\d+/gi, '').match(/(\d+)(?=[^\d]*$)/);
+      if (lastNumMatch && lastNumMatch[1]) {
+        return `Ep ${lastNumMatch[1]}`;
       }
 
       return 'Terbaru';
@@ -893,7 +906,6 @@
       }
     }
 
-    // MEMUAT RIWAYAT BERSAMA DENGAN QUERY PARAM EPISODE TERAKHIR DITONTON
     window.renderContinueWatching = async function() {
       const container = document.getElementById('continueSection');
       const row = document.getElementById('continueRow');
@@ -931,19 +943,13 @@
         const lastEpSlug = item.epPath || cleanMainSlug;
 
         let displayEp = item.episode;
-        if (!displayEp || displayEp === 'Ep 1') {
-          const matches = String(lastEpSlug).match(/\d+/g);
-          if (matches && matches.length > 0) {
-            displayEp = `Ep ${matches[matches.length - 1]}`;
-          } else {
-            displayEp = 'Lanjut';
-          }
+        if (!displayEp || displayEp === 'Terbaru') {
+          displayEp = parseEpisodeText({ slug: lastEpSlug, title: item.title });
         }
 
         const card = document.createElement('div');
         card.className = 'card-continue';
         
-        // PENTING: Mendorong parameter ?ep= ke URL
         card.onclick = () => window.location.href = `/detail/${cleanMainSlug}?ep=${encodeURIComponent(lastEpSlug)}`;
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
