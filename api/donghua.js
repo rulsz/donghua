@@ -12,7 +12,7 @@ async function fetchDetailInfo(animeSlug, headers) {
     // Ambil poster asli dari halaman detail jika tersedia
     const poster = $('.fotoanime img').attr('src') || $('.thumb img').attr('src') || $('.infox img').attr('src') || '';
 
-    // Ambil nomor episode terbaru
+    // Ambil nomor episode terbaru yang valid
     let latestEp = null;
     $('.eplister a, .episodelist a, ul.clstyle li a, .daftar-episode.zechs a').each((_, el) => {
       const text = $(el).text().trim();
@@ -29,8 +29,7 @@ async function fetchDetailInfo(animeSlug, headers) {
 
     return {
       poster,
-      // Dikurangi 1 angka jika terbukti kelebihan 1 dari aslinya
-      episode: latestEp ? `Ep ${Math.max(1, latestEp - 1)}` : null
+      episode: latestEp ? `Ep ${latestEp}` : null
     };
   } catch (err) {
     return null;
@@ -78,8 +77,7 @@ export default async function handler(req, res) {
         if (rawEp) {
           const numMatch = rawEp.match(/\d+/);
           if (numMatch) {
-            const correctedNum = Math.max(1, parseInt(numMatch[0], 10) - 1);
-            epNumber = `Ep ${correctedNum}`;
+            epNumber = `Ep ${numMatch[0]}`;
           }
         }
 
@@ -106,12 +104,17 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
-    // Hanya ambil detail untuk item yang posternya benar-benar kosong agar thumbnail utama aman
+    // Lengkapi data untuk item yang posternya kosong atau episodenya masih "Ep 1"
     allItems = await Promise.all(allItems.map(async (item) => {
-      if (item.slug && (!item.poster || item.poster.trim() === '')) {
+      if (item.slug && (!item.poster || item.poster.trim() === '' || item.episode === 'Ep 1')) {
         const detail = await fetchDetailInfo(item.slug, headers);
-        if (detail && detail.poster) {
-          item.poster = detail.poster;
+        if (detail) {
+          if (!item.poster || item.poster.trim() === '') {
+            if (detail.poster) item.poster = detail.poster;
+          }
+          if (item.episode === 'Ep 1' && detail.episode) {
+            item.episode = detail.episode;
+          }
         }
       }
       return item;
