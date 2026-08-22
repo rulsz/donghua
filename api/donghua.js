@@ -8,10 +8,9 @@ export default async function handler(req, res) {
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Referer': 'https://animexin.dev/anime/'
+      'Referer': 'https://animexin.dev/'
     };
 
-    // Helper pembersih judul ganda
     const cleanTitle = (rawTitle) => {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
@@ -38,8 +37,8 @@ export default async function handler(req, res) {
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // Pengekstrakkan episode yang lebih akurat dari elemen Animexin
-        let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep, .bt .epx').first().text().trim();
+        // PENGAMBILAN EPISODE: Menambahkan selector .epx dan .bt .epx agar tertangkap di /page/2/
+        let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
         let epNumber = 'Ep 1';
 
         if (rawEp) {
@@ -57,10 +56,10 @@ export default async function handler(req, res) {
       return result;
     };
 
-    // Mendukung halaman pagination (page=2, page=3, dst)
+    // MENYESUAIKAN URL TARGET: Jika page > 1, gunakan struktur /page/N/ agar sama persis dengan link yang Anda maksud
     const targetUrl = pageNum > 1 
-      ? `https://animexin.dev/anime/?page=${pageNum}&status=&type=&order=update` 
-      : `https://animexin.dev/anime/?status=&type=&order=update`;
+      ? `https://animexin.dev/page/${pageNum}/` 
+      : `https://animexin.dev/`;
 
     const response = await fetch(targetUrl, { headers });
     if (!response.ok) {
@@ -69,7 +68,9 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
+    
+    // Selector card Animexin di halaman utama dan arsip /page/N/
+    const allItems = parseList($, '.listupd .bs, .bsx, .article .bs, .post-show .bs');
 
     if (!type || type === 'all') {
       return res.status(200).json({
