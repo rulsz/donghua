@@ -1,9 +1,7 @@
 import * as cheerio from 'cheerio';
 
-// Fungsi helper untuk mengambil episode terbaru dari halaman detail anime
 async function fetchEpisodeFromDetail(animeSlug, headers) {
   try {
-    // URL detail mengikuti struktur Animexin
     const detailUrl = `https://animexin.dev/${animeSlug}/`;
     const response = await fetch(detailUrl, { headers });
     if (!response.ok) return null;
@@ -11,17 +9,19 @@ async function fetchEpisodeFromDetail(animeSlug, headers) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Mencari teks episode dari elemen list episode di halaman detail
     let latestEp = null;
     
-    // Biasannya list episode ada di .eplister atau .episodelist
-    $('.eplister ul li, .episodelist ul li').each((_, el) => {
-      const epText = $(el).find('.epl-num, .eps-num').text().trim() || $(el).text();
-      const match = epText.match(/\d+/);
+    // Pencarian menyeluruh ke semua link atau elemen list di halaman detail
+    $('.eplister a, .episodelist a, ul.clstyle li a, .daftar-episode.zechs a').each((_, el) => {
+      const text = $(el).text().trim();
+      const match = text.match(/(?:Episode|Ep)\s*(\d+)/i) || text.match(/\b(\d+)\b/);
       if (match) {
-        const num = parseInt(match[0], 10);
-        if (!latestEp || num > latestEp) {
-          latestEp = num;
+        const num = parseInt(match[1], 10);
+        // Pastikan angka masuk akal sebagai episode (bukan tahun atau tanggal)
+        if (num > 0 && num < 5000) {
+          if (!latestEp || num > latestEp) {
+            latestEp = num;
+          }
         }
       }
     });
@@ -46,7 +46,6 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/anime/'
     };
 
-    // Helper pembersih judul ganda
     const cleanTitle = (rawTitle) => {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
@@ -104,7 +103,6 @@ export default async function handler(req, res) {
     const $ = cheerio.load(html);
     let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
-    // Mengambil episode dari halaman detail secara paralel agar cepat dan akurat
     allItems = await Promise.all(allItems.map(async (item) => {
       if (item.slug) {
         const detailEp = await fetchEpisodeFromDetail(item.slug, headers);
