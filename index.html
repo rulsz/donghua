@@ -73,7 +73,6 @@
     .menu-dropdown a svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
     .menu-dropdown a:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-accent); }
 
-    /* Pop-up Favorit Melayang Kanan */
     .fav-popover { display: none; position: absolute; top: 60px; right: 16px; background: #0a0a0a; border: 1px solid var(--border-color); border-radius: 14px; width: 300px; max-height: 400px; overflow-y: auto; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.95); z-index: 102; }
     .fav-popover.active { display: block; }
     .fav-header { font-size: 14px; font-weight: 800; color: var(--color-accent); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
@@ -201,7 +200,6 @@
         </a>
       </div>
 
-      <!-- Popup Melayang Favorit -->
       <div class="fav-popover" id="favPopover">
         <div class="fav-header">
           <span>Daftar Favorit</span>
@@ -214,7 +212,6 @@
     </div>
   </header>
 
-  <!-- Modal Auth -->
   <div class="modal-overlay" id="authModalOverlay">
     <div class="auth-modal-box">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -242,7 +239,6 @@
     </div>
   </div>
 
-  <!-- Modal Pencarian Overlay -->
   <div class="modal-overlay" id="searchModalOverlay">
     <div class="search-modal-header">
       <div class="search-input-box">
@@ -264,7 +260,6 @@
     </div>
   </div>
 
-  <!-- Modal Dialog Donghua Terbaru -->
   <div class="modal-overlay" id="latestModalOverlay">
     <div class="dialog-header">
       <h2 class="dialog-title">
@@ -282,7 +277,6 @@
     </div>
   </div>
 
-  <!-- Banner Hero Slider -->
   <div class="hero-slider-wrapper" id="heroSlider">
     <div class="skeleton skeleton-hero">
       <div style="width: 100%;">
@@ -379,14 +373,22 @@
       return 'ONGOING';
     }
 
+    // PEMBACAAN EPISODE PRESISI UNTUK POPULER & TERBARU
     function parseEpisodeText(item) {
-      if (item.episode) return item.episode;
-      if (item.ep) return item.ep;
-      if (item.latestEpisode) return item.latestEpisode;
+      if (!item) return 'Terbaru';
+      
+      let epRaw = item.episode || item.ep || item.latestEpisode;
+      if (epRaw && epRaw !== 'Ep 1') {
+        const numMatch = String(epRaw).match(/\d+/);
+        return numMatch ? `Ep ${numMatch[0]}` : epRaw;
+      }
 
-      const title = item.title || '';
-      const match = title.match(/ep(?:isode)?\s*(\d+)/i) || title.match(/(\d+)/);
-      if (match) return `Ep ${match[1]}`;
+      const textToScan = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`;
+      const epMatch = textToScan.match(/episode[^\d]*(\d+)/i) || textToScan.match(/ep[^\d]*(\d+)/i) || textToScan.match(/(\d+)/);
+      
+      if (epMatch && epMatch[1]) {
+        return `Ep ${epMatch[1]}`;
+      }
 
       return 'Terbaru';
     }
@@ -400,7 +402,6 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    // Fungsi ekstraksi Slug Donghua Utama yang Murni (Mempertahankan Season, memotong episode)
     function getCleanMainSlug(input) {
       if (!input) return '';
       let str = cleanPath(input);
@@ -876,6 +877,7 @@
         title: item.title,
         poster: item.poster || item.image,
         mainPath: cleanMainSlug,
+        epPath: cleanPath(rawSlug),
         episode: parseEpisodeText(item),
         timestamp: Date.now()
       };
@@ -891,6 +893,7 @@
       }
     }
 
+    // MEMUAT RIWAYAT BERSAMA DENGAN QUERY PARAM EPISODE TERAKHIR DITONTON
     window.renderContinueWatching = async function() {
       const container = document.getElementById('continueSection');
       const row = document.getElementById('continueRow');
@@ -924,12 +927,12 @@
       row.innerHTML = '';
 
       historyList.forEach((item) => {
-        const rawSlug = item.mainPath || item.epPath || '';
-        const cleanMainSlug = getCleanMainSlug(rawSlug);
+        const cleanMainSlug = getCleanMainSlug(item.mainPath || item.epPath);
+        const lastEpSlug = item.epPath || cleanMainSlug;
 
         let displayEp = item.episode;
         if (!displayEp || displayEp === 'Ep 1') {
-          const matches = String(rawSlug).match(/\d+/g);
+          const matches = String(lastEpSlug).match(/\d+/g);
           if (matches && matches.length > 0) {
             displayEp = `Ep ${matches[matches.length - 1]}`;
           } else {
@@ -939,7 +942,9 @@
 
         const card = document.createElement('div');
         card.className = 'card-continue';
-        card.onclick = () => window.location.href = `/detail/${cleanMainSlug}`;
+        
+        // PENTING: Mendorong parameter ?ep= ke URL
+        card.onclick = () => window.location.href = `/detail/${cleanMainSlug}?ep=${encodeURIComponent(lastEpSlug)}`;
         card.innerHTML = `
           <div class="card-continue-img-wrapper">
             <img src="${item.poster}" alt="${item.title}" loading="lazy" />
