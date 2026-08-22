@@ -27,7 +27,6 @@
     }
     .skeleton { background: #182232; animation: skeletonPulse 1.5s infinite ease-in-out; border-radius: 8px; }
     .skeleton-player { width: 100%; height: 100%; border-radius: 0; }
-    .skeleton-text { height: 14px; margin-bottom: 8px; border-radius: 4px; }
     .skeleton-title { height: 24px; width: 65%; margin-bottom: 12px; }
     .skeleton-synopsis { height: 12px; width: 100%; margin-bottom: 6px; }
 
@@ -35,13 +34,29 @@
     .detail-player-box { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
     .player-iframe { width: 100%; height: 100%; border: none; }
     
-    .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .ep-header-title { font-size: 16px; font-weight: 700; }
-    .ep-total-text { font-size: 12px; color: #38bdf8; font-weight: 700; cursor: pointer; text-decoration: underline; }
+    /* EP Header & Tombol Lihat Semua Episode Modern */
+    .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .ep-header-title { font-size: 16px; font-weight: 800; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px; }
+    
+    .btn-see-all-ep {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(56, 189, 248, 0.12); color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .btn-see-all-ep:hover {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+    .btn-see-all-ep svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+
     .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; scrollbar-width: none; }
     .ep-scroll-grid::-webkit-scrollbar { display: none; }
-    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .ep-box.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .ep-box.active { background: #0284c7; border-color: #38bdf8; color: #fff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4); }
     
     /* Action Bar */
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; position: relative; }
@@ -85,38 +100,57 @@
     .sheet-close { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
-    /* Komentar */
-    .comments-section { margin-top: 30px; border-top: 1px solid #1e293b; padding-top: 20px; }
-    .comments-header { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .comments-header svg { width: 18px; height: 18px; stroke: #38bdf8; fill: none; stroke-width: 2; }
+    /* Komentar Modern & Perbagus UI */
+    .comments-section { margin-top: 30px; border-top: 1px solid #1e293b; padding-top: 24px; }
+    .comments-header { font-size: 17px; font-weight: 800; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; color: #f8fafc; }
+    .comments-header svg { width: 20px; height: 20px; stroke: #38bdf8; fill: none; stroke-width: 2.2; }
     
-    .comment-input-box { background: #0b1329; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; margin-bottom: 20px; }
-    .comment-textarea { width: 100%; height: 70px; background: transparent; border: none; color: #fff; font-size: 13px; outline: none; resize: none; font-family: inherit; }
-    .comment-form-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-    .comment-user-info { font-size: 11px; color: #94a3b8; }
-    .btn-send-comment { background: #0284c7; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .comment-input-box { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 14px; padding: 14px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+    .comment-textarea { width: 100%; height: 72px; background: transparent; border: none; color: #fff; font-size: 13.5px; outline: none; resize: none; font-family: inherit; }
+    .comment-form-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 10px; }
+    .comment-user-info { font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 8px; }
+    .comment-user-info img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+    
+    .btn-send-comment { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); transition: transform 0.2s; }
+    .btn-send-comment:active { transform: scale(0.96); }
     .btn-send-comment svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; }
     
-    .comment-login-notice { background: #0b1329; border: 1px dashed #1e293b; border-radius: 12px; padding: 16px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
+    .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 18px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
     .comment-login-notice a { color: #38bdf8; font-weight: 700; text-decoration: none; cursor: pointer; }
 
-    .comments-list { display: flex; flex-direction: column; gap: 12px; }
-    .comment-item { background: #0b1329; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px; }
-    .comment-item.reply { margin-left: 28px; border-left: 2px solid #38bdf8; background: #070d1e; }
-    .comment-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .comment-author-group { display: flex; align-items: center; gap: 8px; }
-    .avatar-circle { width: 26px; height: 26px; border-radius: 50%; background: #0284c7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; overflow: hidden; }
+    .comments-list { display: flex; flex-direction: column; gap: 14px; }
+    .comment-item { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; backdrop-filter: blur(6px); transition: border-color 0.2s; }
+    .comment-item:hover { border-color: rgba(56, 189, 248, 0.2); }
+    .comment-item.reply { margin-left: 28px; border-left: 3px solid #38bdf8; background: rgba(10, 16, 31, 0.8); }
+    
+    .comment-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .comment-author-group { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 32px; height: 32px; border-radius: 50%; background: #0284c7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
     .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-    .comment-author { font-size: 12px; font-weight: 700; color: #38bdf8; }
-    .comment-date { font-size: 10px; color: #64748b; }
-    .comment-text { font-size: 13px; color: #d1d5db; line-height: 1.4; word-break: break-word; margin-top: 4px; }
-    .comment-actions { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; }
-    .btn-action-text { color: #38bdf8; font-weight: 700; cursor: pointer; background: none; border: none; padding: 0; }
+    
+    /* Styling Nama User & Admin */
+    .comment-author { font-size: 13px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
+    .comment-author.admin-name { color: #f59e0b !important; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+    
+    /* Badge Admin Emas */
+    .badge-admin {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #000000; font-size: 9.5px; font-weight: 900;
+      padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 3px;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    .comment-date { font-size: 11px; color: #64748b; }
+    .comment-text { font-size: 13.5px; color: #e2e8f0; line-height: 1.5; word-break: break-word; margin-top: 6px; }
+    .comment-actions { display: flex; gap: 14px; margin-top: 10px; font-size: 11px; }
+    .btn-action-text { color: #38bdf8; font-weight: 700; cursor: pointer; background: none; border: none; padding: 0; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-action-text:hover { text-decoration: underline; }
     .btn-action-text.delete { color: #ef4444; }
 
-    .reply-input-box { margin-top: 10px; display: flex; gap: 8px; }
-    .reply-input { flex: 1; height: 36px; background: #121d3a; border: 1px solid #1e293b; border-radius: 8px; padding: 0 10px; color: #fff; font-size: 12px; outline: none; }
-    .btn-reply-send { background: #0284c7; color: #fff; border: none; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .reply-input-box { margin-top: 12px; display: flex; gap: 8px; }
+    .reply-input { flex: 1; height: 38px; background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0 12px; color: #fff; font-size: 12px; outline: none; }
+    .btn-reply-send { background: #0284c7; color: #fff; border: none; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -139,9 +173,15 @@
 
     <div class="detail-body">
       <div id="epContainer">
+        <!-- UI Header Episode & Tombol "Lihat Semua Episode" Modern -->
         <div class="ep-header-row">
-          <span class="ep-header-title">Episode List</span>
-          <span class="ep-total-text" id="epTotalInfo" onclick="openEpisodeSheet()">0 Episode ➔</span>
+          <span class="ep-header-title">
+            Episode List
+          </span>
+          <button class="btn-see-all-ep" onclick="openEpisodeSheet()">
+            <span id="epTotalInfo">0 Episode</span>
+            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
         </div>
         <div class="ep-scroll-grid" id="epGrid">
           <div class="ep-box skeleton"></div>
@@ -201,7 +241,9 @@
         <div class="comment-input-box" id="commentFormBox" style="display: none;">
           <textarea class="comment-textarea" id="commentInput" placeholder="Tulis komentar kamu di sini..."></textarea>
           <div class="comment-form-footer">
-            <span class="comment-user-info" id="commentUserInfo">Posting sebagai User</span>
+            <div class="comment-user-info" id="commentUserInfo">
+              <span>Mengirim sebagai User</span>
+            </div>
             <button class="btn-send-comment" onclick="submitComment()">
               <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               Kirim
@@ -236,6 +278,8 @@
     let currentPoster = '';
     let currentServerUrl = '';
     let isFavorite = false;
+
+    const ADMIN_EMAIL = 'zahrulms01@gmail.com';
 
     function getTodayString() {
       const d = new Date();
@@ -358,7 +402,6 @@
       }
     }
 
-    // Fungsi Unduh Langsung Berkas Video (Bukan Link Embed)
     function triggerDownload() {
       if (!currentServerUrl) {
         alert("Video belum siap diunduh.");
@@ -367,7 +410,6 @@
 
       const cleanFileName = (currentMainTitle || 'video').replace(/[^a-zA-Z0-9_-]/g, '_') + '.mp4';
       
-      // Jika URL mengarah langsung ke berkas media (.mp4, .m3u8, dsb)
       const a = document.createElement('a');
       a.href = currentServerUrl;
       a.download = cleanFileName;
@@ -401,8 +443,17 @@
       if (window.currentUser) {
         if (formBox) formBox.style.display = 'block';
         if (noticeBox) noticeBox.style.display = 'none';
+        
         const name = window.currentUser.displayName || (window.currentUser.email ? window.currentUser.email.split('@')[0] : 'User');
-        if (userInfoLabel) userInfoLabel.innerText = `Mengirim sebagai: ${name}`;
+        const photo = window.currentUser.photoURL ? `<img src="${window.currentUser.photoURL}" />` : '';
+        const isAdmin = window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+        if (userInfoLabel) {
+          userInfoLabel.innerHTML = `
+            ${photo}
+            <span>Mengirim sebagai: <b style="color:${isAdmin ? '#f59e0b' : '#38bdf8'};">${name}</b> ${isAdmin ? '<span class="badge-admin">ADMIN</span>' : ''}</span>
+          `;
+        }
       } else {
         if (formBox) formBox.style.display = 'none';
         if (noticeBox) noticeBox.style.display = 'block';
@@ -466,8 +517,23 @@
       card.id = `comment-${item.id}`;
 
       const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja';
-      const initial = (item.author || 'U').charAt(0).toUpperCase();
-      const photoHtml = item.photoURL ? `<img src="${item.photoURL}" />` : initial;
+      const authorEmail = (item.email || '').toLowerCase();
+      const isAdmin = authorEmail === ADMIN_EMAIL.toLowerCase();
+
+      // Ambil nama & foto profil realtime jika user sedang login
+      let currentAuthorName = item.author || 'User';
+      let currentPhotoURL = item.photoURL || '';
+
+      if (window.currentUser && window.currentUser.uid === item.uid) {
+        currentAuthorName = window.currentUser.displayName || currentAuthorName;
+        currentPhotoURL = window.currentUser.photoURL || currentPhotoURL;
+      }
+
+      const initial = currentAuthorName.charAt(0).toUpperCase();
+      const photoHtml = currentPhotoURL ? `<img src="${currentPhotoURL}" />` : initial;
+      
+      const adminBadge = isAdmin ? `<span class="badge-admin">★ ADMIN</span>` : '';
+      const nameClass = isAdmin ? 'comment-author admin-name' : 'comment-author';
 
       const isMyComment = window.currentUser && (window.currentUser.uid === item.uid);
 
@@ -476,7 +542,7 @@
         if (!isReply) {
           actionButtons += `<button class="btn-action-text" onclick="toggleReplyBox('${item.id}')">Balas</button>`;
         }
-        if (isMyComment) {
+        if (isMyComment || (window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())) {
           actionButtons += `<button class="btn-action-text delete" onclick="deleteComment('${item.id}')">Hapus</button>`;
         }
       }
@@ -485,7 +551,10 @@
         <div class="comment-item-header">
           <div class="comment-author-group">
             <div class="avatar-circle">${photoHtml}</div>
-            <span class="comment-author">${escapeHtml(item.author || 'User')}</span>
+            <span class="${nameClass}">
+              ${escapeHtml(currentAuthorName)}
+              ${adminBadge}
+            </span>
           </div>
           <span class="comment-date">${dateStr}</span>
         </div>
@@ -532,6 +601,7 @@
 
       const commentItem = {
         uid: window.currentUser.uid,
+        email: window.currentUser.email || '',
         author: name,
         photoURL: window.currentUser.photoURL || '',
         text: text,
@@ -560,6 +630,7 @@
 
       const replyItem = {
         uid: window.currentUser.uid,
+        email: window.currentUser.email || '',
         author: name,
         photoURL: window.currentUser.photoURL || '',
         text: text,
@@ -615,7 +686,6 @@
         document.getElementById('topHeaderTitle').innerText = data.title;
         document.getElementById('pageTitle').innerText = `${data.title} - RZ Media Player`;
 
-        // Ganti Placeholder Detail dengan Informasi Riil
         document.getElementById('mediaDetailsGroup').innerHTML = `
           <h1 class="media-title">${data.title}</h1>
           <p class="synopsis-text">${data.synopsis || 'Tidak ada deskripsi.'}</p>
@@ -628,7 +698,7 @@
         } else {
           document.getElementById('epContainer').style.display = 'block';
           globalEpisodes = data.episodes || [];
-          document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode ➔`;
+          document.getElementById('epTotalInfo').innerText = `${globalEpisodes.length} Episode`;
 
           const epGrid = document.getElementById('epGrid');
           epGrid.innerHTML = '';
