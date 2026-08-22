@@ -1,51 +1,5 @@
 import * as cheerio from 'cheerio';
 
-// Fungsi untuk mengambil nomor episode terbaru dari AniList API berdasarkan judul
-async function fetchEpisodeFromAniList(title) {
-  try {
-    const query = `
-      query ($search: String) {
-        Media(search: $search, type: ANIME) {
-          episodes
-          nextAiringEpisode {
-            episode
-          }
-        }
-      }
-    `;
-
-    // Beri timeout 1.5 detik agar Vercel tidak lambat/timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-
-    const response = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ query, variables: { search: title } }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    const json = await response.json();
-    if (json.data && json.data.Media) {
-      const media = json.data.Media;
-      if (media.nextAiringEpisode && media.nextAiringEpisode.episode > 1) {
-        return `Ep ${media.nextAiringEpisode.episode - 1}`;
-      }
-      if (media.episodes) {
-        return `Ep ${media.episodes}`;
-      }
-    }
-    return null;
-  } catch (e) {
-    return null; // Fallback aman jika gagal
-  }
-}
-
 export default async function handler(req, res) {
   try {
     const { type = 'all', page = 1 } = req.query;
@@ -57,7 +11,6 @@ export default async function handler(req, res) {
       'Referer': 'https://animexin.dev/anime/'
     };
 
-    // Helper pembersih judul ganda
     const cleanTitle = (rawTitle) => {
       if (!rawTitle) return '';
       const text = rawTitle.trim();
@@ -84,13 +37,16 @@ export default async function handler(req, res) {
         let poster = $(el).find('img').attr('data-src') || $(el).find('img').attr('src') || '';
         let href = $(el).find('a').first().attr('href') || '';
         
-        // Fallback awal jika AniList tidak merespons
-        let rawEp = $(el).find('.epx, .bt .ep, .episode, .sb, .ep').first().text().trim();
+        // PENCARIAN EPISODE: Memindai seluruh teks di dalam kartu atau elemen badge episode
+        let rawEp = $(el).find('.epx, .bt .epx, .bt .ep, .episode, .sb, .ep, .limit').text().trim() || 
+                    $(el).text(); // Fallback membaca teks card jika class spesifik tidak ketemu
+        
         let epNumber = 'Ep 1';
-
-        if (rawEp) {
-          const numMatch = rawEp.match(/\d+/);
-          if (numMatch) epNumber = `Ep ${numMatch[0]}`;
+        
+        // Ekstraksi angka setelah kata 'Episode' atau 'Ep' atau angka di dalam teks card
+        const match = rawEp.match(/(?:Episode|Ep)\s*(\d+)/i) || rawEp.match(/\b(\d+)\b/);
+        if (match && match[1]) {
+          epNumber = `Ep ${match[1]}`;
         }
 
         let status = $(el).find('.status, .typez').first().text().trim() || 'Ongoing';
@@ -114,16 +70,7 @@ export default async function handler(req, res) {
 
     const html = await response.text();
     const $ = cheerio.load(html);
-    let allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
-
-    // Ambil data episode dari AniList secara paralel untuk setiap judul donghua yang ditemukan
-    allItems = await Promise.all(allItems.map(async (item) => {
-      const aniListEp = await fetchEpisodeFromAniList(item.title);
-      if (aniListEp) {
-        item.episode = aniListEp;
-      }
-      return item;
-    }));
+    const allItems = parseList($, '.listupd .bs, .article .bs, .post-show .bs');
 
     if (!type || type === 'all') {
       return res.status(200).json({
