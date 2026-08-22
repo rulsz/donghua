@@ -95,13 +95,14 @@
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
     /* =========================================================
-       CSS KOMENTAR DENGAN ACTION MENU BANYAK FITUR ADMIN
+       CSS SECTION KOMENTAR + POPUP SORTING DROPDOWN
        ========================================================= */
     .comments-section { 
       margin-top: 24px; 
       border-top: 1px solid #1e293b; 
       padding-top: 20px; 
       width: 100%;
+      display: block;
       text-align: left !important;
     }
     
@@ -111,6 +112,7 @@
       justify-content: space-between !important;
       width: 100% !important;
       margin-bottom: 16px !important;
+      position: relative;
     }
 
     .comments-header-title { 
@@ -127,17 +129,35 @@
     .comments-header-title svg { width: 18px; height: 18px; stroke: #38bdf8; fill: none; stroke-width: 2.2; }
 
     /* Tombol Ikon SVG Sort */
+    .btn-sort-wrapper { position: relative; }
     .btn-sort-svg {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid #1e293b;
       color: #38bdf8;
-      width: 34px; height: 34px;
+      width: 36px; height: 36px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: all 0.2s;
     }
-    .btn-sort-svg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .btn-sort-svg svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
     .btn-sort-svg:hover { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; }
+
+    /* Pop-up Dropdown Sort Menu */
+    .sort-dropdown-menu {
+      display: none; position: absolute; top: 42px; right: 0;
+      background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 6px; min-width: 140px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 120;
+    }
+    .sort-dropdown-menu.active { display: block; }
+    .sort-dropdown-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; color: #94a3b8; font-size: 12.5px;
+      font-weight: 700; border-radius: 8px; cursor: pointer;
+    }
+    .sort-dropdown-item:hover, .sort-dropdown-item.active {
+      background: rgba(56, 189, 248, 0.15); color: #38bdf8;
+    }
     
     .comment-input-box {
       display: flex; 
@@ -200,8 +220,7 @@
       border-radius: 12px;
       padding: 12px;
       position: relative;
-      user-select: none;
-      -webkit-user-select: none;
+      touch-action: pan-y;
     }
 
     .comment-card.pinned {
@@ -248,13 +267,13 @@
       padding: 1px 5px; border-radius: 3px;
     }
 
-    .badge-pinned {
-      background: rgba(245, 158, 11, 0.15); color: #f59e0b;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      font-size: 9.5px; font-weight: 800;
-      padding: 1px 6px; border-radius: 4px;
-      display: inline-flex; align-items: center; gap: 3px;
+    /* Pin SVG Icon Badge */
+    .icon-pin-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #f59e0b; background: rgba(245, 158, 11, 0.15);
+      padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3);
     }
+    .icon-pin-badge svg { width: 12px; height: 12px; fill: currentColor; }
 
     .comment-body-text { 
       font-size: 13.5px; 
@@ -403,7 +422,7 @@
         <div class="skeleton skeleton-synopsis" style="width: 80%;"></div>
       </div>
 
-      <!-- Section Komentar Rata Kiri -->
+      <!-- Section Komentar -->
       <section class="comments-section">
         <div class="comments-header-wrapper">
           <h3 class="comments-header-title">
@@ -411,10 +430,20 @@
             Komentar <span id="commentsCountBadge">(0)</span>
           </h3>
 
-          <!-- Tombol SVG Filter Sort -->
-          <button class="btn-sort-svg" onclick="toggleSortOrder()" title="Urutkan Komentar">
-            <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-          </button>
+          <!-- Tombol SVG Filter Sort & Dropdown Menu -->
+          <div class="btn-sort-wrapper">
+            <button class="btn-sort-svg" onclick="toggleSortDropdown(event)" title="Urutkan Komentar">
+              <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+            </button>
+            <div class="sort-dropdown-menu" id="sortDropdownMenu">
+              <div class="sort-dropdown-item active" id="sortOptLatest" onclick="selectSortOrder('latest')">
+                <span>Terbaru</span>
+              </div>
+              <div class="sort-dropdown-item" id="sortOptTop" onclick="selectSortOrder('top')">
+                <span>Teratas</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Input Komentar -->
@@ -466,6 +495,8 @@
     let selectedAdminCommentId = null;
     let selectedAdminCommentPinned = false;
     let pressTimer = null;
+    let startTouchX = 0;
+    let startTouchY = 0;
 
     const ADMIN_EMAIL = 'zahrulms01@gmail.com';
 
@@ -636,10 +667,23 @@
       }
     };
 
-    function toggleSortOrder() {
-      currentSortMode = currentSortMode === 'latest' ? 'top' : 'latest';
+    function toggleSortDropdown(event) {
+      event.stopPropagation();
+      document.getElementById('sortDropdownMenu').classList.toggle('active');
+    }
+
+    function selectSortOrder(mode) {
+      currentSortMode = mode;
+      document.getElementById('sortOptLatest').classList.toggle('active', mode === 'latest');
+      document.getElementById('sortOptTop').classList.toggle('active', mode === 'top');
+      document.getElementById('sortDropdownMenu').classList.remove('active');
       loadComments();
     }
+
+    document.addEventListener('click', () => {
+      const dropdown = document.getElementById('sortDropdownMenu');
+      if (dropdown) dropdown.classList.remove('active');
+    });
 
     async function loadComments() {
       const container = document.getElementById('commentsListContainer');
@@ -674,7 +718,6 @@
             }
           });
 
-          // Urutkan berdasarkan Pin terlebih dahulu, baru Sort Mode
           mainComments.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -711,10 +754,15 @@
       card.className = `comment-card ${item.isPinned ? 'pinned' : ''}`;
       card.id = `comment-${item.id}`;
 
-      // Pasang event Hold (Tekan Lama) khusus Admin
-      card.onpointerdown = (e) => startPressTimer(e, item.id, !!item.isPinned);
-      card.onpointerup = cancelPressTimer;
-      card.onpointerleave = cancelPressTimer;
+      // PERBAIKAN: Deteksi Scroll agar Long Press tidak ter-trigger saat scroll
+      card.addEventListener('touchstart', (e) => startPressTimer(e, item.id, !!item.isPinned), { passive: true });
+      card.addEventListener('touchmove', checkTouchMove, { passive: true });
+      card.addEventListener('touchend', cancelPressTimer, { passive: true });
+      card.addEventListener('touchcancel', cancelPressTimer, { passive: true });
+
+      card.onmousedown = (e) => startPressTimer(e, item.id, !!item.isPinned);
+      card.onmouseup = cancelPressTimer;
+      card.onmouseleave = cancelPressTimer;
       card.oncontextmenu = (e) => {
         if (isAdminUser()) {
           e.preventDefault();
@@ -737,7 +785,12 @@
       const initial = currentAuthorName.charAt(0).toUpperCase();
       const photoHtml = currentPhotoURL ? `<img src="${currentPhotoURL}" />` : initial;
       const adminBadge = isAdmin ? `<span class="badge-admin">★ ADMIN</span>` : '';
-      const pinBadge = item.isPinned ? `<span class="badge-pinned">📌 Dipin</span>` : '';
+      
+      // Pin SVG Icon Badge
+      const pinBadge = item.isPinned ? `
+        <span class="icon-pin-badge" title="Dipin oleh Admin">
+          <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+        </span>` : '';
 
       const isMyComment = window.currentUser && (window.currentUser.uid === item.uid);
 
@@ -830,12 +883,29 @@
       return window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
     }
 
+    // PENGATUR LONG-PRESS DENGAN DETEKSI PERGERAKAN JARI (FIX SCROLL)
     function startPressTimer(e, commentId, isPinned) {
       if (!isAdminUser()) return;
       cancelPressTimer();
+
+      const touch = e.touches ? e.touches[0] : e;
+      startTouchX = touch.clientX;
+      startTouchY = touch.clientY;
+
       pressTimer = setTimeout(() => {
         openAdminSheet(commentId, isPinned);
       }, 500);
+    }
+
+    function checkTouchMove(e) {
+      if (!pressTimer) return;
+      const touch = e.touches ? e.touches[0] : e;
+      const diffX = Math.abs(touch.clientX - startTouchX);
+      const diffY = Math.abs(touch.clientY - startTouchY);
+
+      if (diffX > 10 || diffY > 10) {
+        cancelPressTimer();
+      }
     }
 
     function cancelPressTimer() {
