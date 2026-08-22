@@ -19,7 +19,6 @@
     .icon-circle-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; }
     .brand-title { font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
     
-    /* Skeleton Animation */
     @keyframes skeletonPulse {
       0% { opacity: 0.3; }
       50% { opacity: 0.7; }
@@ -53,7 +52,6 @@
     .ep-box { flex: 0 0 54px; height: 54px; background: #111827; border: 1px solid #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     .ep-box.active { background: #0284c7; border-color: #38bdf8; color: #fff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4); }
     
-    /* Action Bar */
     .action-bar { display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; position: relative; }
     .action-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #94a3b8; font-size: 11px; cursor: pointer; background: none; border: none; outline: none; }
     .action-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
@@ -94,7 +92,6 @@
     .sheet-close { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: 700; }
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
-    /* Section Komentar */
     .comments-section { 
       margin-top: 24px; 
       border-top: 1px solid #1e293b; 
@@ -280,7 +277,6 @@
         </div>
       </div>
 
-      <!-- Action Bar -->
       <div class="action-bar">
         <div class="server-tooltip-hint" id="serverHint">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
@@ -320,7 +316,6 @@
         <div class="skeleton skeleton-synopsis" style="width: 80%;"></div>
       </div>
 
-      <!-- Section Komentar -->
       <section class="comments-section">
         <div class="comments-header-wrapper">
           <h3 class="comments-header-title">
@@ -371,7 +366,6 @@
     </div>
   </div>
 
-  <!-- Admin Bottom Sheet -->
   <div class="sheet-overlay" id="adminSheetOverlay" onclick="closeAdminSheet()">
     <div class="admin-menu-sheet active" id="adminMenuSheet" onclick="event.stopPropagation()">
       <button class="admin-menu-btn" id="btnAdminPin" onclick="executeAdminPin()">Sematkan Komentar</button>
@@ -401,12 +395,18 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    // Pembacaan slug serbaguna (Mendukung /detail/slug dan ?slug=...)
     function cleanSlug(str) {
-      const urlParams = new URLSearchParams(window.location.search);
-      let paramSlug = urlParams.get('slug');
-      if (paramSlug) str = paramSlug;
-      if (!str) str = window.location.pathname;
-      return String(str)
+      let slug = str;
+      if (!slug) {
+        const urlParams = new URLSearchParams(window.location.search);
+        slug = urlParams.get('slug');
+      }
+      if (!slug) {
+        slug = window.location.pathname;
+      }
+      
+      return String(slug)
         .replace(/^https?:\/\/[^\/]+/, '')
         .replace(/^\/?detail\//, '')
         .replace(/^\/?anime\//, '')
@@ -414,7 +414,12 @@
         .replace(/^\/+|\/+$/g, '');
     }
 
-    // PENTING: Ekstraksi nomor episode yang akurat dari string/slug
+    // Pemotong slug murni agar mengembalikan judul/season utama
+    function getCleanMainSlug(str) {
+      const raw = cleanSlug(str);
+      return raw.replace(/-episode-\d+.*$/i, '');
+    }
+
     function extractEpNumber(titleOrSlug, fallback) {
       if (!titleOrSlug) return fallback;
       const matches = String(titleOrSlug).match(/\d+/g);
@@ -431,7 +436,7 @@
       return String(num);
     }
 
-    let targetSlug = cleanSlug();
+    let targetSlug = getCleanMainSlug();
 
     function goBack() { window.location.href = '/'; }
     function goToHomeLogin() { window.location.href = '/'; }
@@ -479,7 +484,7 @@
         isFavorite = snap.exists();
       } else {
         let favs = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
-        isFavorite = favs.some(f => f.slug === targetSlug);
+        isFavorite = favs.some(f => cleanSlug(f.slug) === targetSlug);
       }
 
       if (isFavorite) btn.classList.add('active');
@@ -511,10 +516,10 @@
       } else {
         let favs = JSON.parse(localStorage.getItem('rz_favorites') || '[]');
         if (isFavorite) {
-          favs = favs.filter(f => f.slug !== targetSlug);
+          favs = favs.filter(f => cleanSlug(f.slug) !== targetSlug);
           favs.unshift(favItem);
         } else {
-          favs = favs.filter(f => f.slug !== targetSlug);
+          favs = favs.filter(f => cleanSlug(f.slug) !== targetSlug);
         }
         localStorage.setItem('rz_favorites', JSON.stringify(favs));
       }
@@ -989,7 +994,6 @@
             box.innerText = epNum;
             box.id = `ep-box-${cleanSlug(ep.slug)}`;
             
-            // PENTING: Kirimkan nomor episode presisi saat diklik
             box.onclick = () => selectEpisode(ep.slug, data.title, data.poster, `Ep ${epNum}`);
             epGrid.appendChild(box);
           });
@@ -1018,7 +1022,6 @@
 
       const epLabel = episodeName || `Ep ${extractEpNumber(cleanEp, 1)}`;
 
-      // Simpan langsung ke LocalStorage & Firebase Database
       await saveHistory(targetSlug, cleanEp, title, poster, epLabel);
       
       const mediaBox = document.getElementById('playerMediaContainer');
@@ -1033,25 +1036,25 @@
     }
 
     async function saveHistory(mainPath, epPath, title, poster, episode) {
+      const cleanMainSlug = getCleanMainSlug(mainPath);
+      
       const historyData = { 
-        mainPath: mainPath, 
-        epPath: epPath, 
+        mainPath: cleanMainSlug, 
+        epPath: cleanSlug(epPath), 
         title: title, 
         poster: poster, 
-        episode: episode, // Mengirim teks akurat seperti "Ep 38"
+        episode: episode, 
         timestamp: Date.now()
       };
 
-      // 1. LocalStorage Backup
       let localHistory = JSON.parse(localStorage.getItem('rz_continue_history') || '[]');
-      localHistory = localHistory.filter(item => item.mainPath !== mainPath);
+      localHistory = localHistory.filter(item => getCleanMainSlug(item.mainPath) !== cleanMainSlug);
       localHistory.unshift(historyData);
       localStorage.setItem('rz_continue_history', JSON.stringify(localHistory.slice(0, 10)));
 
-      // 2. Simpan Langsung ke Node Firebase User jika Login
       if (window.currentUser && window.db) {
         try {
-          const userHistoryRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${mainPath}`);
+          const userHistoryRef = window.fbRef(window.db, `users/${window.currentUser.uid}/history/${cleanMainSlug}`);
           await window.fbSet(userHistoryRef, historyData);
         } catch (e) {
           console.error("Gagal simpan ke Firebase:", e);
