@@ -9,8 +9,8 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-    body { background-color: #000000; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 68px; padding-bottom: 40px; }
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+    body { background-color: #000000; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-top: 68px; padding-bottom: 40px; text-align: left; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 16px; text-align: left; }
     
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 70%, rgba(0, 0, 0, 0) 100%); padding: 10px 16px 16px 16px; }
     .header-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 44px; }
@@ -34,7 +34,6 @@
     .detail-player-box { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px; }
     .player-iframe { width: 100%; height: 100%; border: none; }
     
-    /* EP Header & Tombol Lihat Semua Episode Modern */
     .ep-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .ep-header-title { font-size: 16px; font-weight: 800; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px; }
     
@@ -46,11 +45,7 @@
       font-size: 12px; font-weight: 700; cursor: pointer;
       transition: all 0.25s ease;
     }
-    .btn-see-all-ep:hover {
-      background: rgba(56, 189, 248, 0.25);
-      border-color: #38bdf8;
-      transform: translateY(-1px);
-    }
+    .btn-see-all-ep:hover { background: rgba(56, 189, 248, 0.25); border-color: #38bdf8; transform: translateY(-1px); }
     .btn-see-all-ep svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; }
 
     .ep-scroll-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px; scrollbar-width: none; }
@@ -70,7 +65,6 @@
     .server-label-text { font-size: 11px; font-weight: 500; color: #94a3b8; }
     .server-select-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-    /* Tooltip Server */
     .server-tooltip-hint {
       position: absolute; top: -45px; left: 10px;
       background: #0284c7; color: #ffffff;
@@ -88,8 +82,8 @@
       border-color: #0284c7 transparent transparent transparent;
     }
 
-    .media-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
-    .synopsis-text { font-size: 13px; line-height: 1.5; color: #94a3b8; margin-bottom: 24px; }
+    .media-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: left; }
+    .synopsis-text { font-size: 13px; line-height: 1.5; color: #94a3b8; margin-bottom: 24px; text-align: left; }
     
     .sheet-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; backdrop-filter: blur(4px); }
     .sheet-overlay.active { display: block; }
@@ -101,34 +95,55 @@
     .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 10px; overflow-y: auto; padding-bottom: 20px; }
 
     /* =========================================================
-       PERBAIKAN TOTAL LAYOUT KOMENTAR TIKTOK STYLE
+       CSS KOMENTAR DENGAN ACTION MENU BANYAK FITUR ADMIN
        ========================================================= */
     .comments-section { 
       margin-top: 24px; 
       border-top: 1px solid #1e293b; 
       padding-top: 20px; 
       width: 100%;
-      text-align: left; /* Memastikan rata kiri */
+      text-align: left !important;
     }
     
-    .comments-header { 
-      font-size: 16px; 
-      font-weight: 800; 
-      margin-bottom: 16px; 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      color: #f8fafc;
-      justify-content: flex-start; /* Paksa Rata Kiri */
-      text-align: left;
+    .comments-header-wrapper {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      width: 100% !important;
+      margin-bottom: 16px !important;
     }
+
+    .comments-header-title { 
+      font-size: 16px !important; 
+      font-weight: 800 !important; 
+      display: flex !important; 
+      align-items: center !important; 
+      gap: 6px !important; 
+      color: #f8fafc !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      text-align: left !important;
+    }
+    .comments-header-title svg { width: 18px; height: 18px; stroke: #38bdf8; fill: none; stroke-width: 2.2; }
+
+    /* Tombol Ikon SVG Sort */
+    .btn-sort-svg {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid #1e293b;
+      color: #38bdf8;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-sort-svg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .btn-sort-svg:hover { background: rgba(56, 189, 248, 0.15); border-color: #38bdf8; }
     
-    /* Form Input Komentar */
     .comment-input-box {
       display: flex; 
       align-items: center; 
       gap: 10px;
-      background: #111827; 
+      background: #0f172a; 
       border: 1px solid #1e293b;
       border-radius: 24px; 
       padding: 6px 8px 6px 16px;
@@ -166,14 +181,32 @@
     .comment-login-notice { background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 14px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
     .comment-login-notice a { color: #38bdf8; font-weight: 700; text-decoration: none; cursor: pointer; }
 
-    /* List Komentar & Struktur Kartu TikTok */
-    .comments-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+    /* List Komentar */
+    .comments-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 14px; 
+      width: 100%; 
+      text-align: left !important;
+    }
     
     .comment-card { 
       display: flex; 
       gap: 12px; 
       width: 100%; 
       align-items: flex-start;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px;
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .comment-card.pinned {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.03);
     }
     
     .tiktok-avatar {
@@ -192,7 +225,11 @@
     }
     .tiktok-avatar img { width: 100%; height: 100%; object-fit: cover; }
     
-    .comment-content { flex: 1; min-width: 0; text-align: left; }
+    .comment-content { 
+      flex: 1; 
+      min-width: 0; 
+      text-align: left !important; 
+    }
     
     .comment-user-row { 
       display: flex; 
@@ -202,26 +239,30 @@
       flex-wrap: wrap;
     }
     
-    .tiktok-username { font-size: 12.5px; font-weight: 700; color: #94a3b8; }
+    .tiktok-username { font-size: 13px; font-weight: 700; color: #94a3b8; }
     .tiktok-username.admin { color: #f59e0b !important; }
     
     .badge-admin {
-      background: #f59e0b; 
-      color: #000; 
-      font-size: 9px; 
-      font-weight: 900;
-      padding: 1px 5px; 
-      border-radius: 3px; 
-      letter-spacing: 0.3px;
-      display: inline-block;
+      background: #f59e0b; color: #000; 
+      font-size: 9px; font-weight: 900;
+      padding: 1px 5px; border-radius: 3px;
+    }
+
+    .badge-pinned {
+      background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      font-size: 9.5px; font-weight: 800;
+      padding: 1px 6px; border-radius: 4px;
+      display: inline-flex; align-items: center; gap: 3px;
     }
 
     .comment-body-text { 
-      font-size: 13px; 
+      font-size: 13.5px; 
       color: #f1f5f9; 
       line-height: 1.4; 
       word-break: break-word; 
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      text-align: left !important;
     }
     
     .comment-footer-actions { 
@@ -236,61 +277,55 @@
     .btn-reply-tiktok:hover { color: #fff; }
     .btn-delete-tiktok { font-weight: 700; color: #ef4444; cursor: pointer; background: none; border: none; padding: 0; font-size: 11.5px; }
 
-    /* Tombol Like TikTok */
     .comment-like-box { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: flex-start; 
-      padding-top: 2px; 
-      color: #64748b; 
-      font-size: 11px; 
-      cursor: pointer; 
-      flex-shrink: 0;
+      display: flex; flex-direction: column; 
+      align-items: center; justify-content: flex-start; 
+      padding-top: 2px; color: #64748b; font-size: 11px; 
+      cursor: pointer; flex-shrink: 0;
     }
     .comment-like-box svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
     .comment-like-box.liked svg { fill: #ef4444; stroke: #ef4444; }
 
-    /* Tombol "Lihat Balasan" */
+    /* Tombol Lihat Balasan TikTok */
     .replies-toggle-btn {
-      display: inline-flex; 
-      align-items: center; 
-      gap: 6px;
-      color: #8b92a5; 
-      font-size: 12px; 
-      font-weight: 700;
-      margin-top: 8px; 
-      cursor: pointer; 
-      background: none; 
-      border: none; 
-      padding: 0;
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #38bdf8; font-size: 12px; font-weight: 700;
+      margin-top: 8px; cursor: pointer; background: none; border: none; padding: 0;
     }
     .replies-toggle-btn::before {
-      content: ""; 
-      display: inline-block; 
-      width: 18px; 
-      height: 1px; 
-      background: #334155;
+      content: ""; display: inline-block; width: 20px; height: 1px; background: #0284c7;
     }
-    .replies-toggle-btn:hover { color: #e2e8f0; }
 
-    /* PERBAIKAN: Kontainer Balasan Bergeser ke Kanan (Indentation) */
     .replies-container { 
-      display: none; 
-      margin-top: 10px; 
-      flex-direction: column; 
-      gap: 12px; 
-      padding-left: 12px; 
-      border-left: 2px solid #1e293b; /* Garis vertikal pembatas balasan */
+      display: none; margin-top: 10px; 
+      flex-direction: column; gap: 10px; 
+      padding-left: 14px; border-left: 2px solid #0284c7; width: 100%;
     }
     .replies-container.show { display: flex; }
 
-    .reply-card { display: flex; gap: 10px; align-items: flex-start; }
-    .reply-card .tiktok-avatar { width: 26px; height: 26px; font-size: 10px; }
+    .reply-card { 
+      display: flex; gap: 10px; align-items: flex-start; 
+      background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 8px; width: 100%;
+    }
+    .reply-card .tiktok-avatar { width: 26px; height: 26px; font-size: 11px; }
 
-    .reply-input-box { margin-top: 10px; display: flex; gap: 8px; }
+    .reply-input-box { margin-top: 10px; display: flex; gap: 8px; width: 100%; }
     .reply-input { flex: 1; height: 34px; background: #0b1329; border: 1px solid #1e293b; border-radius: 18px; padding: 0 12px; color: #fff; font-size: 12px; outline: none; }
     .btn-reply-send { background: #0284c7; color: #fff; border: none; padding: 0 14px; border-radius: 18px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+    /* Modal Context Admin */
+    .admin-menu-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; background: #0f172a;
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      padding: 20px; z-index: 300; display: none; flex-direction: column; gap: 12px;
+      border-top: 1px solid #1e293b;
+    }
+    .admin-menu-sheet.active { display: flex; }
+    .admin-menu-btn {
+      width: 100%; padding: 14px; background: #1e293b; color: #fff; border: none;
+      border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; text-align: center;
+    }
+    .admin-menu-btn.danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
   </style>
 </head>
 <body>
@@ -368,14 +403,21 @@
         <div class="skeleton skeleton-synopsis" style="width: 80%;"></div>
       </div>
 
-      <!-- Section Komentar TikTok Rata Kiri -->
+      <!-- Section Komentar Rata Kiri -->
       <section class="comments-section">
-        <h3 class="comments-header">
-          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Komentar
-        </h3>
+        <div class="comments-header-wrapper">
+          <h3 class="comments-header-title">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Komentar <span id="commentsCountBadge">(0)</span>
+          </h3>
 
-        <!-- Input Komentar TikTok -->
+          <!-- Tombol SVG Filter Sort -->
+          <button class="btn-sort-svg" onclick="toggleSortOrder()" title="Urutkan Komentar">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+          </button>
+        </div>
+
+        <!-- Input Komentar -->
         <div class="comment-input-box" id="commentFormBox" style="display: none;">
           <input class="comment-textarea" id="commentInput" placeholder="Tambah komentar..." />
           <button class="btn-send-comment" onclick="submitComment()">
@@ -404,12 +446,26 @@
     </div>
   </div>
 
+  <!-- Sheet Menu khusus Admin -->
+  <div class="sheet-overlay" id="adminSheetOverlay" onclick="closeAdminSheet()">
+    <div class="admin-menu-sheet active" id="adminMenuSheet" onclick="event.stopPropagation()">
+      <button class="admin-menu-btn" id="btnAdminPin" onclick="executeAdminPin()">Sematkan Komentar</button>
+      <button class="admin-menu-btn danger" onclick="executeAdminDelete()">Hapus Komentar Ini</button>
+      <button class="admin-menu-btn" style="background:#0f172a; border: 1px solid #1e293b;" onclick="closeAdminSheet()">Batal</button>
+    </div>
+  </div>
+
   <script>
     let globalEpisodes = [];
     let currentMainTitle = '';
     let currentPoster = '';
     let currentServerUrl = '';
     let isFavorite = false;
+    let currentSortMode = 'latest'; 
+
+    let selectedAdminCommentId = null;
+    let selectedAdminCommentPinned = false;
+    let pressTimer = null;
 
     const ADMIN_EMAIL = 'zahrulms01@gmail.com';
 
@@ -580,8 +636,15 @@
       }
     };
 
+    function toggleSortOrder() {
+      currentSortMode = currentSortMode === 'latest' ? 'top' : 'latest';
+      loadComments();
+    }
+
     async function loadComments() {
       const container = document.getElementById('commentsListContainer');
+      const countBadge = document.getElementById('commentsCountBadge');
+
       if (!window.db || !targetSlug) {
         container.innerHTML = '<p style="font-size:12px; color:#64748b;">Komentar belum dapat dimuat.</p>';
         return;
@@ -597,6 +660,9 @@
 
           const mainComments = [];
           const repliesMap = {};
+          let totalCount = Object.keys(commentsData).length;
+
+          countBadge.innerText = `(${totalCount})`;
 
           Object.keys(commentsData).forEach(key => {
             const item = { id: key, ...commentsData[key] };
@@ -608,7 +674,19 @@
             }
           });
 
-          mainComments.reverse();
+          // Urutkan berdasarkan Pin terlebih dahulu, baru Sort Mode
+          mainComments.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+
+            if (currentSortMode === 'top') {
+              const repliesA = (repliesMap[a.id] || []).length;
+              const repliesB = (repliesMap[b.id] || []).length;
+              return repliesB - repliesA;
+            } else {
+              return b.timestamp - a.timestamp;
+            }
+          });
 
           if (mainComments.length === 0) {
             container.innerHTML = '<p style="font-size:12px; color:#64748b;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
@@ -620,6 +698,7 @@
             container.appendChild(renderTikTokCommentCard(item, replies));
           });
         } else {
+          countBadge.innerText = '(0)';
           container.innerHTML = '<p style="font-size:12px; color:#64748b;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
         }
       } catch (e) {
@@ -629,8 +708,19 @@
 
     function renderTikTokCommentCard(item, replies = []) {
       const card = document.createElement('div');
-      card.className = 'comment-card';
+      card.className = `comment-card ${item.isPinned ? 'pinned' : ''}`;
       card.id = `comment-${item.id}`;
+
+      // Pasang event Hold (Tekan Lama) khusus Admin
+      card.onpointerdown = (e) => startPressTimer(e, item.id, !!item.isPinned);
+      card.onpointerup = cancelPressTimer;
+      card.onpointerleave = cancelPressTimer;
+      card.oncontextmenu = (e) => {
+        if (isAdminUser()) {
+          e.preventDefault();
+          openAdminSheet(item.id, !!item.isPinned);
+        }
+      };
 
       const timeAgo = item.timestamp ? getTimeAgo(item.timestamp) : 'Baru saja';
       const authorEmail = (item.email || '').toLowerCase();
@@ -647,12 +737,14 @@
       const initial = currentAuthorName.charAt(0).toUpperCase();
       const photoHtml = currentPhotoURL ? `<img src="${currentPhotoURL}" />` : initial;
       const adminBadge = isAdmin ? `<span class="badge-admin">★ ADMIN</span>` : '';
+      const pinBadge = item.isPinned ? `<span class="badge-pinned">📌 Dipin</span>` : '';
+
       const isMyComment = window.currentUser && (window.currentUser.uid === item.uid);
 
       let actionButtons = '';
       if (window.currentUser) {
         actionButtons += `<button class="btn-reply-tiktok" onclick="toggleReplyBox('${item.id}')">Balas</button>`;
-        if (isMyComment || (window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())) {
+        if (isMyComment || isAdminUser()) {
           actionButtons += `<button class="btn-delete-tiktok" onclick="deleteComment('${item.id}')">Hapus</button>`;
         }
       }
@@ -675,6 +767,7 @@
           <div class="comment-user-row">
             <span class="tiktok-username ${isAdmin ? 'admin' : ''}">${escapeHtml(currentAuthorName)}</span>
             ${adminBadge}
+            ${pinBadge}
           </div>
           <div class="comment-body-text">${escapeHtml(item.text)}</div>
           <div class="comment-footer-actions">
@@ -711,7 +804,7 @@
       const isMyComment = window.currentUser && (window.currentUser.uid === reply.uid);
 
       let deleteBtn = '';
-      if (window.currentUser && (isMyComment || (window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()))) {
+      if (window.currentUser && (isMyComment || isAdminUser())) {
         deleteBtn = `<button class="btn-delete-tiktok" onclick="deleteComment('${reply.id}')">Hapus</button>`;
       }
 
@@ -731,6 +824,54 @@
           </div>
         </div>
       `;
+    }
+
+    function isAdminUser() {
+      return window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    }
+
+    function startPressTimer(e, commentId, isPinned) {
+      if (!isAdminUser()) return;
+      cancelPressTimer();
+      pressTimer = setTimeout(() => {
+        openAdminSheet(commentId, isPinned);
+      }, 500);
+    }
+
+    function cancelPressTimer() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    function openAdminSheet(commentId, isPinned) {
+      selectedAdminCommentId = commentId;
+      selectedAdminCommentPinned = isPinned;
+      document.getElementById('btnAdminPin').innerText = isPinned ? 'Lepas Sematan Komentar' : 'Sematkan Komentar';
+      document.getElementById('adminSheetOverlay').classList.add('active');
+    }
+
+    function closeAdminSheet() {
+      document.getElementById('adminSheetOverlay').classList.remove('active');
+    }
+
+    async function executeAdminPin() {
+      if (!selectedAdminCommentId || !window.db) return;
+      try {
+        const pinRef = window.fbRef(window.db, `comments/${targetSlug}/${selectedAdminCommentId}/isPinned`);
+        await window.fbSet(pinRef, !selectedAdminCommentPinned);
+        closeAdminSheet();
+        loadComments();
+      } catch (e) {
+        alert("Gagal menyematkan komentar.");
+      }
+    }
+
+    async function executeAdminDelete() {
+      if (!selectedAdminCommentId) return;
+      closeAdminSheet();
+      deleteComment(selectedAdminCommentId);
     }
 
     function toggleRepliesDisplay(commentId, count) {
