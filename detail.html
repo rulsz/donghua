@@ -420,10 +420,19 @@
 
     function extractEpNumber(titleOrSlug, fallback) {
       if (!titleOrSlug) return fallback;
-      const matches = String(titleOrSlug).match(/\d+/g);
+      
+      const str = String(titleOrSlug);
+      const epMatch = str.match(/(?:episode|ep)[^\d]*(\d+)/i) || str.match(/-episode-(\d+)/i);
+      
+      if (epMatch && epMatch[1]) {
+        return parseInt(epMatch[1], 10);
+      }
+
+      const matches = str.replace(/season\s*\d+/gi, '').match(/\d+/g);
       if (matches && matches.length > 0) {
         return parseInt(matches[matches.length - 1], 10);
       }
+      
       return fallback;
     }
 
@@ -950,7 +959,6 @@
         .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // PEMBACAAN EPISODE OTOMATIS DARI QUERY PARAMETER URL (?ep=...)
     async function loadDetail() {
       if (!targetSlug) {
         document.getElementById('mediaDetailsGroup').innerHTML = '<h1 class="media-title">Slug Tidak Ditemukan</h1>';
@@ -997,7 +1005,6 @@
             epGrid.appendChild(box);
           });
 
-          // PENTING: Mengecek apakah ada episode spesifik dari URL Lanjutkan Menonton (?ep=...)
           const urlParams = new URLSearchParams(window.location.search);
           const targetEpParam = urlParams.get('ep');
 
