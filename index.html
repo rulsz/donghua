@@ -51,7 +51,7 @@
     .skeleton-btn { height: 38px; width: 110px; border-radius: 10px; }
 
     .card-skeleton { width: 100%; }
-    .card-skeleton-img { width: 100%; height: 160px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); }
+    .card-skeleton-img { width: 100%; height: 180px; border-radius: 14px; margin-bottom: 8px; border: 1px solid var(--border-color); }
     .card-skeleton-title { height: 13px; width: 85%; margin-bottom: 4px; }
     .card-skeleton-sub { height: 11px; width: 50%; }
 
@@ -140,23 +140,42 @@
     .scroll-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
     .scroll-row::-webkit-scrollbar { display: none; }
     .card-continue { flex: 0 0 calc((100% - 24px) / 3); min-width: calc((100% - 24px) / 3); cursor: pointer; }
-    .card-continue-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
-    .card-continue img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-ep { position: absolute; top: 8px; left: 8px; background: var(--color-primary); color: var(--text-main); font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; z-index: 2; text-transform: uppercase; }
+    
+    /* STYLING POSTER MODERN GLASSMORPHISM */
+    .card-continue-img-wrapper, .card-grid-img-wrapper { 
+      position: relative; width: 100%; height: 180px; 
+      border-radius: 14px; overflow: hidden; background: var(--bg-card); 
+      border: 1px solid var(--border-color); 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6); 
+    }
+    .card-continue img, .card-grid img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .badge-ep { 
+      position: absolute; top: 10px; left: 10px; 
+      background: rgba(2, 132, 199, 0.85); backdrop-filter: blur(8px);
+      color: var(--text-main); font-size: 9.5px; font-weight: 800; 
+      padding: 3px 8px; border-radius: 6px; z-index: 2; text-transform: uppercase; 
+      letter-spacing: 0.5px;
+    }
+
+    .badge-bottom { 
+      position: absolute; bottom: 10px; left: 10px; 
+      background: rgba(15, 23, 42, 0.88); color: var(--color-accent); 
+      border: 1px solid rgba(56, 189, 248, 0.3); 
+      font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 8px; 
+      backdrop-filter: blur(6px); z-index: 2;
+    }
     
     .badge-view-count { 
-      position: absolute; bottom: 8px; right: 8px; 
-      background: rgba(0, 0, 0, 0.82); color: #e2e8f0; 
+      position: absolute; bottom: 10px; right: 10px; 
+      background: rgba(0, 0, 0, 0.88); color: #e2e8f0; 
       border: 1px solid var(--border-color); 
-      font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; 
-      backdrop-filter: blur(4px); display: flex; align-items: center; gap: 4px; z-index: 2;
+      font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; 
+      backdrop-filter: blur(6px); display: flex; align-items: center; gap: 4px; z-index: 2;
     }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .card-grid { cursor: pointer; }
-    .card-grid-img-wrapper { position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); }
-    .card-grid img { width: 100%; height: 100%; object-fit: cover; }
-    .badge-bottom { position: absolute; bottom: 8px; left: 8px; max-width: calc(60%); background: rgba(0, 0, 0, 0.85); color: var(--color-accent); border: 1px solid var(--border-color); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
     .card-title { margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .see-all-btn { color: var(--color-accent); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; background: none; }
 
@@ -373,22 +392,19 @@
       return 'ONGOING';
     }
 
-    // PEMBACAAN EPISODE TANPA KATA 'SEASON X'
     function parseEpisodeText(item) {
-      if (!item) return 'ONGOING';
+      if (!item) return 'Ep 1';
 
       let directEp = item.episode || item.ep || item.latestEpisode;
-      if (directEp && String(directEp).trim() !== '' && directEp !== 'Ep 1' && directEp !== 'Terbaru') {
+      if (directEp && String(directEp).trim() !== '' && directEp !== 'Ep 1') {
         const epNum = String(directEp).match(/\d+/);
         if (epNum) return `Ep ${epNum[0]}`;
+        return directEp;
       }
 
-      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`
-        .replace(/season\s*\d+/gi, '')
-        .replace(/s\d+/gi, '');
-
+      const rawText = `${item.title || ''} ${item.slug || ''} ${item.link || ''}`;
       const epMatch = rawText.match(/(?:episode|ep)[^\d]*(\d+)/i) || 
-                      rawText.match(/-episode-(\d+)/i) ||
+                      rawText.match(/-episode-(\d+)/i) || 
                       rawText.match(/(\d+)\s*(?:sub|indonesia|eng)/i);
 
       if (epMatch && epMatch[1]) {
@@ -412,26 +428,6 @@
       let str = cleanPath(input);
       str = str.replace(/-episode-\d+.*$/i, '');
       return str;
-    }
-
-    function findMasterDonghuaBySlug(dbSlug) {
-      if (!dbSlug || !allMasterDonghuaList.length) return null;
-
-      const cleanDb = getCleanMainSlug(dbSlug).toLowerCase();
-
-      let found = allMasterDonghuaList.find(item => {
-        const masterSlug = getCleanMainSlug(item.slug || item.link).toLowerCase();
-        return masterSlug === cleanDb;
-      });
-
-      if (found) return found;
-
-      found = allMasterDonghuaList.find(item => {
-        const masterSlug = getCleanMainSlug(item.slug || item.link).toLowerCase();
-        return masterSlug.includes(cleanDb) || cleanDb.includes(masterSlug);
-      });
-
-      return found || null;
     }
 
     async function trackDonghuaClick(item) {
@@ -805,7 +801,6 @@
       }
     }
 
-    // PEMUATAN DONGHUA POPULER DENGAN POSTER OTOMATIS BERDASARKAN FIREBASE
     async function loadFirebasePopularData(latestListFromApi = []) {
       if (!window.db) return;
 
@@ -818,7 +813,12 @@
         const rawTotalMap = totalSnap.exists() ? totalSnap.val() : {};
         const rawDailyMap = dailySnap.exists() ? dailySnap.val() : {};
 
-        // 1. DONGHUA POPULER KESELURUHAN
+        const masterMapBySlug = new Map();
+        allMasterDonghuaList.forEach(item => {
+          const cleanS = getCleanMainSlug(item.slug || item.link);
+          if (cleanS) masterMapBySlug.set(cleanS, item);
+        });
+
         const sortedTotalSlugs = Object.keys(rawTotalMap)
           .map(slugKey => ({
             slug: getCleanMainSlug(slugKey),
@@ -827,43 +827,30 @@
           .filter(item => item.views > 0)
           .sort((a, b) => b.views - a.views);
 
-        const totalPopularList = await Promise.all(
-          sortedTotalSlugs.slice(0, 12).map(async (item) => {
-            const matched = findMasterDonghuaBySlug(item.slug);
-            
-            if (matched) {
-              return { ...matched, views: item.views };
-            }
+        const totalPopularList = sortedTotalSlugs.slice(0, 12).map(item => {
+          const matchedMaster = masterMapBySlug.get(item.slug);
+          if (matchedMaster) {
+            return { ...matchedMaster, views: item.views };
+          }
+          
+          const formatTitle = item.slug
+            .split('-')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
 
-            try {
-              const detailRes = await fetch(`/api/detail?slug=${encodeURIComponent(item.slug)}`).then(r => r.json());
-              if (detailRes && detailRes.success && detailRes.data) {
-                return {
-                  title: detailRes.data.title || item.slug.replace(/-/g, ' '),
-                  slug: item.slug,
-                  poster: detailRes.data.poster || detailRes.data.image,
-                  views: item.views,
-                  status: detailRes.data.status || 'ONGOING'
-                };
-              }
-            } catch (e) {}
-
-            const formatTitle = item.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            return {
-              title: formatTitle,
-              slug: item.slug,
-              poster: `https://images.placeholders.dev/?width=160&height=220&text=${encodeURIComponent(formatTitle)}&bgColor=%23121212&textColor=%23ffffff`,
-              views: item.views
-            };
-          })
-        );
+          return {
+            title: formatTitle,
+            slug: item.slug,
+            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
+            views: item.views
+          };
+        });
 
         const popAllGrid = document.getElementById('popularAllGrid');
         if (popAllGrid) {
           renderGridItems(totalPopularList, popAllGrid);
         }
 
-        // 2. DONGHUA POPULER HARI INI
         const sortedDailySlugs = Object.keys(rawDailyMap)
           .map(slugKey => ({
             slug: getCleanMainSlug(slugKey),
@@ -873,36 +860,25 @@
           .filter(item => item.todayActivity > 0)
           .sort((a, b) => b.todayActivity - a.todayActivity);
 
-        const dailyPopularList = await Promise.all(
-          sortedDailySlugs.slice(0, 12).map(async (item) => {
-            const matched = findMasterDonghuaBySlug(item.slug);
-            if (matched) {
-              return { ...matched, views: item.views, todayActivity: item.todayActivity };
-            }
+        const dailyPopularList = sortedDailySlugs.slice(0, 12).map(item => {
+          const matchedMaster = masterMapBySlug.get(item.slug);
+          if (matchedMaster) {
+            return { ...matchedMaster, views: item.views, todayActivity: item.todayActivity };
+          }
 
-            try {
-              const detailRes = await fetch(`/api/detail?slug=${encodeURIComponent(item.slug)}`).then(r => r.json());
-              if (detailRes && detailRes.success && detailRes.data) {
-                return {
-                  title: detailRes.data.title || item.slug.replace(/-/g, ' '),
-                  slug: item.slug,
-                  poster: detailRes.data.poster || detailRes.data.image,
-                  views: item.views,
-                  todayActivity: item.todayActivity
-                };
-              }
-            } catch (e) {}
+          const formatTitle = item.slug
+            .split('-')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
 
-            const formatTitle = item.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            return {
-              title: formatTitle,
-              slug: item.slug,
-              poster: `https://images.placeholders.dev/?width=160&height=220&text=${encodeURIComponent(formatTitle)}&bgColor=%23121212&textColor=%23ffffff`,
-              views: item.views,
-              todayActivity: item.todayActivity
-            };
-          })
-        );
+          return {
+            title: formatTitle,
+            slug: item.slug,
+            poster: 'https://via.placeholder.com/160x220?text=' + encodeURIComponent(formatTitle),
+            views: item.views,
+            todayActivity: item.todayActivity
+          };
+        });
 
         const popRow = document.getElementById('popularTodayRow');
         if (popRow) {
@@ -916,7 +892,6 @@
           }
         }
 
-        // 3. Update View Count Grid Terbaru
         const latestGrid = document.getElementById('latestGrid');
         if (latestGrid && latestListFromApi.length > 0) {
           const latestWithViews = latestListFromApi.map(item => {
@@ -995,9 +970,7 @@
             historyList = Object.values(dataMap);
             historyList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           }
-        } catch (e) {
-          console.error("Gagal membaca riwayat dari Firebase:", e);
-        }
+        } catch (e) {}
       }
 
       if (historyList.length === 0) {
